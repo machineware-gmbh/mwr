@@ -24,6 +24,7 @@
 #include "mwr/common/types.h"
 #include "mwr/common/bitops.h"
 #include "mwr/common/bitfields.h"
+#include "mwr/common/terminal.h"
 #include "mwr/common/utils.h"
 
 #include "mwr/stl/containers.h"

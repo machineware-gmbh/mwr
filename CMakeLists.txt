@@ -40,6 +40,7 @@ add_library(mwr STATIC
             ${src}/mwr/common/version.cpp
             ${src}/mwr/common/utils.cpp
             ${src}/mwr/common/bitops.cpp
+            ${src}/mwr/common/terminal.cpp
             ${src}/mwr/stl/strings.cpp
             ${src}/mwr/stl/threads.cpp)
 

@@ -19,9 +19,10 @@
 #ifndef MWR_COMMON_TYPES_H
 #define MWR_COMMON_TYPES_H
 
+#include <stdlib.h>
+#include <stdint.h>
 #include <limits>
 #include <time.h>
-#include <stdlib.h>
 
 namespace mwr {
 

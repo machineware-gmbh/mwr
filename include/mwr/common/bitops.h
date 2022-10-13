@@ -19,12 +19,14 @@
 #ifndef MWR_COMMON_BITOPS_H
 #define MWR_COMMON_BITOPS_H
 
+#include <type_traits>
+
 #include "mwr/common/types.h"
 
 namespace mwr {
 
 template <typename T>
-constexpr size_t width_of() {
+constexpr size_t width_of(const T& val) {
     return sizeof(T) * 8;
 };
 
@@ -49,46 +51,141 @@ constexpr size_t parity_even(const T& val) {
 }
 
 template <typename T>
-constexpr bool is_pow2(const T& val) {
-    return val != 0 && popcnt(val) == 1u;
-}
-
-template <typename T>
-constexpr size_t clz(const T& val) { // count leading zeroes
-    return val ? __builtin_clzll(val) -
-                     (width_of<unsigned long long>() - width_of<T>())
-               : width_of<T>();
+inline bool is_aligned(T addr, size_t size) {
+    return ((uintptr_t)addr & (size - 1)) == 0;
 }
 
 template <typename T>
 constexpr size_t ctz(const T& val) { // count trailing zeroes
-    return val ? __builtin_ctzll(val) : width_of<T>();
+    return val ? __builtin_ctzll(val) : width_of(val);
 }
 
 template <typename T>
-constexpr ssize_t ffs(const T& val) { // find first set
+constexpr size_t clz(const T& val) { // count leading zeroes
+    return val ? __builtin_clzll(val) - (64 - width_of(val)) : width_of(val);
+}
+
+template <typename T>
+constexpr int ffs(const T& val) {
     return __builtin_ffsll(val) - 1;
 }
 
 template <typename T>
-constexpr int fls(const T& val) { // find last set
-    return width_of<T>() - clz(val) - 1;
+constexpr int fls(T val) {
+    return width_of(val) - clz(val) - 1;
+}
+
+template <typename T>
+constexpr T rol(T val, size_t n) {
+    return (val << n) | (val >> (width_of(val) - n));
+}
+
+template <typename T>
+constexpr T ror(T val, size_t n) {
+    return (val >> n) | (val << (width_of(val) - n));
+}
+
+template <typename T>
+constexpr bool is_pow2(const T& val) {
+    if (val == 0)
+        return false;
+    return (val & (val - 1)) == 0;
+}
+
+template <typename T>
+constexpr int log2i(T val) {
+    return ctz(val); // value must be power of two
 }
 
 constexpr u64 bit(size_t offset) {
     return 1ull << offset;
 }
 
-constexpr u64 bitmask(size_t length, size_t offset = 0) {
-    if (offset >= width_of<u64>())
+constexpr u64 bitmask(size_t width, size_t offset = 0) {
+    if (offset >= 64)
         return 0ull;
-    if (length >= width_of<u64>())
+    if (width >= 64)
         return ~0ull << offset;
-    return ((1ull << length) - 1) << offset;
+    return ((1ull << width) - 1) << offset;
 }
 
 constexpr u32 fourcc(const char* s) {
     return s[0] | s[1] << 8 | s[2] << 16 | s[3] << 24;
+}
+
+template <typename T1, typename T2>
+constexpr bool fits(T1 val) {
+    return val == (T1)((T2)val);
+}
+
+template <typename T>
+constexpr bool fits_i8(T val) {
+    return fits<T, i8>(val);
+}
+
+template <typename T>
+constexpr bool fits_i16(T val) {
+    return fits<T, i16>(val);
+}
+
+template <typename T>
+constexpr bool fits_i32(T val) {
+    return fits<T, i32>(val);
+}
+
+template <typename T>
+constexpr bool fits_i64(T val) {
+    return fits<T, i64>(val);
+}
+
+template <typename T>
+constexpr bool fits_u8(T val) {
+    return fits<T, u8>(val);
+}
+
+template <typename T>
+constexpr bool fits_u16(T val) {
+    return fits<T, u16>(val);
+}
+
+template <typename T>
+constexpr bool fits_u32(T val) {
+    return fits<T, u32>(val);
+}
+
+template <typename T>
+constexpr bool fits_u64(T val) {
+    return fits<T, u64>(val);
+}
+
+template <bool IS_SIGNED>
+struct encode_traits {
+    typedef i8 t8;
+    typedef i16 t16;
+    typedef i32 t32;
+    typedef i64 t64;
+};
+
+template <>
+struct encode_traits<false> {
+    typedef u8 t8;
+    typedef u16 t16;
+    typedef u32 t32;
+    typedef u64 t64;
+};
+
+template <typename T>
+constexpr int encode_size(T val) {
+    typedef encode_traits<std::is_signed<T>::value> traits;
+    if (fits<T, typename traits::t8>(val))
+        return 8;
+    if (fits<T, typename traits::t16>(val))
+        return 16;
+    if (fits<T, typename traits::t32>(val))
+        return 32;
+    if (fits<T, typename traits::t64>(val))
+        return 64;
+    return width_of(val);
 }
 
 extern const u8 BITREV_TABLE[256];
@@ -137,6 +234,24 @@ inline void memswap(void* ptr, unsigned int size) {
 
         v[size - i - 1] = tmp;
     }
+}
+
+inline u32 f32_raw(f32 val) {
+    union {
+        f32 f;
+        u32 u;
+    } helper;
+    helper.f = val;
+    return helper.u;
+}
+
+inline u64 f64_raw(f64 val) {
+    union {
+        f64 f;
+        u64 u;
+    } helper;
+    helper.f = val;
+    return helper.u;
 }
 
 // crc7 calculates a 7 bit CRC of the specified data using the polynomial

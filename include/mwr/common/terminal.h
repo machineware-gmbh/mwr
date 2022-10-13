@@ -16,41 +16,30 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_COMMON_UTILS_H
-#define MWR_COMMON_UTILS_H
-
-#include <string>
-#include <vector>
-
-#include "mwr/common/types.h"
+#ifndef MWR_COMMON_TERMINAL_H
+#define MWR_COMMON_TERMINAL_H
 
 namespace mwr {
 
-using std::string;
-using std::vector;
-
-bool file_exists(const string& filename);
-
-string dirname(const string& path);
-string filename(const string& path);
-string filename_noext(const string& path);
-
-string curr_dir();
-string temp_dir();
-
-string progname();
-string username();
-
-vector<string> backtrace(size_t frames = 63, size_t skip = 1);
-void report_segfaults();
-extern size_t max_backtrace_length;
-
-size_t fd_peek(int fd, time_t timeout_ms = 0);
-size_t fd_read(int fd, void* buffer, size_t buflen);
-size_t fd_write(int fd, const void* buffer, size_t buflen);
-
-double timestamp();
-u64 timestamp_us();
+struct termcolors {
+    static const char* const CLEAR;
+    static const char* const BLACK;
+    static const char* const RED;
+    static const char* const GREEN;
+    static const char* const YELLOW;
+    static const char* const BLUE;
+    static const char* const MAGENTA;
+    static const char* const CYAN;
+    static const char* const WHITE;
+    static const char* const BRIGHT_BLACK;
+    static const char* const BRIGHT_RED;
+    static const char* const BRIGHT_GREEN;
+    static const char* const BRIGHT_YELLOW;
+    static const char* const BRIGHT_BLUE;
+    static const char* const BRIGHT_MAGENTA;
+    static const char* const BRIGHT_CYAN;
+    static const char* const BRIGHT_WHITE;
+};
 
 } // namespace mwr
 

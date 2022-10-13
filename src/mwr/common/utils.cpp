@@ -21,12 +21,17 @@
 #include "mwr/stl/strings.h"
 
 #include <string.h>
+#include <signal.h>
 #include <unistd.h>
 #include <limits.h>
 #include <execinfo.h>
 #include <cxxabi.h>
 
 namespace mwr {
+
+bool file_exists(const string& filename) {
+    return access(filename.c_str(), F_OK) != -1;
+}
 
 string dirname(const string& path) {
 #ifdef _WIN32
@@ -134,6 +139,127 @@ vector<string> backtrace(size_t frames, size_t skip) {
     free(dmbuf);
 
     return sv;
+}
+
+size_t max_backtrace_length = 16;
+static struct sigaction oldact;
+
+static void handle_segfault(int sig, siginfo_t* info, void* context) {
+    fprintf(stderr, "Backtrace\n");
+    auto symbols = backtrace(max_backtrace_length, 2);
+    for (size_t i = symbols.size() - 1; i < symbols.size(); i--)
+        fprintf(stderr, "# %2zu: %s\n", i, symbols[i].c_str());
+    fprintf(stderr,
+            "Caught signal %d (%s) while accessing memory at location %p\n",
+            sig, strsignal(sig), info->si_addr);
+    fflush(stderr);
+
+    if ((oldact.sa_flags & SA_SIGINFO) && (oldact.sa_sigaction != NULL)) {
+        (*oldact.sa_sigaction)(sig, info, context);
+        return;
+    }
+
+    if (oldact.sa_handler != NULL) {
+        (*oldact.sa_handler)(sig);
+        return;
+    }
+
+    // If there is no other handler to call, reset the handler back to the
+    // default signal handler and then re-raise the signal again.
+    signal(sig, SIG_DFL);
+    raise(sig);
+}
+
+void report_segfaults() {
+    struct sigaction newact;
+    memset(&newact, 0, sizeof(newact));
+    memset(&oldact, 0, sizeof(oldact));
+
+    sigemptyset(&newact.sa_mask);
+    newact.sa_sigaction = &handle_segfault;
+    newact.sa_flags = SA_SIGINFO;
+
+    if (::sigaction(SIGSEGV, &newact, &oldact) < 0)
+        MWR_ERROR("failed to install SIGSEGV signal handler");
+}
+
+size_t fd_peek(int fd, time_t timeoutms) {
+    if (fd < 0)
+        return 0;
+
+    fd_set in, out, err;
+    struct timeval timeout;
+
+    FD_ZERO(&in);
+    FD_SET(fd, &in);
+    FD_ZERO(&out);
+    FD_ZERO(&err);
+
+    timeout.tv_sec = (timeoutms / 1000ull);
+    timeout.tv_usec = (timeoutms % 1000ull) * 1000ull;
+
+    struct timeval* ptimeout = ~timeoutms ? &timeout : nullptr;
+    int ret = select(fd + 1, &in, &out, &err, ptimeout);
+    return ret > 0 ? 1 : 0;
+}
+
+size_t fd_read(int fd, void* buffer, size_t buflen) {
+    if (fd < 0 || buffer == nullptr || buflen == 0)
+        return 0;
+
+    u8* ptr = reinterpret_cast<u8*>(buffer);
+
+    ssize_t len;
+    size_t numread = 0;
+
+    while (numread < buflen) {
+        do {
+            len = ::read(fd, ptr + numread, buflen - numread);
+        } while (len < 0 && errno == EINTR);
+
+        if (len <= 0)
+            return numread;
+
+        numread += len;
+    }
+
+    return numread;
+}
+
+size_t fd_write(int fd, const void* buffer, size_t buflen) {
+    if (fd < 0 || buffer == nullptr || buflen == 0)
+        return false;
+
+    const u8* ptr = reinterpret_cast<const u8*>(buffer);
+
+    ssize_t len;
+    size_t written = 0;
+
+    while (written < buflen) {
+        do {
+            len = ::write(fd, ptr + written, buflen - written);
+        } while (len < 0 && errno == EINTR);
+
+        if (len <= 0)
+            return written;
+
+        written += len;
+    }
+
+    return written;
+}
+
+double timestamp() {
+    struct timespec tp;
+    clock_gettime(CLOCK_MONOTONIC, &tp);
+    return tp.tv_sec + tp.tv_nsec * 1e-9;
+}
+
+u64 timestamp_us() {
+    struct timespec tp = {};
+    if (clock_gettime(CLOCK_MONOTONIC, &tp))
+        MWR_ERROR("cannot read clock: %s (%d)", strerror(errno), errno);
+    return tp.tv_sec * 1000000ull + tp.tv_nsec / 1000ull;
 }
 
 } // namespace mwr

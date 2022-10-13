@@ -19,26 +19,34 @@
 #ifndef MWR_COMMON_BITFIELDS_H
 #define MWR_COMMON_BITFIELDS_H
 
+#include <assert.h>
+
 #include "mwr/common/types.h"
 #include "mwr/common/bitops.h"
 
 namespace mwr {
 
-template <typename T>
-constexpr T extract(T val, size_t off, size_t len) {
-    return (val >> off) & ((1ull << len) - 1);
+template <typename T, typename RET = std::make_unsigned_t<T>>
+constexpr RET extract(T val, size_t start, size_t width) {
+    assert(start + width <= width_of(val) && "bit range exceeded");
+    return ((RET)val >> start) & bitmask(width);
+}
+
+template <typename T, typename RET = std::make_signed_t<T>>
+constexpr RET sextract(T val, size_t start, size_t w) {
+    assert(start + w <= width_of(val) && "bit range exceeded");
+    return ((RET)val << (width_of(val) - w - start)) >> (width_of(val) - w);
 }
 
 template <typename T, typename T2>
-constexpr void insert(T& val, size_t off, size_t len, T2 x) {
-    const T mask = bitmask(len, off);
-    val = (val & ~mask) | (((T)x << off) & mask);
+constexpr T deposit(T val, size_t start, size_t width, T2 in) {
+    assert(start + width <= width_of(val) && "bit range exceeded");
+    const T mask = bitmask(width, start);
+    return (val & ~mask) | (((T)in << start) & mask);
 }
 
-template <typename T, typename T2>
-constexpr T deposit(T val, size_t off, size_t len, T2 x) {
-    const T mask = ((1ull << len) - 1) << off;
-    return (val & ~mask) | (((T)x << off) & mask);
+constexpr i64 signext(u64 val, size_t width) {
+    return sextract(val, 0, width);
 }
 
 template <size_t OFF, size_t LEN, typename T = u32>
@@ -58,12 +66,12 @@ constexpr typename F::base get_field(typename F::base val) {
 
 template <typename F>
 constexpr void set_field(typename F::base& val) {
-    insert(val, F::OFFSET, F::LENGTH, ~0ull);
+    val = deposit(val, F::OFFSET, F::LENGTH, ~0ull);
 }
 
 template <typename F>
 constexpr void set_field(typename F::base& val, typename F::base x) {
-    insert(val, F::OFFSET, F::LENGTH, x);
+    val = deposit(val, F::OFFSET, F::LENGTH, x);
 }
 
 } // namespace mwr
