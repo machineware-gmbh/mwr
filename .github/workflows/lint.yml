@@ -15,14 +15,16 @@ env:
 jobs:
   lint:
     name: lint
-    runs-on: self-hosted-ubuntu-20.04
+    runs-on: ubuntu-20.04
 
     steps:
     - name: Checkout
       uses: actions/checkout@v3
       with:
         submodules: 'recursive'
-        token: ${{ secrets.CI_TOKEN }}
+
+    - name: Setup Dependencies
+      run: sudo apt-get install libelf-dev ninja-build
 
     - name: Configure
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON -DMWR_LINTER=clang-tidy
