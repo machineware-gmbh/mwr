@@ -2,3 +2,7 @@
 	path = test/googletest
 	url = https://github.com/google/googletest.git
 	branch = main
+[submodule "cmake"]
+	path = cmake
+	url = https://github.com/machineware-gmbh/cmake
+	branch = main
