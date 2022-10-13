@@ -16,19 +16,15 @@
  #                                                                            #
  ##############################################################################
 
-if (NOT TARGET gtest OR NOT TARGET gmock)
-    option(INSTALL_GTEST OFF)
-    add_subdirectory(googletest EXCLUDE_FROM_ALL)
-endif()
+macro(common_test test)
+    add_executable(${test} ${test}.cpp)
+    target_link_libraries(${test} mwr gtest gmock gtest_main)
+    set_target_properties(${test} PROPERTIES CXX_CLANG_TIDY "${MWR_LINTER}")
+    add_test(NAME common/${test} COMMAND ${test})
+    set_tests_properties(common/${test} PROPERTIES ENVIRONMENT "${MWR_ENVVAR}")
+    set_tests_properties(common/${test} PROPERTIES TIMEOUT 4)
+endmacro()
 
-if(CMAKE_BUILD_TYPE MATCHES "ASAN")
-    string(APPEND ENVVARS "ASAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/sanitizer/asan.cfg:detect_leaks=1:fast_unwind_on_malloc=0;")
-    string(APPEND ENVVARS "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/sanitizer/lsan.cfg;")
-elseif(CMAKE_BUILD_TYPE MATCHES "TSAN")
-    string(APPEND ENVVARS "TSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/sanitizer/tsan.cfg;")
-elseif(CMAKE_BUILD_TYPE MATCHES "UBSAN")
-    string(APPEND ENVVARS "UBSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/sanitizer/ubsan.cfg:print_stacktrace=1;")
-endif()
-
-add_subdirectory(common)
-add_subdirectory(stl)
+common_test(utils)
+common_test(bitops)
+common_test(bitfields)

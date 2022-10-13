@@ -16,19 +16,28 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_H
-#define MWR_H
+#ifndef MWR_STL_THREADS_H
+#define MWR_STL_THREADS_H
 
-#include "mwr/common/version.h"
-#include "mwr/common/compiler.h"
-#include "mwr/common/types.h"
-#include "mwr/common/bitops.h"
-#include "mwr/common/bitfields.h"
-#include "mwr/common/utils.h"
+#include <string>
+#include <atomic>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
-#include "mwr/stl/containers.h"
-#include "mwr/stl/strings.h"
-#include "mwr/stl/streams.h"
-#include "mwr/stl/threads.h"
+namespace mwr {
+
+using std::string;
+using std::atomic;
+using std::thread;
+using std::mutex;
+using std::condition_variable;
+using std::condition_variable_any;
+using std::lock_guard;
+
+string get_thread_name(const thread& t = std::thread());
+bool set_thread_name(thread& t, const string& name);
+
+} // namespace mwr
 
 #endif

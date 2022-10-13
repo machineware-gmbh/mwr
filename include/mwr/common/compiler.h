@@ -16,19 +16,45 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_H
-#define MWR_H
+#ifndef MWR_COMMON_COMPILER_H
+#define MWR_COMMON_COMPILER_H
 
-#include "mwr/common/version.h"
-#include "mwr/common/compiler.h"
-#include "mwr/common/types.h"
-#include "mwr/common/bitops.h"
-#include "mwr/common/bitfields.h"
-#include "mwr/common/utils.h"
+#define MWR_DECL_PACKED __attribute__((packed))
+#define MWR_DECL_PRINTF(strpos, argpos) \
+    __attribute__((format(printf, (strpos), (argpos))))
+#define MWR_DECL_CONSTRUCTOR __attribute__((constructor))
+#define MWR_DECL_DESTRUCTOR  __attribute__((destructor))
 
-#include "mwr/stl/containers.h"
-#include "mwr/stl/strings.h"
-#include "mwr/stl/streams.h"
-#include "mwr/stl/threads.h"
+#define MWR_ERROR(...)                                 \
+    do {                                               \
+        fprintf(stderr, "%s:%d ", __FILE__, __LINE__); \
+        fprintf(stderr, __VA_ARGS__);                  \
+        fprintf(stderr, "\n");                         \
+        fflush(stderr);                                \
+        abort();                                       \
+    } while (0)
+
+#define MWR_ERROR_ON(cond, ...)     \
+    do {                            \
+        if (mwr::unlikely(cond)) {  \
+            MWR_ERROR(__VA_ARGS__); \
+        }                           \
+    } while (0)
+
+#define MWR_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+
+namespace mwr {
+
+template <typename T>
+constexpr int likely(const T& x) {
+    return __builtin_expect(!!(x), 1);
+}
+
+template <typename T>
+constexpr int unlikely(const T& x) {
+    return __builtin_expect(!!(x), 0);
+}
+
+} // namespace mwr
 
 #endif

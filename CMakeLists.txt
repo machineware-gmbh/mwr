@@ -1,11 +1,18 @@
  ##############################################################################
  #                                                                            #
  # Copyright 2022 MachineWare GmbH                                            #
- # All Rights Reserved                                                        #
  #                                                                            #
- # This is unpublished proprietary work and may not be used or disclosed to   #
- # third parties, copied or duplicated in any form, in whole or in part,      #
- # without prior written permission of the authors.                           #
+ # Licensed under the Apache License, Version 2.0 (the "License");            #
+ # you may not use this file except in compliance with the License.           #
+ # You may obtain a copy of the License at                                    #
+ #                                                                            #
+ #     http://www.apache.org/licenses/LICENSE-2.0                             #
+ #                                                                            #
+ # Unless required by applicable law or agreed to in writing, software        #
+ # distributed under the License is distributed on an "AS IS" BASIS,          #
+ # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
+ # See the License for the specific language governing permissions and        #
+ # limitations under the License.                                             #
  #                                                                            #
  ##############################################################################
 
@@ -25,12 +32,15 @@ set(src ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(inc ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(gen ${CMAKE_CURRENT_BINARY_DIR}/gen)
 
-configure_file(${src}/mwr/version.h.in
-               ${gen}/mwr/version.h @ONLY)
+configure_file(${src}/mwr/common/version.h.in
+               ${gen}/mwr/common/version.h @ONLY)
 
 add_library(mwr STATIC
-            ${src}/mwr/strings.cpp
-            ${src}/mwr/utils.cpp)
+            ${src}/mwr/common/version.cpp
+            ${src}/mwr/common/utils.cpp
+            ${src}/mwr/common/bitops.cpp
+            ${src}/mwr/stl/strings.cpp
+            ${src}/mwr/stl/threads.cpp)
 
 target_include_directories(mwr PUBLIC ${inc})
 target_include_directories(mwr PUBLIC ${gen})

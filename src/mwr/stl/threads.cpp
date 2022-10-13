@@ -16,19 +16,32 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_H
-#define MWR_H
-
-#include "mwr/common/version.h"
-#include "mwr/common/compiler.h"
-#include "mwr/common/types.h"
-#include "mwr/common/bitops.h"
-#include "mwr/common/bitfields.h"
-#include "mwr/common/utils.h"
-
-#include "mwr/stl/containers.h"
-#include "mwr/stl/strings.h"
-#include "mwr/stl/streams.h"
 #include "mwr/stl/threads.h"
 
+namespace mwr {
+
+string get_thread_name(const thread& t) {
+#ifdef __linux__
+    thread::native_handle_type handle = const_cast<thread&>(t).native_handle();
+    if (!t.joinable())
+        handle = (thread::native_handle_type)pthread_self();
+
+    char buffer[256] = {};
+    if (pthread_getname_np(handle, buffer, sizeof(buffer)) != 0)
+        return "unknown";
+
+    return buffer;
+#else
+    return "unknown";
 #endif
+}
+
+bool set_thread_name(thread& t, const string& name) {
+#ifdef __linux__
+    return pthread_setname_np(t.native_handle(), name.c_str()) == 0;
+#else
+    return false;
+#endif
+}
+
+} // namespace mwr

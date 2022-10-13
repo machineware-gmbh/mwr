@@ -16,19 +16,29 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_H
-#define MWR_H
+#ifndef MWR_COMMON_UTILS_H
+#define MWR_COMMON_UTILS_H
 
-#include "mwr/common/version.h"
-#include "mwr/common/compiler.h"
-#include "mwr/common/types.h"
-#include "mwr/common/bitops.h"
-#include "mwr/common/bitfields.h"
-#include "mwr/common/utils.h"
+#include <string>
+#include <vector>
 
-#include "mwr/stl/containers.h"
-#include "mwr/stl/strings.h"
-#include "mwr/stl/streams.h"
-#include "mwr/stl/threads.h"
+namespace mwr {
+
+using std::string;
+using std::vector;
+
+string dirname(const string& path);
+string filename(const string& path);
+string filename_noext(const string& path);
+
+string curr_dir();
+string temp_dir();
+
+string progname();
+string username();
+
+vector<string> backtrace(size_t frames = 63, size_t skip = 1);
+
+} // namespace mwr
 
 #endif

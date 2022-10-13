@@ -16,19 +16,37 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_H
-#define MWR_H
+#ifndef MWR_STL_STREAMS_H
+#define MWR_STL_STREAMS_H
 
-#include "mwr/common/version.h"
-#include "mwr/common/compiler.h"
-#include "mwr/common/types.h"
-#include "mwr/common/bitops.h"
-#include "mwr/common/bitfields.h"
-#include "mwr/common/utils.h"
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <sstream>
 
-#include "mwr/stl/containers.h"
-#include "mwr/stl/strings.h"
-#include "mwr/stl/streams.h"
-#include "mwr/stl/threads.h"
+namespace mwr {
+
+using std::istream;
+using std::ostream;
+using std::fstream;
+using std::ifstream;
+using std::ofstream;
+using std::stringstream;
+using std::ostringstream;
+using std::istringstream;
+
+class stream_guard
+{
+private:
+    std::ostream& m_os;
+    std::ios::fmtflags m_flags;
+    stream_guard() = delete;
+
+public:
+    stream_guard(ostream& os): m_os(os), m_flags(os.flags()) {}
+    ~stream_guard() { m_os.flags(m_flags); }
+};
+
+} // namespace mwr
 
 #endif

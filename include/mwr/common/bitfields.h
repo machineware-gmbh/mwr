@@ -16,19 +16,56 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_H
-#define MWR_H
+#ifndef MWR_COMMON_BITFIELDS_H
+#define MWR_COMMON_BITFIELDS_H
 
-#include "mwr/common/version.h"
-#include "mwr/common/compiler.h"
 #include "mwr/common/types.h"
 #include "mwr/common/bitops.h"
-#include "mwr/common/bitfields.h"
-#include "mwr/common/utils.h"
 
-#include "mwr/stl/containers.h"
-#include "mwr/stl/strings.h"
-#include "mwr/stl/streams.h"
-#include "mwr/stl/threads.h"
+namespace mwr {
+
+template <typename T>
+constexpr T extract(T val, size_t off, size_t len) {
+    return (val >> off) & ((1ull << len) - 1);
+}
+
+template <typename T, typename T2>
+constexpr void insert(T& val, size_t off, size_t len, T2 x) {
+    const T mask = bitmask(len, off);
+    val = (val & ~mask) | (((T)x << off) & mask);
+}
+
+template <typename T, typename T2>
+constexpr T deposit(T val, size_t off, size_t len, T2 x) {
+    const T mask = ((1ull << len) - 1) << off;
+    return (val & ~mask) | (((T)x << off) & mask);
+}
+
+template <size_t OFF, size_t LEN, typename T = u32>
+struct field {
+    using base = T;
+    enum : size_t { OFFSET = OFF };
+    enum : size_t { LENGTH = LEN };
+    enum : T { MASK = bitmask(LEN, OFF) };
+    constexpr operator T() const noexcept { return MASK; }
+    static constexpr T set(T v) noexcept { return (v << OFFSET) & MASK; }
+};
+
+template <typename F>
+constexpr typename F::base get_field(typename F::base val) {
+    return extract(val, F::OFFSET, F::LENGTH);
+}
+
+template <typename F>
+constexpr void set_field(typename F::base& val) {
+    insert(val, F::OFFSET, F::LENGTH, ~0ull);
+}
+
+template <typename F>
+constexpr void set_field(typename F::base& val, typename F::base x) {
+    insert(val, F::OFFSET, F::LENGTH, x);
+}
+
+} // namespace vcml
 
 #endif

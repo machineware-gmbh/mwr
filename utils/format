@@ -12,7 +12,7 @@
  ##############################################################################
 
 home="$(cd $(dirname $(dirname ${BASH_SOURCE[0]} )) &>/dev/null && pwd)"
-check_dirs="$home/src/ $home/include/ $home/test/mwr/"
+check_dirs="$home/src/ $home/include/ $home/test/common/ $home/test/stl/"
 headers=$(find $check_dirs -name '*.h')
 sources=$(find $check_dirs -name '*.cpp')
 exec clang-format --Werror $headers $sources $@
