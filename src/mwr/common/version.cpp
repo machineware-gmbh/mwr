@@ -16,7 +16,7 @@
  *                                                                            *
  ******************************************************************************/
 
-#include "mwr/version.h"
+#include "mwr/common/version.h"
 
 #ifndef MWR_VERSION_MAJOR
 #error MWR_VERSION_MAJOR undefined
