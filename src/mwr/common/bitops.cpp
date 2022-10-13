@@ -130,4 +130,4 @@ u32 crc32(const u8* buffer, size_t len, u32 crc) {
     return crc;
 }
 
-} // namespace vcml
+} // namespace mwr

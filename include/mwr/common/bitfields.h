@@ -66,6 +66,6 @@ constexpr void set_field(typename F::base& val, typename F::base x) {
     insert(val, F::OFFSET, F::LENGTH, x);
 }
 
-} // namespace vcml
+} // namespace mwr
 
 #endif

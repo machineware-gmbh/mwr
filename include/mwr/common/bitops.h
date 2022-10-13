@@ -151,6 +151,6 @@ u16 crc16(const u8* buffer, size_t len, u16 crc = 0);
 // x^32+x^26+x^23+x^22+x^16+x^12+x^11+x^10+x^8+x^7+x^5+x^4+x^2+x^1+1
 u32 crc32(const u8* buffer, size_t len, u32 crc = ~0u);
 
-} // namespace vcml
+} // namespace mwr
 
 #endif
