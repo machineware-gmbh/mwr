@@ -1,0 +1,44 @@
+name: asan
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'dev**'
+  pull_request:
+    branches:
+      - 'main'
+
+env:
+  TARGET_ARCH: linux64
+  ASAN_OPTIONS: verbosity=1
+  TSAN_OPTIONS: verbosity=1
+  UBSAN_OPTIONS: print_stacktrace=1
+
+jobs:
+  sanitize:
+    name: ${{matrix.sanitizer}}
+    runs-on: self-hosted-ubuntu-20.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [ASAN, TSAN, UBSAN]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        submodules: 'recursive'
+        token: ${{ secrets.CI_TOKEN }}
+
+    - name: Configure
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.sanitizer}} -DMWR_BUILD_TESTS=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{matrix.sanitizer}} -j $(nproc)
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C ${{matrix.sanitizer}} --verbose
+

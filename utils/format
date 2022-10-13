@@ -1,0 +1,18 @@
+#!/bin/bash
+
+ ##############################################################################
+ #                                                                            #
+ # Copyright 2022 MachineWare GmbH                                            #
+ # All Rights Reserved                                                        #
+ #                                                                            #
+ # This is unpublished proprietary work and may not be used or disclosed to   #
+ # third parties, copied or duplicated in any form, in whole or in part,      #
+ # without prior written permission of the authors.                           #
+ #                                                                            #
+ ##############################################################################
+
+home="$(cd $(dirname $(dirname ${BASH_SOURCE[0]} )) &>/dev/null && pwd)"
+check_dirs="$home/src/ $home/include/ $home/test/mwr/"
+headers=$(find $check_dirs -name '*.h')
+sources=$(find $check_dirs -name '*.cpp')
+exec clang-format --Werror $headers $sources $@
