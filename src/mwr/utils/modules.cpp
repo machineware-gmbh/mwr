@@ -52,7 +52,11 @@ void modules::register_module(const string& name, size_t version,
     mod.version_string = version_string;
     mod.git_rev = git_rev;
     mod.git_rev_short = git_rev_short;
-    m_modules.push_back(std::move(mod));
+
+    replace(mod.name, "_", "-");
+
+    if (!stl_contains(m_modules, mod))
+        m_modules.push_back(std::move(mod));
 }
 
 modules& modules::instance() {
