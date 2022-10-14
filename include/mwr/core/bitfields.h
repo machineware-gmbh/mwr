@@ -16,13 +16,13 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_COMMON_BITFIELDS_H
-#define MWR_COMMON_BITFIELDS_H
+#ifndef MWR_CORE_BITFIELDS_H
+#define MWR_CORE_BITFIELDS_H
 
 #include <assert.h>
 
-#include "mwr/common/types.h"
-#include "mwr/common/bitops.h"
+#include "mwr/core/types.h"
+#include "mwr/core/bitops.h"
 
 namespace mwr {
 

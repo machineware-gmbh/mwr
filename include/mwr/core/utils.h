@@ -16,13 +16,13 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_COMMON_UTILS_H
-#define MWR_COMMON_UTILS_H
+#ifndef MWR_CORE_UTILS_H
+#define MWR_CORE_UTILS_H
 
 #include <string>
 #include <vector>
 
-#include "mwr/common/types.h"
+#include "mwr/core/types.h"
 
 namespace mwr {
 
@@ -51,6 +51,7 @@ size_t fd_write(int fd, const void* buffer, size_t buflen);
 
 double timestamp();
 u64 timestamp_us();
+u64 timestamp_ns();
 
 } // namespace mwr
 

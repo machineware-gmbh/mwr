@@ -16,8 +16,8 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_COMMON_TYPES_H
-#define MWR_COMMON_TYPES_H
+#ifndef MWR_CORE_TYPES_H
+#define MWR_CORE_TYPES_H
 
 #include <stdlib.h>
 #include <stdint.h>

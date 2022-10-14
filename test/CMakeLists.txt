@@ -30,5 +30,5 @@ elseif(CMAKE_BUILD_TYPE MATCHES "UBSAN")
     string(APPEND ENVVARS "UBSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/sanitizer/ubsan.cfg:print_stacktrace=1;")
 endif()
 
-add_subdirectory(common)
+add_subdirectory(core)
 add_subdirectory(stl)

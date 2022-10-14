@@ -16,8 +16,8 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_COMMON_TERMINAL_H
-#define MWR_COMMON_TERMINAL_H
+#ifndef MWR_CORE_TERMINAL_H
+#define MWR_CORE_TERMINAL_H
 
 namespace mwr {
 

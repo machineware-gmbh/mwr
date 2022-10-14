@@ -16,44 +16,45 @@
  *                                                                            *
  ******************************************************************************/
 
-#include "mwr/common/version.h"
+#ifndef MWR_CORE_COMPILER_H
+#define MWR_CORE_COMPILER_H
 
-#ifndef MWR_VERSION_MAJOR
-#error MWR_VERSION_MAJOR undefined
-#endif
+#define MWR_DECL_PACKED __attribute__((packed))
+#define MWR_DECL_PRINTF(strpos, argpos) \
+    __attribute__((format(printf, (strpos), (argpos))))
+#define MWR_DECL_CONSTRUCTOR __attribute__((constructor))
+#define MWR_DECL_DESTRUCTOR  __attribute__((destructor))
 
-#ifndef MWR_VERSION_MINOR
-#error MWR_VERSION_MINOR undefined
-#endif
+#define MWR_ERROR(...)                                 \
+    do {                                               \
+        fprintf(stderr, "%s:%d ", __FILE__, __LINE__); \
+        fprintf(stderr, __VA_ARGS__);                  \
+        fprintf(stderr, "\n");                         \
+        fflush(stderr);                                \
+        abort();                                       \
+    } while (0)
 
-#ifndef MWR_VERSION_PATCH
-#error MWR_VERSION_PATCH undefined
-#endif
+#define MWR_ERROR_ON(cond, ...)     \
+    do {                            \
+        if (mwr::unlikely(cond)) {  \
+            MWR_ERROR(__VA_ARGS__); \
+        }                           \
+    } while (0)
 
-#ifndef MWR_GIT_REV
-#error MWR_GIT_REV undefined
-#endif
-
-#ifndef MWR_GIT_REV_SHORT
-#error MWR_GIT_REV_SHORT undefined
-#endif
-
-#ifndef MWR_VERSION
-#error MWR_VERSION undefined
-#endif
-
-#ifndef MWR_VERSION_STRING
-#error MWR_VERSION_STRING undefined
-#endif
+#define MWR_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 namespace mwr {
 
-unsigned int version() {
-    return MWR_VERSION;
+template <typename T>
+constexpr int likely(const T& x) {
+    return __builtin_expect(!!(x), 1);
 }
 
-const char* version_string() {
-    return MWR_VERSION_STRING;
+template <typename T>
+constexpr int unlikely(const T& x) {
+    return __builtin_expect(!!(x), 0);
 }
 
 } // namespace mwr
+
+#endif

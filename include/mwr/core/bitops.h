@@ -16,12 +16,12 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_COMMON_BITOPS_H
-#define MWR_COMMON_BITOPS_H
+#ifndef MWR_CORE_BITOPS_H
+#define MWR_CORE_BITOPS_H
 
 #include <type_traits>
 
-#include "mwr/common/types.h"
+#include "mwr/core/types.h"
 
 namespace mwr {
 

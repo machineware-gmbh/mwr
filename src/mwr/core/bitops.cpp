@@ -16,7 +16,7 @@
  *                                                                            *
  ******************************************************************************/
 
-#include "mwr/common/bitops.h"
+#include "mwr/core/bitops.h"
 
 namespace mwr {
 

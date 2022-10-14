@@ -16,45 +16,40 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_COMMON_COMPILER_H
-#define MWR_COMMON_COMPILER_H
+#include <gtest/gtest.h>
+#include "mwr.h"
+using namespace mwr;
 
-#define MWR_DECL_PACKED __attribute__((packed))
-#define MWR_DECL_PRINTF(strpos, argpos) \
-    __attribute__((format(printf, (strpos), (argpos))))
-#define MWR_DECL_CONSTRUCTOR __attribute__((constructor))
-#define MWR_DECL_DESTRUCTOR  __attribute__((destructor))
+TEST(atomic, max) {
+    i64 cmp, data = 5;
+    EXPECT_EQ(atomic_max(&data, 6), 5);
+    EXPECT_EQ(data, 6);
 
-#define MWR_ERROR(...)                                 \
-    do {                                               \
-        fprintf(stderr, "%s:%d ", __FILE__, __LINE__); \
-        fprintf(stderr, __VA_ARGS__);                  \
-        fprintf(stderr, "\n");                         \
-        fflush(stderr);                                \
-        abort();                                       \
-    } while (0)
+    EXPECT_EQ(atomic_max(&data, -1), 6);
+    EXPECT_EQ(data, 6);
 
-#define MWR_ERROR_ON(cond, ...)     \
-    do {                            \
-        if (mwr::unlikely(cond)) {  \
-            MWR_ERROR(__VA_ARGS__); \
-        }                           \
-    } while (0)
+    cmp = -2;
+    EXPECT_EQ(atomic_max_ptr(&data, &cmp, sizeof(data)), 6);
+    EXPECT_EQ(data, 6);
 
-#define MWR_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-
-namespace mwr {
-
-template <typename T>
-constexpr int likely(const T& x) {
-    return __builtin_expect(!!(x), 1);
+    cmp = 9;
+    EXPECT_EQ(atomic_max_ptr(&data, &cmp, sizeof(data)), 6);
+    EXPECT_EQ(data, 9);
 }
 
-template <typename T>
-constexpr int unlikely(const T& x) {
-    return __builtin_expect(!!(x), 0);
+TEST(atomic, umax) {
+    u64 cmp, data = 5;
+    EXPECT_EQ(atomic_max(&data, 6), 5);
+    EXPECT_EQ(data, 6);
+
+    EXPECT_EQ(atomic_max(&data, -2), 6);
+    EXPECT_EQ(data, -2);
+
+    cmp = -1;
+    EXPECT_EQ(atomic_umax_ptr(&data, &cmp, sizeof(data)), -2);
+    EXPECT_EQ(data, -1);
+
+    cmp = 9;
+    EXPECT_EQ(atomic_umax_ptr(&data, &cmp, sizeof(data)), -1);
+    EXPECT_EQ(data, -1);
 }
-
-} // namespace mwr
-
-#endif

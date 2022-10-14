@@ -26,8 +26,8 @@
 #include <vector>
 #include <functional>
 
-#include "mwr/common/compiler.h"
-#include "mwr/common/types.h"
+#include "mwr/core/compiler.h"
+#include "mwr/core/types.h"
 
 namespace mwr {
 

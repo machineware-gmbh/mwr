@@ -16,15 +16,16 @@
  #                                                                            #
  ##############################################################################
 
-macro(common_test test)
+macro(core_test test)
     add_executable(${test} ${test}.cpp)
     target_link_libraries(${test} mwr gtest gmock gtest_main)
     set_target_properties(${test} PROPERTIES CXX_CLANG_TIDY "${MWR_LINTER}")
-    add_test(NAME common/${test} COMMAND ${test})
-    set_tests_properties(common/${test} PROPERTIES ENVIRONMENT "${MWR_ENVVAR}")
-    set_tests_properties(common/${test} PROPERTIES TIMEOUT 4)
+    add_test(NAME core/${test} COMMAND ${test})
+    set_tests_properties(core/${test} PROPERTIES ENVIRONMENT "${MWR_ENVVAR}")
+    set_tests_properties(core/${test} PROPERTIES TIMEOUT 4)
 endmacro()
 
-common_test(utils)
-common_test(bitops)
-common_test(bitfields)
+core_test(atomics)
+core_test(bitops)
+core_test(bitfields)
+core_test(utils)

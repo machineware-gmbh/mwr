@@ -33,14 +33,14 @@ set(src ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(inc ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(gen ${CMAKE_CURRENT_BINARY_DIR}/gen)
 
-configure_file(${src}/mwr/common/version.h.in
-               ${gen}/mwr/common/version.h @ONLY)
+configure_file(${src}/mwr/core/version.h.in
+               ${gen}/mwr/core/version.h @ONLY)
 
 add_library(mwr STATIC
-            ${src}/mwr/common/version.cpp
-            ${src}/mwr/common/utils.cpp
-            ${src}/mwr/common/bitops.cpp
-            ${src}/mwr/common/terminal.cpp
+            ${src}/mwr/core/version.cpp
+            ${src}/mwr/core/utils.cpp
+            ${src}/mwr/core/bitops.cpp
+            ${src}/mwr/core/terminal.cpp
             ${src}/mwr/stl/strings.cpp
             ${src}/mwr/stl/threads.cpp)
 
