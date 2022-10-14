@@ -16,47 +16,52 @@
  *                                                                            *
  ******************************************************************************/
 
-#include "mwr/core/version.h"
 #include "mwr/utils/modules.h"
-
-#ifndef MWR_VERSION_MAJOR
-#error MWR_VERSION_MAJOR undefined
-#endif
-
-#ifndef MWR_VERSION_MINOR
-#error MWR_VERSION_MINOR undefined
-#endif
-
-#ifndef MWR_VERSION_PATCH
-#error MWR_VERSION_PATCH undefined
-#endif
-
-#ifndef MWR_GIT_REV
-#error MWR_GIT_REV undefined
-#endif
-
-#ifndef MWR_GIT_REV_SHORT
-#error MWR_GIT_REV_SHORT undefined
-#endif
-
-#ifndef MWR_VERSION
-#error MWR_VERSION undefined
-#endif
-
-#ifndef MWR_VERSION_STRING
-#error MWR_VERSION_STRING undefined
-#endif
-
-MWR_DECLARE_MODULE(mwr, MWR)
 
 namespace mwr {
 
-unsigned int version() {
-    return MWR_VERSION;
+bool module::operator==(const module& other) const {
+    return name == other.name && version == other.version &&
+           git_rev == other.git_rev;
 }
 
-const char* version_string() {
-    return MWR_VERSION_STRING;
+ostream& operator<<(ostream& os, const module& m) {
+    os << m.name << ": " << m.version_string << " (" << m.git_rev << ")";
+    return os;
+}
+
+void modules::register_module(const string& name, size_t version,
+                              size_t version_major, size_t version_minor,
+                              size_t version_patch,
+                              const string& version_string,
+                              const string& git_rev,
+                              const string& git_rev_short) {
+    module mod;
+    mod.name = name;
+    mod.version = version;
+    mod.version_major = version_major;
+    mod.version_minor = version_minor;
+    mod.version_patch = version_patch;
+    mod.version_string = version_string;
+    mod.git_rev = git_rev;
+    mod.git_rev_short = git_rev_short;
+    m_modules.push_back(std::move(mod));
+}
+
+modules& modules::instance() {
+    static modules inst;
+    return inst;
+}
+
+const vector<module>& modules::all() {
+    return instance().m_modules;
+}
+
+const module* modules::find(const string& name) {
+    for (const module& mod : instance().m_modules)
+        if (mod.name == name)
+            return &mod;
+    return nullptr;
 }
 
 } // namespace mwr

@@ -16,7 +16,7 @@
  #                                                                            #
  ##############################################################################
 
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.13)
 project(mwr VERSION 2022.10.13 LANGUAGES CXX)
 
 set(MWR_LINTER "" CACHE STRING "Code linter to use")
@@ -42,13 +42,15 @@ add_library(mwr STATIC
             ${src}/mwr/core/bitops.cpp
             ${src}/mwr/core/terminal.cpp
             ${src}/mwr/stl/strings.cpp
-            ${src}/mwr/stl/threads.cpp)
+            ${src}/mwr/stl/threads.cpp
+            ${src}/mwr/utils/modules.cpp)
 
 target_include_directories(mwr PUBLIC ${inc})
 target_include_directories(mwr PUBLIC ${gen})
 target_compile_options(mwr PRIVATE -Wall -Werror)
 target_compile_features(mwr PRIVATE cxx_std_17)
 target_compile_definitions(mwr PUBLIC $<$<CONFIG:DEBUG>:MWR_DEBUG>)
+target_link_options(mwr PUBLIC -u mwr_module_register)
 target_link_libraries(mwr PUBLIC -rdynamic)
 target_link_libraries(mwr PUBLIC Threads::Threads)
 target_link_libraries(mwr PUBLIC ${LIBELF_LIBRARIES})
