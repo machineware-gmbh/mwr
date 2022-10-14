@@ -21,13 +21,13 @@
 #include "mwr/utils/modules.h"
 #include "mwr/core/version.h"
 
-#define TEST_VERSION 1234
+#define TEST_VERSION        1234
 #define TEST_VERSION_STRING "1.2.34"
-#define TEST_VERSION_MAJOR 1
-#define TEST_VERSION_MINOR 2
-#define TEST_VERSION_PATCH 34
-#define TEST_GIT_REV "abcdef0123456"
-#define TEST_GIT_REV_SHORT "abcdef"
+#define TEST_VERSION_MAJOR  1
+#define TEST_VERSION_MINOR  2
+#define TEST_VERSION_PATCH  34
+#define TEST_GIT_REV        "abcdef0123456"
+#define TEST_GIT_REV_SHORT  "abcdef"
 
 MWR_DECLARE_MODULE(test, TEST)
 
