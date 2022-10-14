@@ -30,6 +30,13 @@ ostream& operator<<(ostream& os, const module& m) {
     return os;
 }
 
+const module* modules::find(const string& name) const {
+    for (const module& mod : instance().m_modules)
+        if (mod.name == name)
+            return &mod;
+    return nullptr;
+}
+
 void modules::register_module(const string& name, size_t version,
                               size_t version_major, size_t version_minor,
                               size_t version_patch,
@@ -51,17 +58,6 @@ void modules::register_module(const string& name, size_t version,
 modules& modules::instance() {
     static modules inst;
     return inst;
-}
-
-const vector<module>& modules::all() {
-    return instance().m_modules;
-}
-
-const module* modules::find(const string& name) {
-    for (const module& mod : instance().m_modules)
-        if (mod.name == name)
-            return &mod;
-    return nullptr;
 }
 
 } // namespace mwr

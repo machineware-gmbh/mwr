@@ -32,7 +32,8 @@
 MWR_DECLARE_MODULE(test, TEST)
 
 TEST(modules, declare) {
-    const mwr::module* test = mwr::modules::find("test");
+    const auto& modules = mwr::modules::instance();
+    const mwr::module* test = modules.find("test");
     ASSERT_NE(test, nullptr);
     EXPECT_EQ(test->name, "test");
     EXPECT_EQ(test->version, TEST_VERSION);
@@ -45,7 +46,7 @@ TEST(modules, declare) {
 }
 
 TEST(modules, list) {
-    for (const auto& module : mwr::modules::all())
+    for (const auto& module : mwr::modules::instance().all())
         std::cout << module << std::endl;
-    EXPECT_EQ(mwr::modules::all().size(), 2);
+    EXPECT_EQ(mwr::modules::instance().count(), 2);
 }

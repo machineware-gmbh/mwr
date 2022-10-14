@@ -53,18 +53,20 @@ private:
 public:
     ~modules() = default;
 
+    size_t count() const { return m_modules.size(); }
+    const vector<module>& all() const { return m_modules; }
+    const module* find(const string& name) const;
+
     void register_module(const string& name, size_t version,
                          size_t version_major, size_t version_minor,
                          size_t version_patch, const string& version_string,
                          const string& git_rev, const string& git_rev_short);
 
     static modules& instance();
-    static const vector<module>& all();
-    static const module* find(const string& name);
 };
 
 #define MWR_DECLARE_MODULE(name, prefix)                                      \
-    extern "C" MWR_DECL_CONSTRUCTOR void name##_module_register() {           \
+    extern "C" MWR_DECL_CONSTRUCTOR void name##_register_module() {           \
         ::mwr::modules::instance().register_module(                           \
             #name, MWR_CAT(prefix, _VERSION),                                 \
             MWR_CAT(prefix, _VERSION_MAJOR), MWR_CAT(prefix, _VERSION_MINOR), \
