@@ -17,7 +17,9 @@
  ******************************************************************************/
 
 #include <gtest/gtest.h>
-#include "mwr.h"
+
+#include "mwr/core/bitops.h"
+
 using namespace mwr;
 
 TEST(bitops, clz32) {

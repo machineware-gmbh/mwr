@@ -17,7 +17,9 @@
  ******************************************************************************/
 
 #include <gtest/gtest.h>
-#include "mwr.h"
+
+#include "mwr/core/utils.h"
+
 using namespace mwr;
 
 TEST(utils, dirname) {

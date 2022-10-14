@@ -25,6 +25,7 @@
 #include <sstream>
 #include <vector>
 #include <functional>
+#include <algorithm>
 
 #include "mwr/core/compiler.h"
 #include "mwr/core/types.h"

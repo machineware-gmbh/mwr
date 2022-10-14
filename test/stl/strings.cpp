@@ -17,7 +17,9 @@
  ******************************************************************************/
 
 #include <gtest/gtest.h>
-#include "mwr.h"
+
+#include "mwr/stl/strings.h"
+
 using namespace mwr;
 
 TEST(strings, mkstr) {

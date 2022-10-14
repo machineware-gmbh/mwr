@@ -20,7 +20,9 @@
 #define MWR_CORE_ATOMICS_H
 
 #include <algorithm>
+
 #include "mwr/core/types.h"
+#include "mwr/core/compiler.h"
 
 namespace mwr {
 

@@ -17,7 +17,9 @@
  ******************************************************************************/
 
 #include <gtest/gtest.h>
-#include "mwr.h"
+
+#include "mwr/core/atomics.h"
+
 using namespace mwr;
 
 TEST(atomic, max) {
