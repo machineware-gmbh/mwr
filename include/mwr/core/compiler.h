@@ -19,6 +19,8 @@
 #ifndef MWR_CORE_COMPILER_H
 #define MWR_CORE_COMPILER_H
 
+#include <stdio.h>
+
 #define MWR_DECL_PACKED __attribute__((packed))
 #define MWR_DECL_PRINTF(strpos, argpos) \
     __attribute__((format(printf, (strpos), (argpos))))
