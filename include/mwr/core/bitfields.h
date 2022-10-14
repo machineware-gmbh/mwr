@@ -49,7 +49,7 @@ constexpr i64 signext(u64 val, size_t width) {
     return sextract(val, 0, width);
 }
 
-template <size_t OFF, size_t LEN, typename T = u32>
+template <size_t OFF, size_t LEN = 1, typename T = u64>
 struct field {
     using base = T;
     enum : size_t { OFFSET = OFF };

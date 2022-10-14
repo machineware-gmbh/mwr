@@ -44,8 +44,8 @@ TEST(bitops, deposit64) {
     EXPECT_EQ(deposit(0ul, 5, 3, 0b101), 0b10100000ul);
 }
 
-typedef field<0, 3> TEST_FIELD1;
-typedef field<4, 1> TEST_FIELD2;
+typedef field<0, 3, u32> TEST_FIELD1;
+typedef field<4, 1, u32> TEST_FIELD2;
 
 TEST(bitops, field) {
     EXPECT_EQ(TEST_FIELD1::MASK, 0b111);
