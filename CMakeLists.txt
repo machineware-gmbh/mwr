@@ -16,7 +16,7 @@
  #                                                                            #
  ##############################################################################
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.11)
 project(mwr VERSION 2022.10.13 LANGUAGES CXX)
 
 set(MWR_LINTER "" CACHE STRING "Code linter to use")
@@ -50,7 +50,6 @@ target_include_directories(mwr PUBLIC ${gen})
 target_compile_options(mwr PRIVATE -Wall -Werror)
 target_compile_features(mwr PRIVATE cxx_std_17)
 target_compile_definitions(mwr PUBLIC $<$<CONFIG:DEBUG>:MWR_DEBUG>)
-target_link_options(mwr PUBLIC LINKER:SHELL:-u,mwr_register_module)
 target_link_libraries(mwr PUBLIC -rdynamic)
 target_link_libraries(mwr PUBLIC Threads::Threads)
 target_link_libraries(mwr PUBLIC ${LIBELF_LIBRARIES})

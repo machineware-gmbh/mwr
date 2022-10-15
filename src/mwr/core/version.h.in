@@ -29,11 +29,4 @@
 #define MWR_VERSION         @MWR_VERSION_INT@
 #define MWR_VERSION_STRING  "@MWR_VERSION_STRING@"
 
-namespace mwr {
-
-unsigned int version();
-const char* version_string();
-
-}
-
 #endif
