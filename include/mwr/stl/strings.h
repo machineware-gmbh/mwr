@@ -43,6 +43,7 @@ using std::function;
 string mkstr(const char* format, ...) MWR_DECL_PRINTF(1, 2);
 string vmkstr(const char* format, va_list args);
 string trim(const string& s);
+string pad(const string& s, size_t limit);
 string to_lower(const string& s);
 string to_upper(const string& s);
 string escape(const string& s, const string& chars);

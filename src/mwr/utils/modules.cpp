@@ -39,31 +39,25 @@ const module* modules::find(const string& name) const {
     return nullptr;
 }
 
-void modules::register_module(const string& name, size_t version,
+void modules::register_module(string name, size_t version,
                               size_t version_major, size_t version_minor,
-                              size_t version_patch,
-                              const string& version_string,
-                              const string& git_rev,
-                              const string& git_rev_short) {
+                              size_t version_patch, string version_string,
+                              string git_rev, string git_rev_short) {
     module mod;
-    mod.name = name;
+    mod.name = std::move(name);
+    mod.version_string = std::move(version_string);
+    mod.git_rev = std::move(git_rev);
+    mod.git_rev_short = std::move(git_rev_short);
     mod.version = version;
     mod.version_major = version_major;
     mod.version_minor = version_minor;
     mod.version_patch = version_patch;
-    mod.version_string = version_string;
-    mod.git_rev = git_rev;
-    mod.git_rev_short = git_rev_short;
-
-    replace(mod.name, "_", "-");
-
-    if (!stl_contains(m_modules, mod))
-        m_modules.push_back(std::move(mod));
+    stl_add_unique(m_modules, mod);
 }
 
 modules& modules::instance() {
-    static modules inst;
-    return inst;
+    static modules singleton;
+    return singleton;
 }
 
 } // namespace mwr

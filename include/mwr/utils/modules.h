@@ -58,10 +58,10 @@ public:
     const vector<module>& all() const { return m_modules; }
     const module* find(const string& name) const;
 
-    void register_module(const string& name, size_t version,
-                         size_t version_major, size_t version_minor,
-                         size_t version_patch, const string& version_string,
-                         const string& git_rev, const string& git_rev_short);
+    void register_module(string name, size_t version, size_t version_major,
+                         size_t version_minor, size_t version_patch,
+                         string version_string, string git_rev,
+                         string git_rev_short);
 
     static modules& instance();
 };

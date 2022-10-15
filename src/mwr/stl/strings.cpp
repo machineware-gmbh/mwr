@@ -64,6 +64,13 @@ string trim(const string& str) {
     return copy;
 }
 
+string pad(const string& ref, size_t max) {
+    string s(ref);
+    for (size_t i = ref.length(); i < max; i++)
+        s += " ";
+    return s;
+}
+
 string to_lower(const string& s) {
     string result;
     for (auto ch : s)

@@ -24,6 +24,8 @@
 #include <limits>
 #include <time.h>
 
+#include <algorithm>
+
 namespace mwr {
 
 typedef signed char i8;
@@ -91,6 +93,9 @@ enum u64_limits : u64 {
     U64_MIN = std::numeric_limits<u64>::min(),
     U64_MAX = std::numeric_limits<u64>::max(),
 };
+
+using std::min;
+using std::max;
 
 using ::clock_t;
 
