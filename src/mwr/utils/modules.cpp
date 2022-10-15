@@ -28,15 +28,8 @@ bool module::operator==(const module& other) const {
 }
 
 ostream& operator<<(ostream& os, const module& m) {
-    os << m.name << ": " << m.version_string << " (" << m.git_rev << ")";
+    os << m.name << ": " << m.version_string;
     return os;
-}
-
-const module* modules::find(const string& name) const {
-    for (const module& mod : instance().m_modules)
-        if (mod.name == name)
-            return &mod;
-    return nullptr;
 }
 
 void modules::register_module(string name, size_t version,
@@ -58,6 +51,30 @@ void modules::register_module(string name, size_t version,
 modules& modules::instance() {
     static modules singleton;
     return singleton;
+}
+
+size_t modules::count() {
+    return instance().m_modules.size();
+}
+
+const vector<module>& modules::all() {
+    return instance().m_modules;
+}
+
+const module* modules::find(const string& name) {
+    for (const module& mod : all())
+        if (mod.name == name)
+            return &mod;
+    return nullptr;
+}
+
+void modules::print_versions(ostream& os) {
+    size_t limit = 0;
+    for (const module& mod : all())
+        limit = max(limit, mod.name.length());
+
+    for (const module& mod : all())
+        os << pad(mod.name, limit) << " : " << mod.version_string << std::endl;
 }
 
 } // namespace mwr

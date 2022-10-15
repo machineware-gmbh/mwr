@@ -50,3 +50,7 @@ TEST(modules, list) {
         std::cout << module << std::endl;
     EXPECT_EQ(mwr::modules::instance().count(), 2);
 }
+
+TEST(modules, version) {
+    mwr::modules::print_versions(std::cout);
+}

@@ -54,16 +54,17 @@ private:
 public:
     ~modules() = default;
 
-    size_t count() const { return m_modules.size(); }
-    const vector<module>& all() const { return m_modules; }
-    const module* find(const string& name) const;
-
     void register_module(string name, size_t version, size_t version_major,
                          size_t version_minor, size_t version_patch,
                          string version_string, string git_rev,
                          string git_rev_short);
 
     static modules& instance();
+
+    static size_t count();
+    static const vector<module>& all();
+    static const module* find(const string& name);
+    static void print_versions(ostream& os);
 };
 
 #define MWR_DECLARE_MODULE(prefix, name)                                      \
