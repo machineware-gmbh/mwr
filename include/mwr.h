@@ -33,4 +33,7 @@
 #include "mwr/stl/streams.h"
 #include "mwr/stl/threads.h"
 
+#include "mwr/utils/modules.h"
+#include "mwr/utils/options.h"
+
 #endif

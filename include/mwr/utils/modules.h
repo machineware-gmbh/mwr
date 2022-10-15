@@ -21,6 +21,7 @@
 
 #include "mwr/core/types.h"
 #include "mwr/core/compiler.h"
+#include "mwr/core/version.h"
 
 #include "mwr/stl/strings.h"
 #include "mwr/stl/streams.h"
@@ -65,12 +66,11 @@ public:
     static modules& instance();
 };
 
-#define MWR_DECLARE_MODULE(name, prefix)                                      \
-    extern "C" MWR_DECL_CONSTRUCTOR void name##_register_module() {           \
+#define MWR_DECLARE_MODULE(prefix, name)                                      \
+    MWR_DECL_CONSTRUCTOR static void prefix##_register_module() {             \
         ::mwr::modules::instance().register_module(                           \
-            #name, MWR_CAT(prefix, _VERSION),                                 \
-            MWR_CAT(prefix, _VERSION_MAJOR), MWR_CAT(prefix, _VERSION_MINOR), \
-            MWR_CAT(prefix, _VERSION_PATCH),                                  \
+            name, MWR_CAT(prefix, _VERSION), MWR_CAT(prefix, _VERSION_MAJOR), \
+            MWR_CAT(prefix, _VERSION_MINOR), MWR_CAT(prefix, _VERSION_PATCH), \
             MWR_CAT(prefix, _VERSION_STRING), MWR_CAT(prefix, _GIT_REV),      \
             MWR_CAT(prefix, _GIT_REV_SHORT));                                 \
     }

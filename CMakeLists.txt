@@ -37,13 +37,13 @@ configure_file(${src}/mwr/core/version.h.in
                ${gen}/mwr/core/version.h @ONLY)
 
 add_library(mwr STATIC
-            ${src}/mwr/core/version.cpp
             ${src}/mwr/core/utils.cpp
             ${src}/mwr/core/bitops.cpp
             ${src}/mwr/core/terminal.cpp
             ${src}/mwr/stl/strings.cpp
             ${src}/mwr/stl/threads.cpp
-            ${src}/mwr/utils/modules.cpp)
+            ${src}/mwr/utils/modules.cpp
+            ${src}/mwr/utils/options.cpp)
 
 target_include_directories(mwr PUBLIC ${inc})
 target_include_directories(mwr PUBLIC ${gen})

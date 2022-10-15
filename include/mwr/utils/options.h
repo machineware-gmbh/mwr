@@ -16,37 +16,12 @@
  *                                                                            *
  ******************************************************************************/
 
-#include <gtest/gtest.h>
+#ifndef MWR_UTILS_OPTIONS_H
+#define MWR_UTILS_OPTIONS_H
 
-#include "mwr/utils/modules.h"
-#include "mwr/core/version.h"
+#include "mwr/core/types.h"
+#include "mwr/core/compiler.h"
 
-#define TEST_VERSION        1234
-#define TEST_VERSION_STRING "1.2.34"
-#define TEST_VERSION_MAJOR  1
-#define TEST_VERSION_MINOR  2
-#define TEST_VERSION_PATCH  34
-#define TEST_GIT_REV        "abcdef0123456"
-#define TEST_GIT_REV_SHORT  "abcdef"
+#include "mwr/stl/strings.h"
 
-MWR_DECLARE_MODULE(TEST, "test")
-
-TEST(modules, declare) {
-    const auto& modules = mwr::modules::instance();
-    const mwr::module* test = modules.find("test");
-    ASSERT_NE(test, nullptr);
-    EXPECT_EQ(test->name, "test");
-    EXPECT_EQ(test->version, TEST_VERSION);
-    EXPECT_EQ(test->version_major, TEST_VERSION_MAJOR);
-    EXPECT_EQ(test->version_minor, TEST_VERSION_MINOR);
-    EXPECT_EQ(test->version_patch, TEST_VERSION_PATCH);
-    EXPECT_EQ(test->version_string, TEST_VERSION_STRING);
-    EXPECT_EQ(test->git_rev, TEST_GIT_REV);
-    EXPECT_EQ(test->git_rev_short, TEST_GIT_REV_SHORT);
-}
-
-TEST(modules, list) {
-    for (const auto& module : mwr::modules::instance().all())
-        std::cout << module << std::endl;
-    EXPECT_EQ(mwr::modules::instance().count(), 2);
-}
+#endif

@@ -26,3 +26,4 @@ macro(util_test test)
 endmacro()
 
 util_test(modules)
+util_test(options)

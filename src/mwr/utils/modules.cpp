@@ -20,6 +20,8 @@
 
 namespace mwr {
 
+MWR_DECLARE_MODULE(MWR, "mwr")
+
 bool module::operator==(const module& other) const {
     return name == other.name && version == other.version &&
            git_rev == other.git_rev;
