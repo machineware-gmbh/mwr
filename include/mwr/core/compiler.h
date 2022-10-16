@@ -26,6 +26,7 @@
 #define MWR_DECL_PRINTF(s, a) __attribute__((format(printf, s, a)))
 #define MWR_DECL_CONSTRUCTOR  __attribute__((constructor))
 #define MWR_DECL_DESTRUCTOR   __attribute__((destructor))
+#define MWR_DECL_WEAK         __attribute__((weak))
 #define MWR_DECL_USED         __attribute__((used))
 #define MWR_DECL_UNUSED       __attribute__((unused))
 #define MWR_DECL_INLINE       __attribute__((always_inline))
