@@ -21,7 +21,6 @@
 
 #include "mwr/core/types.h"
 #include "mwr/core/compiler.h"
-#include "mwr/core/version.h"
 
 #include "mwr/stl/strings.h"
 #include "mwr/stl/streams.h"
@@ -39,42 +38,46 @@ struct module {
     string git_rev;
     string git_rev_short;
 
-    bool operator==(const module& other) const;
+    module(string name, size_t version, size_t version_major,
+           size_t version_minor, size_t version_patch, string version_string,
+           string git_rev, string git_rev_short);
 };
 
 ostream& operator<<(ostream& os, const module& mod);
 
 class modules
 {
+    friend class module;
+
 private:
-    vector<module> m_modules;
+    vector<const module*> m_modules;
 
     modules() = default;
+
+    void import(const module* mod);
+
+    static modules& instance();
 
 public:
     ~modules() = default;
 
-    void register_module(string name, size_t version, size_t version_major,
-                         size_t version_minor, size_t version_patch,
-                         string version_string, string git_rev,
-                         string git_rev_short);
-
-    static modules& instance();
-
     static size_t count();
-    static const vector<module>& all();
+    static const vector<const module*>& all();
     static const module* find(const string& name);
-    static void print_versions(ostream& os);
+    static void print_modules(ostream& os);
 };
 
-#define MWR_DECLARE_MODULE(prefix, name)                                      \
-    MWR_DECL_CONSTRUCTOR static void prefix##_register_module() {             \
-        ::mwr::modules::instance().register_module(                           \
-            name, MWR_CAT(prefix, _VERSION), MWR_CAT(prefix, _VERSION_MAJOR), \
-            MWR_CAT(prefix, _VERSION_MINOR), MWR_CAT(prefix, _VERSION_PATCH), \
-            MWR_CAT(prefix, _VERSION_STRING), MWR_CAT(prefix, _GIT_REV),      \
-            MWR_CAT(prefix, _GIT_REV_SHORT));                                 \
-    }
+#define MWR_DECLARE_MODULE_EX(prefix, name, version, major, minor, patch, \
+                              verstr, gitrev, shortrev)                   \
+    MWR_DECL_WEAK mwr::module MWR_CAT(module_##prefix##_, version)(       \
+        name, version, major, minor, patch, verstr, gitrev, shortrev)
+
+#define MWR_DECLARE_MODULE(prefix, name)                                   \
+    MWR_DECLARE_MODULE_EX(                                                 \
+        prefix, name, MWR_CAT(prefix, _VERSION),                           \
+        MWR_CAT(prefix, _VERSION_MAJOR), MWR_CAT(prefix, _VERSION_MINOR),  \
+        MWR_CAT(prefix, _VERSION_PATCH), MWR_CAT(prefix, _VERSION_STRING), \
+        MWR_CAT(prefix, _GIT_REV), MWR_CAT(prefix, _GIT_REV_SHORT))
 
 } // namespace mwr
 

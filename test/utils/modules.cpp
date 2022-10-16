@@ -29,11 +29,10 @@
 #define TEST_GIT_REV        "abcdef0123456"
 #define TEST_GIT_REV_SHORT  "abcdef"
 
-MWR_DECLARE_MODULE(TEST, "test")
+MWR_DECLARE_MODULE(TEST, "test");
 
 TEST(modules, declare) {
-    const auto& modules = mwr::modules::instance();
-    const mwr::module* test = modules.find("test");
+    const mwr::module* test = mwr::modules::find("test");
     ASSERT_NE(test, nullptr);
     EXPECT_EQ(test->name, "test");
     EXPECT_EQ(test->version, TEST_VERSION);
@@ -46,11 +45,11 @@ TEST(modules, declare) {
 }
 
 TEST(modules, list) {
-    for (const auto& module : mwr::modules::instance().all())
-        std::cout << module << std::endl;
-    EXPECT_EQ(mwr::modules::instance().count(), 2);
+    for (const auto* module : mwr::modules::all())
+        std::cout << *module << std::endl;
+    EXPECT_EQ(mwr::modules::count(), 2);
 }
 
 TEST(modules, version) {
-    mwr::modules::print_versions(std::cout);
+    mwr::modules::print_modules(std::cout);
 }

@@ -19,7 +19,6 @@
 #ifndef MWR_H
 #define MWR_H
 
-#include "mwr/core/version.h"
 #include "mwr/core/compiler.h"
 #include "mwr/core/types.h"
 #include "mwr/core/atomics.h"
@@ -35,5 +34,7 @@
 
 #include "mwr/utils/modules.h"
 #include "mwr/utils/options.h"
+
+#include "mwr/core/version.h"
 
 #endif
