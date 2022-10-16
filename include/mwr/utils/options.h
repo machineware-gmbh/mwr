@@ -49,7 +49,7 @@ public:
                 size_t argc);
     virtual ~option_base();
 
-    virtual bool parse(int argc, const char** argv) = 0;
+    virtual bool parse(int argc, const char* const* argv) = 0;
 };
 
 inline const char* option_base::aname() const {
@@ -84,9 +84,9 @@ public:
     option(const string& name, const string& aname, const string& desc,
            function<bool(T)> parse);
 
-    virtual bool parse(int argc, const char** argv,
+    virtual bool parse(int argc, const char* const* argv,
                        const function<bool(T)>& parse);
-    virtual bool parse(int argc, const char** argv) override;
+    virtual bool parse(int argc, const char* const* argv) override;
 };
 
 template <typename T>
@@ -111,7 +111,7 @@ inline option<T>::option(const string& name, const string& aname,
 }
 
 template <typename T>
-inline bool option<T>::parse(int argc, const char** argv,
+inline bool option<T>::parse(int argc, const char* const* argv,
                              const function<bool(T)>& parse) {
     m_values.clear();
 
@@ -137,7 +137,7 @@ inline bool option<T>::parse(int argc, const char** argv,
 }
 
 template <typename T>
-inline bool option<T>::parse(int argc, const char** argv) {
+inline bool option<T>::parse(int argc, const char* const* argv) {
     return parse(argc, argv, function<bool(T)>());
 }
 
@@ -160,9 +160,9 @@ public:
     option(const string& name, const string& aname, const string& desc,
            function<bool(void)> parse);
 
-    virtual bool parse(int argc, const char** argv,
+    virtual bool parse(int argc, const char* const* argv,
                        const function<bool(void)>& parse);
-    virtual bool parse(int argc, const char** argv) override;
+    virtual bool parse(int argc, const char* const* argv) override;
 };
 
 class options
@@ -182,8 +182,9 @@ private:
 public:
     static const vector<option_base*>& all();
     static option_base* find(const string& name);
-    static bool parse(int argc, const char** argv);
-    static bool parse(int argc, const char** argv, vector<string>& extra);
+    static bool parse(int argc, const char* const* argv);
+    static bool parse(int argc, const char* const* argv,
+                      vector<string>& extra);
 
     static void print_help(ostream& os);
 };

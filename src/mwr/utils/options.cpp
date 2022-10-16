@@ -71,7 +71,7 @@ option<bool>::option(const string& name, const string& aname,
     m_parse(std::move(parse)) {
 }
 
-bool option<bool>::parse(int argc, const char** argv,
+bool option<bool>::parse(int argc, const char* const* argv,
                          const function<bool(void)>& parse) {
     m_value = false;
     m_has_value = false;
@@ -90,7 +90,7 @@ bool option<bool>::parse(int argc, const char** argv,
     return true;
 }
 
-bool option<bool>::parse(int argc, const char** argv) {
+bool option<bool>::parse(int argc, const char* const* argv) {
     return parse(argc, argv, function<bool(void)>());
 }
 
@@ -125,14 +125,14 @@ option_base* options::find(const string& name) {
     return nullptr;
 }
 
-bool options::parse(int argc, const char** argv) {
+bool options::parse(int argc, const char* const* argv) {
     bool result = true;
     for (option_base* opt : all())
         result &= opt->parse(argc, argv);
     return result;
 }
 
-bool options::parse(int argc, const char** argv, vector<string>& extra) {
+bool options::parse(int argc, const char* const* argv, vector<string>& extra) {
     if (!parse(argc, argv))
         return false;
 
@@ -153,6 +153,8 @@ void options::print_help(ostream& os) {
     struct help {
         string mnem;
         string desc;
+
+        bool operator<(const help& other) const { return mnem < other.mnem; }
     };
 
     size_t column = 0;
@@ -161,13 +163,15 @@ void options::print_help(ostream& os) {
     for (option_base* opt : all()) {
         string mnemonic(opt->name());
         if (opt->aname())
-            mnemonic += mkstr(" | %s", opt->aname());
+            mnemonic += mkstr(", %s", opt->aname());
         if (opt->argc())
             mnemonic += " <value>";
 
         column = max(column, mnemonic.size());
         entries.push_back({ mnemonic, opt->desc() });
     }
+
+    std::sort(entries.begin(), entries.end());
 
     for (const auto& entry : entries)
         os << pad(entry.mnem, column) << " " << entry.desc << std::endl;
