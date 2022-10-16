@@ -47,6 +47,12 @@ TEST(container, contains) {
     EXPECT_TRUE(stl_contains(m2, 1));
     EXPECT_TRUE(stl_contains(m2, 2));
     EXPECT_FALSE(stl_contains(m2, 3));
+
+    int x = 5;
+    int* px = &x;
+    const int* cpx = &x;
+    vector<int*> v2{ px };
+    EXPECT_TRUE(stl_contains(v2, cpx));
 }
 
 TEST(container, remove) {
@@ -67,16 +73,12 @@ TEST(container, remove_if) {
     EXPECT_FALSE(stl_contains(v1, 4));
 
     map<int, const char*> m1{ { 1, "one" }, { 2, "two" } };
-    stl_remove_if(m1, [](const std::pair<int, const char*> val) -> bool {
-        return val.first > 1;
-    });
+    stl_remove_if(m1, [](const auto& val) -> bool { return val->first > 1; });
     EXPECT_TRUE(stl_contains(m1, 1));
     EXPECT_FALSE(stl_contains(m1, 2));
 
     unordered_map<int, const char*> m2{ { 1, "one" }, { 2, "two" } };
-    stl_remove_if(m2, [](const std::pair<int, const char*> val) -> bool {
-        return val.first > 1;
-    });
+    stl_remove_if(m2, [](const auto& val) -> bool { return val->first > 1; });
     EXPECT_TRUE(stl_contains(m2, 1));
     EXPECT_FALSE(stl_contains(m2, 2));
 }

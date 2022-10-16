@@ -56,17 +56,22 @@ inline void stl_remove_if(vector<T>& v, PRED p) {
 template <typename M, class PRED>
 inline void stl_remove_if(M& m, PRED p) {
     for (auto it = std::begin(m); it != std::end(m);)
-        it = p(*it) ? m.erase(it) : ++it;
+        it = p(it) ? m.erase(it) : ++it;
 }
 
-template <typename T>
-inline bool stl_contains(const vector<T>& v, const T& t) {
+template <typename V, typename T>
+inline bool stl_contains(const V& v, const T& t) {
     return std::find(v.begin(), v.end(), t) != v.end();
 }
 
-template <typename M>
-inline bool stl_contains(const M& m, const typename M::key_type& t) {
-    return m.find(t) != m.end();
+template <typename K, typename V>
+inline bool stl_contains(const map<K, V>& m, const K& k) {
+    return m.find(k) != m.end();
+}
+
+template <typename K, typename V>
+inline bool stl_contains(const unordered_map<K, V>& m, const K& k) {
+    return m.find(k) != m.end();
 }
 
 template <typename V, class PRED>
@@ -80,13 +85,13 @@ inline void stl_add_unique(vector<T>& v, const T& t) {
         v.push_back(t);
 }
 
-template <typename V>
-inline void stl_insert_sorted(V& v, const typename V::value_type& t) {
+template <typename V, typename T>
+inline void stl_insert_sorted(V& v, const T& t) {
     v.insert(std::upper_bound(v.begin(), v.end(), t), t);
 }
 
-template <typename V, typename PRED>
-inline void stl_insert_sorted(V& v, const typename V::value_type& t, PRED p) {
+template <typename V, typename T, typename PRED>
+inline void stl_insert_sorted(V& v, const T& t, PRED p) {
     v.insert(std::upper_bound(v.begin(), v.end(), t, p), t);
 }
 
