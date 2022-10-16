@@ -38,44 +38,34 @@ using std::priority_queue;
 using std::array;
 using std::vector;
 using std::set;
+using std::map;
 using std::unordered_set;
 using std::unordered_map;
 using std::pair;
 
-template <typename V, typename T>
-inline void stl_remove(V& v, const T& t) {
+template <typename T>
+inline void stl_remove(vector<T>& v, const T& t) {
     v.erase(std::remove(v.begin(), v.end(), t), v.end());
 }
 
-template <typename V, class PRED>
-inline void stl_remove_if(V& v, PRED p) {
+template <typename T, class PRED>
+inline void stl_remove_if(vector<T>& v, PRED p) {
     v.erase(std::remove_if(v.begin(), v.end(), p), v.end());
 }
 
-template <typename T1, typename T2, class PRED>
-inline void stl_remove_if(std::map<T1, T2>& m, PRED p) {
+template <typename M, class PRED>
+inline void stl_remove_if(M& m, PRED p) {
     for (auto it = std::begin(m); it != std::end(m);)
-        it = p(it) ? m.erase(it) : ++it;
+        it = p(*it) ? m.erase(it) : ++it;
 }
 
-template <typename T1, typename T2, class PRED>
-inline void stl_remove_if(unordered_map<T1, T2>& m, PRED p) {
-    for (auto it = std::begin(m); it != std::end(m);)
-        it = p(it) ? m.erase(it) : ++it;
-}
-
-template <typename V, typename T>
-inline bool stl_contains(const V& v, const T& t) {
+template <typename T>
+inline bool stl_contains(const vector<T>& v, const T& t) {
     return std::find(v.begin(), v.end(), t) != v.end();
 }
 
-template <typename T1, typename T2>
-inline bool stl_contains(const std::map<T1, T2>& m, const T1& t) {
-    return m.find(t) != m.end();
-}
-
-template <typename T1, typename T2>
-inline bool stl_contains(const std::unordered_map<T1, T2>& m, const T1& t) {
+template <typename M>
+inline bool stl_contains(const M& m, const typename M::key_type& t) {
     return m.find(t) != m.end();
 }
 
@@ -88,6 +78,16 @@ template <typename T>
 inline void stl_add_unique(vector<T>& v, const T& t) {
     if (!stl_contains(v, t))
         v.push_back(t);
+}
+
+template <typename V>
+inline void stl_insert_sorted(V& v, const typename V::value_type& t) {
+    v.insert(std::upper_bound(v.begin(), v.end(), t), t);
+}
+
+template <typename V, typename PRED>
+inline void stl_insert_sorted(V& v, const typename V::value_type& t, PRED p) {
+    v.insert(std::upper_bound(v.begin(), v.end(), t, p), t);
 }
 
 } // namespace mwr

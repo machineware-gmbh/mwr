@@ -26,3 +26,4 @@ macro(stl_test test)
 endmacro()
 
 stl_test(strings)
+stl_test(container)
