@@ -19,7 +19,6 @@
 #include <gtest/gtest.h>
 
 #include "mwr/core/compiler.h"
-#include "mwr/core/version.h"
 
 int global = 0;
 

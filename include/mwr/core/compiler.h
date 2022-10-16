@@ -52,10 +52,11 @@
 
 #define MWR_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
-#define MWR_NOP(val)  val
-#define MWR_CAT(a, b) MWR_NOP(a##b)
-#define MWR_XSTR(str) #str
-#define MWR_STR(str)  MWR_XSTR(str)
+#define MWR_NOP(val)   val
+#define MWR_XCAT(a, b) a##b
+#define MWR_CAT(a, b)  MWR_XCAT(a, b)
+#define MWR_XSTR(str)  #str
+#define MWR_STR(str)   MWR_XSTR(str)
 
 namespace mwr {
 
