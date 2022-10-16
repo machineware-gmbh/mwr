@@ -70,7 +70,7 @@ public:
 #define MWR_DECLARE_MODULE_EX(prefix, name, version, major, minor, patch, \
                               verstr, gitrev, shortrev)                   \
     MWR_DECL_WEAK mwr::module MWR_CAT(module_##prefix##_, version)(       \
-        name, version, major, minor, patch, verstr, gitrev, shortrev)
+        name, version, major, minor, patch, verstr, gitrev, shortrev);
 
 #define MWR_DECLARE_MODULE(prefix, name)                                   \
     MWR_DECLARE_MODULE_EX(                                                 \

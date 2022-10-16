@@ -45,7 +45,7 @@ ostream& operator<<(ostream& os, const module& m) {
 
 void modules::import(const module* mod) {
     stl_insert_sorted(m_modules, mod, [](const module* a, const module* b) {
-        return a->name < b->name;
+        return a->version_string < b->version_string;
     });
 }
 

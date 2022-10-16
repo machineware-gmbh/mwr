@@ -29,7 +29,7 @@
 #define TEST_GIT_REV        "abcdef0123456"
 #define TEST_GIT_REV_SHORT  "abcdef"
 
-MWR_DECLARE_MODULE(TEST, "test");
+MWR_DECLARE_MODULE(TEST, "test")
 
 TEST(modules, declare) {
     const mwr::module* test = mwr::modules::find("test");
