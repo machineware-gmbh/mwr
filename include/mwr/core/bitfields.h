@@ -16,8 +16,8 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_CORE_BITFIELDS_H
-#define MWR_CORE_BITFIELDS_H
+#ifndef MWR_BITFIELDS_H
+#define MWR_BITFIELDS_H
 
 #include <assert.h>
 

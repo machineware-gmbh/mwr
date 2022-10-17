@@ -16,8 +16,7 @@
  *                                                                            *
  ******************************************************************************/
 
-#include <gtest/gtest.h>
-
+#include "testing.h"
 #include "mwr/stl/strings.h"
 
 using namespace mwr;

@@ -16,42 +16,30 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_COMPILER_H
-#define MWR_COMPILER_H
+#ifndef MWR_TESTING_H
+#define MWR_TESTING_H
 
-#define MWR_DECL_ALIGN(n)     __attribute__((aligned(n)))
-#define MWR_DECL_PACKED       __attribute__((packed))
-#define MWR_DECL_PRINTF(s, a) __attribute__((format(printf, s, a)))
-#define MWR_DECL_CONSTRUCTOR  __attribute__((constructor))
-#define MWR_DECL_DESTRUCTOR   __attribute__((destructor))
-#define MWR_DECL_WEAK         __attribute__((weak))
-#define MWR_DECL_USED         __attribute__((used))
-#define MWR_DECL_UNUSED       __attribute__((unused))
-#define MWR_DECL_INLINE       __attribute__((always_inline))
-#define MWR_DECL_NOINLINE     __attribute__((noinline))
-#define MWR_DECL_NORETURN     __attribute__((noreturn))
-#define MWR_DECL_DEPRECATED   __attribute__((deprecated))
+#include <gtest/gtest.h>
 
-#define MWR_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#include <string>
+#include <vector>
 
-#define MWR_NOP(val)   val
-#define MWR_XCAT(a, b) a##b
-#define MWR_CAT(a, b)  MWR_XCAT(a, b)
-#define MWR_XSTR(str)  #str
-#define MWR_STR(str)   MWR_XSTR(str)
+std::vector<std::string> args;
 
-namespace mwr {
+std::string get_resource_path(const std::string& name) {
+    if (args.size() < 2) {
+        ADD_FAILURE() << "test resource path information not provided";
+        std::abort();
+    }
 
-template <typename T>
-constexpr int likely(const T& x) {
-    return __builtin_expect(!!(x), 1);
+    return args[1] + "/" + name;
 }
 
-template <typename T>
-constexpr int unlikely(const T& x) {
-    return __builtin_expect(!!(x), 0);
+int main(int argc, char** argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    for (int i = 0; i < argc; i++)
+        args.push_back(argv[i]);
+    return RUN_ALL_TESTS();
 }
-
-} // namespace mwr
 
 #endif

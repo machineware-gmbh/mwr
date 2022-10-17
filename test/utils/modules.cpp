@@ -16,8 +16,7 @@
  *                                                                            *
  ******************************************************************************/
 
-#include <gtest/gtest.h>
-
+#include "testing.h"
 #include "mwr/utils/modules.h"
 #include "mwr/core/version.h"
 

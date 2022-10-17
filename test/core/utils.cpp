@@ -16,8 +16,7 @@
  *                                                                            *
  ******************************************************************************/
 
-#include <gtest/gtest.h>
-
+#include "testing.h"
 #include "mwr/core/utils.h"
 
 using namespace mwr;

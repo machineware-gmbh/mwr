@@ -38,12 +38,14 @@ configure_file(${src}/mwr/core/version.h.in
 
 add_library(mwr STATIC
             ${src}/mwr/core/utils.cpp
+            ${src}/mwr/core/report.cpp
             ${src}/mwr/core/bitops.cpp
             ${src}/mwr/core/terminal.cpp
             ${src}/mwr/stl/strings.cpp
             ${src}/mwr/stl/threads.cpp
             ${src}/mwr/utils/modules.cpp
-            ${src}/mwr/utils/options.cpp)
+            ${src}/mwr/utils/options.cpp
+            ${src}/mwr/utils/library.cpp)
 
 target_include_directories(mwr PUBLIC ${inc})
 target_include_directories(mwr PUBLIC ${gen})
@@ -51,7 +53,9 @@ target_compile_options(mwr PRIVATE -Wall -Werror)
 target_compile_features(mwr PRIVATE cxx_std_17)
 target_compile_definitions(mwr PUBLIC $<$<CONFIG:DEBUG>:MWR_DEBUG>)
 target_link_libraries(mwr PUBLIC -rdynamic)
+target_link_libraries(mwr PUBLIC -lrt)
 target_link_libraries(mwr PUBLIC Threads::Threads)
+target_link_libraries(mwr PUBLIC ${CMAKE_DL_LIBS})
 target_link_libraries(mwr PUBLIC ${LIBELF_LIBRARIES})
 set_target_properties(mwr PROPERTIES DEBUG_POSTFIX "d")
 set_target_properties(mwr PROPERTIES CXX_CLANG_TIDY "${MWR_LINTER}")

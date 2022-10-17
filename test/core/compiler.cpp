@@ -16,8 +16,7 @@
  *                                                                            *
  ******************************************************************************/
 
-#include <gtest/gtest.h>
-
+#include "testing.h"
 #include "mwr/core/compiler.h"
 
 int global = 0;
@@ -37,8 +36,4 @@ TEST(compiler, str) {
     EXPECT_EQ(MWR_STR(hello), "hello");
     EXPECT_EQ(MWR_STR(MACRO), "macro");
     EXPECT_EQ(MWR_CAT(AB, CD), "abcd");
-}
-
-TEST(compiler, error_on) {
-    MWR_ERROR_ON(false, "should not happen");
 }

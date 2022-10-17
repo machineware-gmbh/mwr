@@ -18,12 +18,14 @@
 
 macro(util_test test)
     add_executable(${test} ${test}.cpp)
-    target_link_libraries(${test} mwr gtest gmock gtest_main)
+    target_include_directories(${test} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/..)
+    target_link_libraries(${test} mwr gtest gmock)
     set_target_properties(${test} PROPERTIES CXX_CLANG_TIDY "${MWR_LINTER}")
-    add_test(NAME utils/${test} COMMAND ${test})
+    add_test(NAME utils/${test} COMMAND ${test} ${resources})
     set_tests_properties(utils/${test} PROPERTIES ENVIRONMENT "${MWR_ENVVAR}")
     set_tests_properties(utils/${test} PROPERTIES TIMEOUT 4)
 endmacro()
 
 util_test(modules)
 util_test(options)
+util_test(library)

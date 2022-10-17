@@ -16,40 +16,53 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_COMPILER_H
-#define MWR_COMPILER_H
+#ifndef MWR_UTILS_LIBRARY_H
+#define MWR_UTILS_LIBRARY_H
 
-#define MWR_DECL_ALIGN(n)     __attribute__((aligned(n)))
-#define MWR_DECL_PACKED       __attribute__((packed))
-#define MWR_DECL_PRINTF(s, a) __attribute__((format(printf, s, a)))
-#define MWR_DECL_CONSTRUCTOR  __attribute__((constructor))
-#define MWR_DECL_DESTRUCTOR   __attribute__((destructor))
-#define MWR_DECL_WEAK         __attribute__((weak))
-#define MWR_DECL_USED         __attribute__((used))
-#define MWR_DECL_UNUSED       __attribute__((unused))
-#define MWR_DECL_INLINE       __attribute__((always_inline))
-#define MWR_DECL_NOINLINE     __attribute__((noinline))
-#define MWR_DECL_NORETURN     __attribute__((noreturn))
-#define MWR_DECL_DEPRECATED   __attribute__((deprecated))
+#include "mwr/core/types.h"
+#include "mwr/core/report.h"
+#include "mwr/core/compiler.h"
 
-#define MWR_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-
-#define MWR_NOP(val)   val
-#define MWR_XCAT(a, b) a##b
-#define MWR_CAT(a, b)  MWR_XCAT(a, b)
-#define MWR_XSTR(str)  #str
-#define MWR_STR(str)   MWR_XSTR(str)
+#include "mwr/stl/strings.h"
 
 namespace mwr {
 
-template <typename T>
-constexpr int likely(const T& x) {
-    return __builtin_expect(!!(x), 1);
-}
+class library
+{
+private:
+    string m_path;
+    void* m_handle;
+    bool m_keep;
+
+    void* lookup(const string& name) const;
+
+public:
+    const char* path() const { return m_path.c_str(); }
+    bool is_open() const { return m_handle != nullptr; }
+
+    bool is_kept_alive() const { return m_keep; }
+    void keep_alive(bool keep = true) { m_keep = keep; }
+
+    library();
+    library(library&& other) noexcept;
+    library(const string& path, int mode);
+    library(const library& copy) = delete;
+    virtual ~library();
+
+    library(const string& path): library(path, -1) {}
+
+    void open(const string& path, int mode = -1);
+    void close();
+
+    bool has(const string& name) const;
+
+    template <typename T>
+    void get(T*& fn, const string& name) const;
+};
 
 template <typename T>
-constexpr int unlikely(const T& x) {
-    return __builtin_expect(!!(x), 0);
+void library::get(T*& fn, const string& name) const {
+    fn = (T*)lookup(name);
 }
 
 } // namespace mwr

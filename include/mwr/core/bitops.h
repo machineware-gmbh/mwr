@@ -16,8 +16,8 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_CORE_BITOPS_H
-#define MWR_CORE_BITOPS_H
+#ifndef MWR_BITOPS_H
+#define MWR_BITOPS_H
 
 #include <type_traits>
 

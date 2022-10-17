@@ -17,6 +17,7 @@
  ******************************************************************************/
 
 #include "mwr/core/utils.h"
+#include "mwr/core/report.h"
 #include "mwr/core/compiler.h"
 #include "mwr/stl/strings.h"
 

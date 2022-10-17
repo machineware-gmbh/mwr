@@ -21,6 +21,8 @@ if (NOT TARGET gtest OR NOT TARGET gmock)
     add_subdirectory(googletest EXCLUDE_FROM_ALL)
 endif()
 
+set(resources ${CMAKE_CURRENT_SOURCE_DIR}/resources)
+
 if(CMAKE_BUILD_TYPE MATCHES "ASAN")
     string(APPEND ENVVARS "ASAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/sanitizer/asan.cfg:detect_leaks=1:fast_unwind_on_malloc=0;")
     string(APPEND ENVVARS "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/sanitizer/lsan.cfg;")

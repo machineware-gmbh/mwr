@@ -1,6 +1,6 @@
 /******************************************************************************
  *                                                                            *
- * Copyright 2022 MachineWare GmbH                                            *
+ * Copyright 2018 Jan Henrik Weinstock                                        *
  *                                                                            *
  * Licensed under the Apache License, Version 2.0 (the "License");            *
  * you may not use this file except in compliance with the License.           *
@@ -16,42 +16,26 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_COMPILER_H
-#define MWR_COMPILER_H
-
-#define MWR_DECL_ALIGN(n)     __attribute__((aligned(n)))
-#define MWR_DECL_PACKED       __attribute__((packed))
-#define MWR_DECL_PRINTF(s, a) __attribute__((format(printf, s, a)))
-#define MWR_DECL_CONSTRUCTOR  __attribute__((constructor))
-#define MWR_DECL_DESTRUCTOR   __attribute__((destructor))
-#define MWR_DECL_WEAK         __attribute__((weak))
-#define MWR_DECL_USED         __attribute__((used))
-#define MWR_DECL_UNUSED       __attribute__((unused))
-#define MWR_DECL_INLINE       __attribute__((always_inline))
-#define MWR_DECL_NOINLINE     __attribute__((noinline))
-#define MWR_DECL_NORETURN     __attribute__((noreturn))
-#define MWR_DECL_DEPRECATED   __attribute__((deprecated))
-
-#define MWR_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-
-#define MWR_NOP(val)   val
-#define MWR_XCAT(a, b) a##b
-#define MWR_CAT(a, b)  MWR_XCAT(a, b)
-#define MWR_XSTR(str)  #str
-#define MWR_STR(str)   MWR_XSTR(str)
+#include "mwr/core/report.h"
+#include "mwr/core/utils.h"
 
 namespace mwr {
 
-template <typename T>
-constexpr int likely(const T& x) {
-    return __builtin_expect(!!(x), 1);
+report::report(const string& msg, const char* file, size_t line):
+    std::exception(),
+    m_message(msg),
+    m_file(file),
+    m_line(line),
+    m_backtrace(mwr::backtrace(max_backtrace_length, 2)) {
+    // nothing to do
 }
 
-template <typename T>
-constexpr int unlikely(const T& x) {
-    return __builtin_expect(!!(x), 0);
+report::~report() throw() {
+    // nothing to do
+}
+
+const char* report::what() const throw() {
+    return m_message.c_str();
 }
 
 } // namespace mwr
-
-#endif

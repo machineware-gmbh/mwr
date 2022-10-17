@@ -21,6 +21,7 @@
 
 #include "mwr/core/compiler.h"
 #include "mwr/core/types.h"
+#include "mwr/core/report.h"
 #include "mwr/core/atomics.h"
 #include "mwr/core/bitops.h"
 #include "mwr/core/bitfields.h"
@@ -34,6 +35,7 @@
 
 #include "mwr/utils/modules.h"
 #include "mwr/utils/options.h"
+#include "mwr/utils/library.h"
 
 #include "mwr/core/version.h"
 

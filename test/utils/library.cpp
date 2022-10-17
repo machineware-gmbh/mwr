@@ -16,42 +16,35 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_COMPILER_H
-#define MWR_COMPILER_H
+#include "testing.h"
 
-#define MWR_DECL_ALIGN(n)     __attribute__((aligned(n)))
-#define MWR_DECL_PACKED       __attribute__((packed))
-#define MWR_DECL_PRINTF(s, a) __attribute__((format(printf, s, a)))
-#define MWR_DECL_CONSTRUCTOR  __attribute__((constructor))
-#define MWR_DECL_DESTRUCTOR   __attribute__((destructor))
-#define MWR_DECL_WEAK         __attribute__((weak))
-#define MWR_DECL_USED         __attribute__((used))
-#define MWR_DECL_UNUSED       __attribute__((unused))
-#define MWR_DECL_INLINE       __attribute__((always_inline))
-#define MWR_DECL_NOINLINE     __attribute__((noinline))
-#define MWR_DECL_NORETURN     __attribute__((noreturn))
-#define MWR_DECL_DEPRECATED   __attribute__((deprecated))
+#include "mwr/utils/library.h"
 
-#define MWR_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+using namespace mwr;
 
-#define MWR_NOP(val)   val
-#define MWR_XCAT(a, b) a##b
-#define MWR_CAT(a, b)  MWR_XCAT(a, b)
-#define MWR_XSTR(str)  #str
-#define MWR_STR(str)   MWR_XSTR(str)
+TEST(library, basic) {
+    string path = get_resource_path("shared.so");
+    library lib;
 
-namespace mwr {
+    EXPECT_NO_THROW(lib.open(path));
+    EXPECT_TRUE(lib.is_open());
+    EXPECT_EQ(lib.path(), path);
+    EXPECT_TRUE(lib.has("global"));
+    EXPECT_TRUE(lib.has("function"));
+    EXPECT_FALSE(lib.has("notfound"));
 
-template <typename T>
-constexpr int likely(const T& x) {
-    return __builtin_expect(!!(x), 1);
+    int* global = nullptr;
+    EXPECT_NO_THROW(lib.get(global, "global"));
+    ASSERT_TRUE(global);
+    if (global) // check to silence clang-tidy
+        EXPECT_EQ(*global, 42);
+
+    int (*function)(int) = nullptr;
+    EXPECT_NO_THROW(lib.get(function, "function"));
+    ASSERT_TRUE(function);
+    if (function && global) // check to silence clang-tidy
+        EXPECT_EQ(function(1), *global + 1);
+
+    EXPECT_THROW(lib.get(global, "notfound"), mwr::report);
+    EXPECT_THROW(library lib2("notfound.so"), mwr::report);
 }
-
-template <typename T>
-constexpr int unlikely(const T& x) {
-    return __builtin_expect(!!(x), 0);
-}
-
-} // namespace mwr
-
-#endif

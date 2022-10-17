@@ -16,13 +16,13 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_CORE_ATOMICS_H
-#define MWR_CORE_ATOMICS_H
+#ifndef MWR_ATOMICS_H
+#define MWR_ATOMICS_H
 
 #include <algorithm>
 
 #include "mwr/core/types.h"
-#include "mwr/core/compiler.h"
+#include "mwr/core/report.h"
 
 namespace mwr {
 

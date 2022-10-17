@@ -16,8 +16,8 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_CORE_UTILS_H
-#define MWR_CORE_UTILS_H
+#ifndef MWR_UTILS_H
+#define MWR_UTILS_H
 
 #include <string>
 #include <vector>

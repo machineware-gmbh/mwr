@@ -20,6 +20,7 @@
 #define MWR_UTILS_MODULES_H
 
 #include "mwr/core/types.h"
+#include "mwr/core/report.h"
 #include "mwr/core/compiler.h"
 
 #include "mwr/stl/strings.h"
