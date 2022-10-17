@@ -143,6 +143,19 @@ TEST(options, fail) {
     EXPECT_FALSE(x.has_value());
 }
 
+TEST(options, extra) {
+    const char* argv[] = { "name", "-a", "string", "extra1", "-b", "extra2" };
+
+    option<string> x("-a", "option a");
+    option<bool> b("-b", "option b");
+
+    vector<string> extra;
+    ASSERT_TRUE(options::parse(6, argv, extra));
+    ASSERT_EQ(extra.size(), 2);
+    EXPECT_EQ(extra[0], "extra1");
+    EXPECT_EQ(extra[1], "extra2");
+}
+
 TEST(options, help) {
     option<string> a("-a", "--long-a", "This is the description for option a");
     option<int> b("-b", "Option b description text");

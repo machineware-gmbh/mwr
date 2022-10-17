@@ -136,7 +136,7 @@ bool options::parse(int argc, const char* const* argv, vector<string>& extra) {
     if (!parse(argc, argv))
         return false;
 
-    int i = 0;
+    int i = 1;
     while (i < argc) {
         if (argv[i][0] == '-') {
             option_base* opt = find(argv[i]);
