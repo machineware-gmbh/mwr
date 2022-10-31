@@ -16,30 +16,40 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_H
-#define MWR_H
+#ifndef MWR_UTILS_SREC_H
+#define MWR_UTILS_SREC_H
 
-#include "mwr/core/compiler.h"
 #include "mwr/core/types.h"
 #include "mwr/core/report.h"
-#include "mwr/core/atomics.h"
-#include "mwr/core/bitops.h"
-#include "mwr/core/bitfields.h"
-#include "mwr/core/terminal.h"
-#include "mwr/core/utils.h"
 
-#include "mwr/stl/containers.h"
 #include "mwr/stl/strings.h"
-#include "mwr/stl/streams.h"
-#include "mwr/stl/threads.h"
+#include "mwr/stl/containers.h"
 
-#include "mwr/utils/aio.h"
-#include "mwr/utils/library.h"
-#include "mwr/utils/modules.h"
-#include "mwr/utils/options.h"
-#include "mwr/utils/socket.h"
-#include "mwr/utils/srec.h"
+namespace mwr {
 
-#include "mwr/core/version.h"
+class srec
+{
+public:
+    struct record {
+        u64 addr;
+        vector<u8> data;
+    };
+
+    u64 entry() const { return m_entry; }
+    string header() const { return m_header; }
+    const vector<record>& records() const { return m_records; }
+
+    srec(const string& filename);
+    ~srec() = default;
+
+    srec(const srec&) = delete;
+
+private:
+    u64 m_entry;
+    string m_header;
+    vector<record> m_records;
+};
+
+} // namespace mwr
 
 #endif
