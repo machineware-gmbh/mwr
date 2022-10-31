@@ -27,6 +27,7 @@ macro(util_test test)
 endmacro()
 
 util_test(aio)
+util_test(elf)
 util_test(library)
 util_test(modules)
 util_test(options)

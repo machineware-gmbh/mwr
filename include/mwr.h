@@ -34,6 +34,7 @@
 #include "mwr/stl/threads.h"
 
 #include "mwr/utils/aio.h"
+#include "mwr/utils/elf.h"
 #include "mwr/utils/library.h"
 #include "mwr/utils/modules.h"
 #include "mwr/utils/options.h"

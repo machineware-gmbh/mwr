@@ -44,6 +44,7 @@ add_library(mwr STATIC
             ${src}/mwr/stl/strings.cpp
             ${src}/mwr/stl/threads.cpp
             ${src}/mwr/utils/aio.cpp
+            ${src}/mwr/utils/elf.cpp
             ${src}/mwr/utils/library.cpp
             ${src}/mwr/utils/modules.cpp
             ${src}/mwr/utils/options.cpp

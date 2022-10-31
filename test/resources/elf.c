@@ -2,6 +2,7 @@
 
 int global_a = 4;
 long global_b = 0x42;
+__thread int global_tls;
 
 int func_c(int x) {
     return x < 0 ? -2 * x : x << 5;
@@ -13,4 +14,3 @@ int _start() {
 }
 
 // gcc -O3 -nostartfiles -static -o elf.elf elf.c
-
