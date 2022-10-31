@@ -16,29 +16,20 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_H
-#define MWR_H
+#ifndef MWR_UTILS_AIO_H
+#define MWR_UTILS_AIO_H
 
-#include "mwr/core/compiler.h"
-#include "mwr/core/types.h"
-#include "mwr/core/report.h"
-#include "mwr/core/atomics.h"
-#include "mwr/core/bitops.h"
-#include "mwr/core/bitfields.h"
-#include "mwr/core/terminal.h"
-#include "mwr/core/utils.h"
+#include <functional>
 
-#include "mwr/stl/containers.h"
-#include "mwr/stl/strings.h"
-#include "mwr/stl/streams.h"
-#include "mwr/stl/threads.h"
+namespace mwr {
 
-#include "mwr/utils/aio.h"
-#include "mwr/utils/library.h"
-#include "mwr/utils/modules.h"
-#include "mwr/utils/options.h"
-#include "mwr/utils/socket.h"
+using std::function;
 
-#include "mwr/core/version.h"
+typedef function<void(int)> aio_handler;
+
+void aio_notify(int fd, aio_handler handler);
+void aio_cancel(int fd);
+
+} // namespace mwr
 
 #endif

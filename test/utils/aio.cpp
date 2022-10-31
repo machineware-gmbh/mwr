@@ -16,29 +16,41 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_H
-#define MWR_H
+#include "testing.h"
 
-#include "mwr/core/compiler.h"
-#include "mwr/core/types.h"
-#include "mwr/core/report.h"
-#include "mwr/core/atomics.h"
-#include "mwr/core/bitops.h"
-#include "mwr/core/bitfields.h"
-#include "mwr/core/terminal.h"
-#include "mwr/core/utils.h"
+#include "mwr.h"
 
-#include "mwr/stl/containers.h"
-#include "mwr/stl/strings.h"
-#include "mwr/stl/streams.h"
-#include "mwr/stl/threads.h"
+TEST(aio, callback) {
+    const char msg = 'X';
 
-#include "mwr/utils/aio.h"
-#include "mwr/utils/library.h"
-#include "mwr/utils/modules.h"
-#include "mwr/utils/options.h"
-#include "mwr/utils/socket.h"
+    int fds[2];
+    EXPECT_EQ(pipe(fds), 0);
 
-#include "mwr/core/version.h"
+    std::mutex mtx;
+    mtx.lock();
+    std::condition_variable_any cv;
+    std::atomic<int> count(0);
 
-#endif
+    mwr::aio_notify(fds[0], [&](int fd) -> void {
+        char buf;
+        EXPECT_EQ(fd, fds[0]) << "wrong file descriptor passed to handler";
+        EXPECT_EQ(read(fd, &buf, 1), 1) << "cannot read file descriptor";
+        EXPECT_EQ(buf, msg) << "read incorrect data";
+
+        count++;
+        cv.notify_all();
+    });
+
+    EXPECT_EQ(write(fds[1], &msg, 1), 1);
+
+    cv.wait(mtx);
+    ASSERT_EQ(count, 1) << "handler called multiple times, should be once";
+
+    mwr::aio_cancel(fds[0]);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    EXPECT_EQ(count, 1) << "handler after being cancelled";
+
+    close(fds[0]);
+    close(fds[1]);
+}
