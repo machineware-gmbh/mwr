@@ -45,7 +45,8 @@ add_library(mwr STATIC
             ${src}/mwr/stl/threads.cpp
             ${src}/mwr/utils/modules.cpp
             ${src}/mwr/utils/options.cpp
-            ${src}/mwr/utils/library.cpp)
+            ${src}/mwr/utils/library.cpp
+            ${src}/mwr/utils/socket.cpp)
 
 target_include_directories(mwr PUBLIC ${inc})
 target_include_directories(mwr PUBLIC ${gen})

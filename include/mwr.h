@@ -36,6 +36,7 @@
 #include "mwr/utils/modules.h"
 #include "mwr/utils/options.h"
 #include "mwr/utils/library.h"
+#include "mwr/utils/socket.h"
 
 #include "mwr/core/version.h"
 
