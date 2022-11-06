@@ -31,25 +31,21 @@ TEST(utils, paths) {
     std::filesystem::create_symlink("test/file", "test/file.link");
     std::filesystem::create_symlink("test/file.link", "test/file.link.link");
 
-    EXPECT_TRUE(is_file("test/file"));
-    EXPECT_TRUE(is_file("test/file.link"));
-    EXPECT_TRUE(is_file("test/file.link.link"));
-
-    EXPECT_TRUE(is_directory("test"));
-    EXPECT_TRUE(is_directory("test/test.link"));
-
-    EXPECT_FALSE(is_directory("test/file"));
-    EXPECT_FALSE(is_directory("test/file.link"));
-    EXPECT_FALSE(is_directory("test/file.link.link"));
-
-    EXPECT_FALSE(is_file("test"));
-    EXPECT_FALSE(is_file("test/test.link"));
-
-    EXPECT_FALSE(is_directory("nothing"));
-    EXPECT_FALSE(is_file("nothing"));
-
-    EXPECT_TRUE(file_exists("test"));
     EXPECT_TRUE(file_exists("test/file"));
+    EXPECT_TRUE(file_exists("test/file.link"));
+    EXPECT_TRUE(file_exists("test/file.link.link"));
+
+    EXPECT_TRUE(directory_exists("test"));
+    EXPECT_TRUE(directory_exists("test/test.link"));
+
+    EXPECT_FALSE(directory_exists("test/file"));
+    EXPECT_FALSE(directory_exists("test/file.link"));
+    EXPECT_FALSE(directory_exists("test/file.link.link"));
+
+    EXPECT_FALSE(file_exists("test"));
+    EXPECT_FALSE(file_exists("test/test.link"));
+
+    EXPECT_FALSE(directory_exists("nothing"));
     EXPECT_FALSE(file_exists("nothing"));
 
     std::filesystem::remove_all("test");

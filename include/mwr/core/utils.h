@@ -29,9 +29,8 @@ namespace mwr {
 using std::string;
 using std::vector;
 
-bool is_file(const string& path);
-bool is_directory(const string& path);
-bool file_exists(const string& filename);
+bool file_exists(const string& file);
+bool directory_exists(const string& file);
 
 string dirname(const string& path);
 string filename(const string& path);

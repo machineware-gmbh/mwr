@@ -34,7 +34,7 @@ namespace fs = std::filesystem;
 
 namespace mwr {
 
-bool is_file(const string& file) {
+bool file_exists(const string& file) {
     try {
         size_t limit = 10;
         fs::path path(file);
@@ -46,7 +46,7 @@ bool is_file(const string& file) {
     }
 }
 
-bool is_directory(const string& dir) {
+bool directory_exists(const string& dir) {
     try {
         size_t limit = 10;
         fs::path path(dir);
@@ -56,11 +56,6 @@ bool is_directory(const string& dir) {
     } catch (...) {
         return false;
     }
-}
-
-bool file_exists(const string& filename) {
-    std::error_code error;
-    return fs::exists(filename, error);
 }
 
 string dirname(const string& path) {
