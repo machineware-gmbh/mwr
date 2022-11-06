@@ -28,10 +28,39 @@
 #include <execinfo.h>
 #include <cxxabi.h>
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 namespace mwr {
 
+bool is_file(const string& file) {
+    try {
+        size_t limit = 10;
+        fs::path path(file);
+        while (fs::is_symlink(path) && limit--)
+            path = fs::read_symlink(path);
+        return fs::is_regular_file(path);
+    } catch (...) {
+        return false;
+    }
+}
+
+bool is_directory(const string& dir) {
+    try {
+        size_t limit = 10;
+        fs::path path(dir);
+        while (fs::is_symlink(path) && limit--)
+            path = fs::read_symlink(path);
+        return fs::is_directory(path);
+    } catch (...) {
+        return false;
+    }
+}
+
 bool file_exists(const string& filename) {
-    return access(filename.c_str(), F_OK) != -1;
+    std::error_code error;
+    return fs::exists(filename, error);
 }
 
 string dirname(const string& path) {
