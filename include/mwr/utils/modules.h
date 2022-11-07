@@ -48,7 +48,7 @@ ostream& operator<<(ostream& os, const module& mod);
 
 class modules
 {
-    friend class module;
+    friend struct module;
 
 private:
     vector<const module*> m_modules;
