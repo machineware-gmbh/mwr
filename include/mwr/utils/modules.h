@@ -83,6 +83,11 @@ public:
         MWR_CAT(prefix, _VERSION_PATCH), MWR_CAT(prefix, _VERSION_STRING), \
         MWR_CAT(prefix, _GIT_REV), MWR_CAT(prefix, _GIT_REV_SHORT))
 
+#define MWR_DECLARE_MODULE_COPYRIGHT(prefix, name, year) \
+    MWR_DECLARE_MODULE(prefix, name,                     \
+                       "Copyright " #year                \
+                       " MachineWare GmbH. All Rights Reserved")
+
 } // namespace mwr
 
 #endif
