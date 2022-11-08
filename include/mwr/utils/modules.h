@@ -38,8 +38,9 @@ struct module {
     string version_string;
     string git_rev;
     string git_rev_short;
+    string license;
 
-    module(string name, size_t version, size_t version_major,
+    module(string name, string license, size_t version, size_t version_major,
            size_t version_minor, size_t version_patch, string version_string,
            string git_rev, string git_rev_short);
 };
@@ -65,17 +66,19 @@ public:
     static size_t count();
     static const vector<const module*>& all();
     static const module* find(const string& name);
-    static void print_modules(ostream& os);
+    static void print_versions(ostream& os);
+    static void print_licenses(ostream& os);
 };
 
-#define MWR_DECLARE_MODULE_EX(prefix, name, version, major, minor, patch, \
-                              verstr, gitrev, shortrev)                   \
-    MWR_DECL_WEAK mwr::module MWR_CAT(module_##prefix##_, version)(       \
-        name, version, major, minor, patch, verstr, gitrev, shortrev);
+#define MWR_DECLARE_MODULE_EX(prefix, name, license, version, major, minor, \
+                              patch, verstr, gitrev, shortrev)              \
+    MWR_DECL_WEAK mwr::module MWR_CAT(module_##prefix##_, version)(         \
+        name, license, version, major, minor, patch, verstr, gitrev,        \
+        shortrev);
 
-#define MWR_DECLARE_MODULE(prefix, name)                                   \
+#define MWR_DECLARE_MODULE(prefix, name, spdx)                             \
     MWR_DECLARE_MODULE_EX(                                                 \
-        prefix, name, MWR_CAT(prefix, _VERSION),                           \
+        prefix, name, spdx, MWR_CAT(prefix, _VERSION),                     \
         MWR_CAT(prefix, _VERSION_MAJOR), MWR_CAT(prefix, _VERSION_MINOR),  \
         MWR_CAT(prefix, _VERSION_PATCH), MWR_CAT(prefix, _VERSION_STRING), \
         MWR_CAT(prefix, _GIT_REV), MWR_CAT(prefix, _GIT_REV_SHORT))

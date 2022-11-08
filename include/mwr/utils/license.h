@@ -16,44 +16,40 @@
  *                                                                            *
  ******************************************************************************/
 
-#include "testing.h"
-#include "mwr/utils/modules.h"
-#include "mwr/core/version.h"
+#ifndef MWR_UTILS_LICENSE_H
+#define MWR_UTILS_LICENSE_H
 
-#define TEST_VERSION        1234
-#define TEST_VERSION_STRING "1.2.34"
-#define TEST_VERSION_MAJOR  1
-#define TEST_VERSION_MINOR  2
-#define TEST_VERSION_PATCH  34
-#define TEST_GIT_REV        "abcdef0123456"
-#define TEST_GIT_REV_SHORT  "abcdef"
+#include "mwr/core/types.h"
+#include "mwr/core/report.h"
+#include "mwr/core/compiler.h"
 
-MWR_DECLARE_MODULE(TEST, "test", "Apache-2.0")
+#include "mwr/stl/strings.h"
+#include "mwr/stl/streams.h"
+#include "mwr/stl/containers.h"
 
-TEST(modules, declare) {
-    const mwr::module* test = mwr::modules::find("test");
-    ASSERT_NE(test, nullptr);
-    EXPECT_EQ(test->name, "test");
-    EXPECT_EQ(test->version, TEST_VERSION);
-    EXPECT_EQ(test->version_major, TEST_VERSION_MAJOR);
-    EXPECT_EQ(test->version_minor, TEST_VERSION_MINOR);
-    EXPECT_EQ(test->version_patch, TEST_VERSION_PATCH);
-    EXPECT_EQ(test->version_string, TEST_VERSION_STRING);
-    EXPECT_EQ(test->git_rev, TEST_GIT_REV);
-    EXPECT_EQ(test->git_rev_short, TEST_GIT_REV_SHORT);
-    EXPECT_EQ(test->license, "Apache-2.0");
-}
+namespace mwr {
 
-TEST(modules, list) {
-    for (const auto* module : mwr::modules::all())
-        std::cout << *module << std::endl;
-    EXPECT_EQ(mwr::modules::count(), 2);
-}
+struct license {
+    const string spdx;
+    const string name;
+    const bool libre;
 
-TEST(modules, version) {
-    mwr::modules::print_versions(std::cout);
-}
+    license() = delete;
+    license(license&&) = delete;
+    license(const license&) = delete;
 
-TEST(modules, license) {
-    mwr::modules::print_licenses(std::cout);
-}
+    license(const string& lic_spdx, const string& lic_name, bool libre = true);
+    ~license();
+
+    bool operator==(const license& o) const { return spdx == o.spdx; }
+    bool operator!=(const license& o) const { return spdx != o.spdx; }
+
+    static const license& find(const string& spdx);
+    static string describe(const string& spdx);
+};
+
+extern const license UNLICENSED;
+
+} // namespace mwr
+
+#endif

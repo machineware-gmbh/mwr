@@ -17,11 +17,13 @@
  ******************************************************************************/
 
 #include "mwr/utils/modules.h"
+#include "mwr/utils/license.h"
 
 namespace mwr {
 
-module::module(string nm, size_t ver, size_t major, size_t minor, size_t patch,
-               string verstr, string gitrev, string gitrev_short):
+module::module(string nm, string lic, size_t ver, size_t major, size_t minor,
+               size_t patch, string verstr, string gitrev,
+               string gitrev_short):
     name(std::move(nm)),
     version(ver),
     version_major(major),
@@ -29,7 +31,8 @@ module::module(string nm, size_t ver, size_t major, size_t minor, size_t patch,
     version_patch(patch),
     version_string(std::move(verstr)),
     git_rev(std::move(gitrev)),
-    git_rev_short(std::move(gitrev_short)) {
+    git_rev_short(std::move(gitrev_short)),
+    license(std::move(lic)) {
     MWR_ERROR_ON(name.empty(), "module does not have a name");
     MWR_ERROR_ON(!version, "module does not have a version");
     const module* other = modules::find(name);
@@ -69,13 +72,23 @@ const module* modules::find(const string& name) {
     return nullptr;
 }
 
-void modules::print_modules(ostream& os) {
+void modules::print_versions(ostream& os) {
     size_t w = 0;
     for (const module* mod : all())
         w = max(w, mod->name.length());
 
     for (const module* mod : all())
         os << pad(mod->name, w) << " : " << mod->version_string << std::endl;
+}
+
+void modules::print_licenses(ostream& os) {
+    size_t w = 0;
+    for (const module* mod : all())
+        w = max(w, mod->name.length());
+
+    for (const module* mod : all()) {
+        os << pad(mod->name, w) << " : " << mod->license << std::endl;
+    }
 }
 
 } // namespace mwr

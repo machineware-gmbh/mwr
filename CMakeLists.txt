@@ -46,6 +46,7 @@ add_library(mwr STATIC
             ${src}/mwr/utils/aio.cpp
             ${src}/mwr/utils/elf.cpp
             ${src}/mwr/utils/library.cpp
+            ${src}/mwr/utils/license.cpp
             ${src}/mwr/utils/modules.cpp
             ${src}/mwr/utils/options.cpp
             ${src}/mwr/utils/socket.cpp
