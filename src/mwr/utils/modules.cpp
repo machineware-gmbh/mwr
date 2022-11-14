@@ -78,7 +78,7 @@ void modules::print_versions(ostream& os) {
         w = max(w, mod->name.length());
 
     for (const module* mod : all())
-        os << pad(mod->name, w) << " : " << mod->version_string << std::endl;
+        os << pad(mod->name, w + 1) << mod->version_string << std::endl;
 }
 
 void modules::print_licenses(ostream& os) {
@@ -87,7 +87,7 @@ void modules::print_licenses(ostream& os) {
         w = max(w, mod->name.length());
 
     for (const module* mod : all()) {
-        os << pad(mod->name, w) << " : " << mod->license << std::endl;
+        os << pad(mod->name, w + 1) << mod->license << std::endl;
     }
 }
 
