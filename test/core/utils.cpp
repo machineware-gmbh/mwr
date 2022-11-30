@@ -25,39 +25,39 @@
 using namespace mwr;
 
 TEST(utils, paths) {
-    std::filesystem::path pwd = std::filesystem::current_path();
-    std::filesystem::create_directory("test");
-    std::filesystem::create_directory("test/dir");
-    std::ofstream("test/file");
-    std::filesystem::create_symlink(pwd / "test", "test/test.link");
-    std::filesystem::create_symlink(pwd / "test/file", "test/file.link");
-    std::filesystem::create_symlink(pwd / "test/file.link",
-                                    "test/file.link.link");
-    std::filesystem::create_symlink("../file", "test/dir/file.link");
-    std::filesystem::create_symlink("../file.link", "test/dir/file.link.link");
-    std::filesystem::create_symlink("test/file", "test/dir/wrong.link");
+    ASSERT_FALSE(std::filesystem::is_directory("temp"));
 
-    EXPECT_TRUE(file_exists("test/file"));
-    EXPECT_TRUE(file_exists("test/file.link"));
-    EXPECT_TRUE(file_exists("test/file.link.link"));
-    EXPECT_TRUE(file_exists("test/dir/file.link"));
-    EXPECT_TRUE(file_exists("test/dir/file.link.link"));
-    EXPECT_FALSE(file_exists("test/dir/wrong.link"));
+    std::filesystem::create_directory("temp");
+    std::filesystem::create_directory("temp/dir");
+    std::ofstream("temp/file");
+    std::filesystem::create_symlink("../temp", "temp/temp.link");
+    std::filesystem::create_symlink("file", "temp/file.link");
+    std::filesystem::create_symlink("file.link", "temp/file.link.link");
+    std::filesystem::create_symlink("../file", "temp/dir/file.link");
+    std::filesystem::create_symlink("../file.link", "temp/dir/file.link.link");
+    std::filesystem::create_symlink("temp/file", "temp/dir/wrong.link");
 
-    EXPECT_TRUE(directory_exists("test"));
-    EXPECT_TRUE(directory_exists("test/test.link"));
+    EXPECT_TRUE(file_exists("temp/file"));
+    EXPECT_TRUE(file_exists("temp/file.link"));
+    EXPECT_TRUE(file_exists("temp/file.link.link"));
+    EXPECT_TRUE(file_exists("temp/dir/file.link"));
+    EXPECT_TRUE(file_exists("temp/dir/file.link.link"));
+    EXPECT_FALSE(file_exists("temp/dir/wrong.link"));
 
-    EXPECT_FALSE(directory_exists("test/file"));
-    EXPECT_FALSE(directory_exists("test/file.link"));
-    EXPECT_FALSE(directory_exists("test/file.link.link"));
+    EXPECT_TRUE(directory_exists("temp"));
+    EXPECT_TRUE(directory_exists("temp/temp.link"));
 
-    EXPECT_FALSE(file_exists("test"));
-    EXPECT_FALSE(file_exists("test/test.link"));
+    EXPECT_FALSE(directory_exists("temp/file"));
+    EXPECT_FALSE(directory_exists("temp/file.link"));
+    EXPECT_FALSE(directory_exists("temp/file.link.link"));
+
+    EXPECT_FALSE(file_exists("temp"));
+    EXPECT_FALSE(file_exists("temp/temp.link"));
 
     EXPECT_FALSE(directory_exists("nothing"));
     EXPECT_FALSE(file_exists("nothing"));
 
-    std::filesystem::remove_all("test");
+    std::filesystem::remove_all("temp");
 }
 
 TEST(utils, dirname) {
