@@ -38,8 +38,11 @@ bool file_exists(const string& file) {
     try {
         size_t limit = 10;
         fs::path path(file);
-        while (fs::is_symlink(path) && limit--)
-            path = fs::read_symlink(path);
+        while (fs::is_symlink(path) && limit--) {
+            fs::path resolved_path = fs::read_symlink(path);
+            path = (resolved_path.is_relative() ? path.parent_path() : "") /
+                   resolved_path;
+        }
         return fs::is_regular_file(path);
     } catch (...) {
         return false;

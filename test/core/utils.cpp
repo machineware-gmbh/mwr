@@ -25,15 +25,24 @@
 using namespace mwr;
 
 TEST(utils, paths) {
+    std::filesystem::path pwd = std::filesystem::current_path();
     std::filesystem::create_directory("test");
+    std::filesystem::create_directory("test/dir");
     std::ofstream("test/file");
-    std::filesystem::create_symlink("test", "test/test.link");
-    std::filesystem::create_symlink("test/file", "test/file.link");
-    std::filesystem::create_symlink("test/file.link", "test/file.link.link");
+    std::filesystem::create_symlink(pwd / "test", "test/test.link");
+    std::filesystem::create_symlink(pwd / "test/file", "test/file.link");
+    std::filesystem::create_symlink(pwd / "test/file.link",
+                                    "test/file.link.link");
+    std::filesystem::create_symlink("../file", "test/dir/file.link");
+    std::filesystem::create_symlink("../file.link", "test/dir/file.link.link");
+    std::filesystem::create_symlink("test/file", "test/dir/wrong.link");
 
     EXPECT_TRUE(file_exists("test/file"));
     EXPECT_TRUE(file_exists("test/file.link"));
     EXPECT_TRUE(file_exists("test/file.link.link"));
+    EXPECT_TRUE(file_exists("test/dir/file.link"));
+    EXPECT_TRUE(file_exists("test/dir/file.link.link"));
+    EXPECT_FALSE(file_exists("test/dir/wrong.link"));
 
     EXPECT_TRUE(directory_exists("test"));
     EXPECT_TRUE(directory_exists("test/test.link"));
