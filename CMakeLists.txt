@@ -54,6 +54,7 @@ add_library(mwr STATIC
 
 target_include_directories(mwr PUBLIC ${inc})
 target_include_directories(mwr PUBLIC ${gen})
+target_include_directories(mwr PUBLIC ${LIBELF_INCLUDE_DIRS})
 target_compile_options(mwr PRIVATE -Wall -Werror)
 target_compile_features(mwr PRIVATE cxx_std_17)
 target_compile_definitions(mwr PUBLIC $<$<CONFIG:DEBUG>:MWR_DEBUG>)
