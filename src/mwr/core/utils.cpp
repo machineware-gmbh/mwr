@@ -34,16 +34,20 @@ namespace fs = std::filesystem;
 
 namespace mwr {
 
+static fs::path resolve(const string& file) {
+    size_t limit = 10;
+    fs::path path(file);
+    while (fs::is_symlink(path) && limit--) {
+        fs::path link = fs::read_symlink(path);
+        path = (link.is_relative() ? path.parent_path() : "") / link;
+    }
+
+    return path;
+}
+
 bool file_exists(const string& file) {
     try {
-        size_t limit = 10;
-        fs::path path(file);
-        while (fs::is_symlink(path) && limit--) {
-            fs::path resolved_path = fs::read_symlink(path);
-            path = (resolved_path.is_relative() ? path.parent_path() : "") /
-                   resolved_path;
-        }
-        return fs::is_regular_file(path);
+        return fs::is_regular_file(resolve(file));
     } catch (...) {
         return false;
     }
@@ -51,11 +55,7 @@ bool file_exists(const string& file) {
 
 bool directory_exists(const string& dir) {
     try {
-        size_t limit = 10;
-        fs::path path(dir);
-        while (fs::is_symlink(path) && limit--)
-            path = fs::read_symlink(path);
-        return fs::is_directory(path);
+        return fs::is_directory(resolve(dir));
     } catch (...) {
         return false;
     }
