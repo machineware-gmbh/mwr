@@ -75,6 +75,14 @@ constexpr void set_field(typename F::base& val, typename F::base x) {
     val = deposit(val, F::OFFSET, F::LENGTH, x);
 }
 
+template <const u64 BIT, typename T = u64>
+constexpr void set_bit(T& val, bool set) {
+    if (set)
+        val |= BIT;
+    else
+        val &= ~BIT;
+}
+
 } // namespace mwr
 
 #endif
