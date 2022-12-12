@@ -21,6 +21,10 @@
 
 namespace mwr {
 
+// clang-format-15 seems to get confused when your class is named 'module', so
+// we need to disable formatting here. If we rename this to module1::module1,
+// no errors are reported. If we rename it back, the errors return...
+// clang-format off
 module::module(string nm, string lic, size_t ver, size_t major, size_t minor,
                size_t patch, string verstr, string gitrev,
                string gitrev_short):
@@ -40,6 +44,7 @@ module::module(string nm, string lic, size_t ver, size_t major, size_t minor,
                  version_string.c_str(), other->version_string.c_str());
     modules::instance().import(this);
 }
+// clang-format on
 
 ostream& operator<<(ostream& os, const module& m) {
     os << m.name << ": " << m.version_string;

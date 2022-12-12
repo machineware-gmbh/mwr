@@ -12,7 +12,7 @@
  ##############################################################################
 
 home="$(cd $(dirname $(dirname ${BASH_SOURCE[0]})) &>/dev/null && pwd)"
-linter=$(which clang-tidy)
+linter="$(which clang-tidy);--extra-arg=-std=c++17"
 builds=$@
 
 [ -z "$builds" ] && builds="DEBUG RELEASE ASAN"
