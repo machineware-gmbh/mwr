@@ -6,6 +6,7 @@ LibMWR contains types and utlities shared between all MachineWare projects.
 [![ASAN Status](https://github.com/machineware-gmbh/mwr/actions/workflows/asan.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/asan.yml)
 [![Lint Status](https://github.com/machineware-gmbh/mwr/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/lint.yml)
 [![Style Status](https://github.com/machineware-gmbh/mwr/actions/workflows/style.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/style.yml)
+[![Nightly Status](https://github.com/machineware-gmbh/mwr/actions/workflows/nightly.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/nightly.yml)
 
 ----
 ## Installation
