@@ -32,6 +32,8 @@
 #define MWR_DECL_NORETURN     __attribute__((noreturn))
 #define MWR_DECL_DEPRECATED   __attribute__((deprecated))
 
+#define MWR_UNREACHABLE __builtin_unreachable()
+
 #define MWR_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 #define MWR_NOP(val)   val
