@@ -137,6 +137,16 @@ struct widen<i64> {
     typedef i64 type;
 };
 
+template <>
+struct widen<f32> {
+    typedef f64 type;
+};
+
+template <>
+struct widen<f64> {
+    typedef f64 type;
+};
+
 template <typename T>
 struct narrow;
 
@@ -178,6 +188,16 @@ struct narrow<u64> {
 template <>
 struct narrow<i64> {
     typedef i32 type;
+};
+
+template <>
+struct narrow<f32> {
+    typedef f32 type;
+};
+
+template <>
+struct narrow<f64> {
+    typedef f32 type;
 };
 
 using std::min;

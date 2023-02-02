@@ -31,6 +31,8 @@ TEST(types, widen) {
     EXPECT_TRUE((std::is_same<widen<i32>::type, i64>::value));
     EXPECT_TRUE((std::is_same<widen<u64>::type, u64>::value));
     EXPECT_TRUE((std::is_same<widen<i64>::type, i64>::value));
+    EXPECT_TRUE((std::is_same<widen<f32>::type, f64>::value));
+    EXPECT_TRUE((std::is_same<widen<f64>::type, f64>::value));
 }
 
 TEST(types, narrow) {
@@ -42,4 +44,6 @@ TEST(types, narrow) {
     EXPECT_TRUE((std::is_same<narrow<i32>::type, i16>::value));
     EXPECT_TRUE((std::is_same<narrow<u64>::type, u32>::value));
     EXPECT_TRUE((std::is_same<narrow<i64>::type, i32>::value));
+    EXPECT_TRUE((std::is_same<narrow<f32>::type, f32>::value));
+    EXPECT_TRUE((std::is_same<narrow<f64>::type, f32>::value));
 }
