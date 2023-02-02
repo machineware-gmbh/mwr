@@ -94,6 +94,92 @@ enum u64_limits : u64 {
     U64_MAX = std::numeric_limits<u64>::max(),
 };
 
+template <typename T>
+struct widen;
+
+template <>
+struct widen<u8> {
+    typedef u16 type;
+};
+
+template <>
+struct widen<i8> {
+    typedef i16 type;
+};
+
+template <>
+struct widen<u16> {
+    typedef u32 type;
+};
+
+template <>
+struct widen<i16> {
+    typedef i32 type;
+};
+
+template <>
+struct widen<u32> {
+    typedef u64 type;
+};
+
+template <>
+struct widen<i32> {
+    typedef i64 type;
+};
+
+template <>
+struct widen<u64> {
+    typedef u64 type;
+};
+
+template <>
+struct widen<i64> {
+    typedef i64 type;
+};
+
+template <typename T>
+struct narrow;
+
+template <>
+struct narrow<u8> {
+    typedef u8 type;
+};
+
+template <>
+struct narrow<i8> {
+    typedef i8 type;
+};
+
+template <>
+struct narrow<u16> {
+    typedef u8 type;
+};
+
+template <>
+struct narrow<i16> {
+    typedef i8 type;
+};
+
+template <>
+struct narrow<u32> {
+    typedef u16 type;
+};
+
+template <>
+struct narrow<i32> {
+    typedef i16 type;
+};
+
+template <>
+struct narrow<u64> {
+    typedef u32 type;
+};
+
+template <>
+struct narrow<i64> {
+    typedef i64 type;
+};
+
 using std::min;
 using std::max;
 
