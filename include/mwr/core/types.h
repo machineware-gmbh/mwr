@@ -177,7 +177,7 @@ struct narrow<u64> {
 
 template <>
 struct narrow<i64> {
-    typedef i64 type;
+    typedef i32 type;
 };
 
 using std::min;
