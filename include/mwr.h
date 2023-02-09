@@ -25,6 +25,7 @@
 #include "mwr/core/atomics.h"
 #include "mwr/core/bitops.h"
 #include "mwr/core/bitfields.h"
+#include "mwr/core/muldiv.h"
 #include "mwr/core/terminal.h"
 #include "mwr/core/utils.h"
 

@@ -16,31 +16,47 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_TESTING_H
-#define MWR_TESTING_H
+#include "testing.h"
+#include "mwr/core/muldiv.h"
 
-#include <gtest/gtest.h>
+using namespace mwr;
 
-#include <string>
-#include <vector>
-#include <random>
+TEST(muldiv, umul64) {
+    std::mt19937 rng;
+    std::uniform_int_distribution<u64> dist;
 
-std::vector<std::string> args;
+    for (size_t i = 0; i < 1000; i++) {
+        u64 a = dist(rng);
+        u64 b = dist(rng);
 
-std::string get_resource_path(const std::string& name) {
-    if (args.size() < 2) {
-        ADD_FAILURE() << "test resource path information not provided";
-        std::abort();
+        u64 h0, l0;
+        umul64(h0, l0, a, b);
+
+        u64 h1, l1;
+        umul64_slow(h1, l1, a, b);
+
+        ASSERT_EQ(l0, a * b);
+        ASSERT_EQ(l1, a * b);
+        ASSERT_EQ(h0, h1);
     }
-
-    return args[1] + "/" + name;
 }
 
-int main(int argc, char** argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    for (int i = 0; i < argc; i++)
-        args.push_back(argv[i]);
-    return RUN_ALL_TESTS();
-}
+TEST(muldiv, imul64) {
+    std::mt19937 rng;
+    std::uniform_int_distribution<i64> dist;
 
-#endif
+    for (size_t i = 0; i < 1000; i++) {
+        i64 a = dist(rng);
+        i64 b = dist(rng);
+
+        i64 h0, l0;
+        imul64(h0, l0, a, b);
+
+        i64 h1, l1;
+        imul64_slow(h1, l1, a, b);
+
+        ASSERT_EQ(l0, a * b);
+        ASSERT_EQ(l1, a * b);
+        ASSERT_EQ(h0, h1);
+    }
+}
