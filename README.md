@@ -1,6 +1,6 @@
 # LibMWR
 
-LibMWR contains types and utlities shared between all MachineWare projects.
+LibMWR contains types and utilities shared between all MachineWare projects.
 
 [![Build Status](https://github.com/machineware-gmbh/mwr/actions/workflows/cmake.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/cmake.yml)
 [![ASAN Status](https://github.com/machineware-gmbh/mwr/actions/workflows/asan.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/asan.yml)
@@ -17,7 +17,7 @@ git clone git@github.com:machineware-gmbh/mwr
 cd mwr
 git submodule update --init
 ```
-Building `mwr` requires `cmake >= 3.11`. During configuration you must state
+Building `mwr` requires `cmake >= 3.11`. During configuration, you must state
 whether to build the unit tests and the example programs:
 * `-DMWR_BUILD_TESTS=[ON|OFF]`: build unit tests (default `OFF`)
 * `-DMWR_LINTER=<string>`: linter program to use (default `<empty>`)
