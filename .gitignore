@@ -13,6 +13,9 @@ BUILD*
 .cproject
 .settings
 
+# Ignore clion project files
+.idea
+
 # Apple specific
 .DS_Store
 
