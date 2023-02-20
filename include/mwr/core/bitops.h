@@ -51,8 +51,8 @@ constexpr size_t parity_even(const T& val) {
 }
 
 template <typename T>
-inline bool is_aligned(T addr, size_t size) {
-    return ((uintptr_t)addr & (size - 1)) == 0;
+constexpr bool is_aligned(T addr, size_t size) {
+    return ((size_t)addr % size) == 0;
 }
 
 template <typename T>
