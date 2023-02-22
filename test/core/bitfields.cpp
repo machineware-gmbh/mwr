@@ -25,12 +25,16 @@ TEST(bitops, extract32) {
     EXPECT_EQ(extract(0b01011001u, 3, 2), 0b11u);
     EXPECT_EQ(extract(0b11000110u, 2, 3), 0b001u);
     EXPECT_EQ(extract(0b10100000u, 5, 3), 0b101u);
+    EXPECT_EQ(extract(0b11111111u, 0, 0), 0);
+    EXPECT_EQ(extract(0b11111111u, 31, 0), 0);
 }
 
 TEST(bitops, extract64) {
     EXPECT_EQ(extract(0b01011001ul, 3, 2), 0b11ul);
     EXPECT_EQ(extract(0b11000110ul, 2, 3), 0b001ul);
     EXPECT_EQ(extract(0b10100000ul, 5, 3), 0b101ul);
+    EXPECT_EQ(extract(0b11111111ul, 0, 0), 0);
+    EXPECT_EQ(extract(0b11111111ul, 63, 0), 0);
 }
 
 TEST(bitops, deposit32) {
