@@ -47,7 +47,7 @@ constexpr enable_if_signed_t<T> sat_add(T x, T y, T z, bool& sat) {
         b = y;
     }
 
-    bool sat1, sat2;
+    bool sat1 = false, sat2 = false;
     res = sat_add<T>(x, a, sat1);
     res = sat_add<T>(res, b, sat2);
     sat = sat1 || sat2;
