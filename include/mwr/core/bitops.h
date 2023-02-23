@@ -19,6 +19,7 @@
 #ifndef MWR_BITOPS_H
 #define MWR_BITOPS_H
 
+#include <limits.h>
 #include <type_traits>
 
 #include "mwr/core/types.h"
@@ -26,8 +27,13 @@
 namespace mwr {
 
 template <typename T>
+constexpr size_t width_of() {
+    return sizeof(T) * CHAR_BIT;
+};
+
+template <typename T>
 constexpr size_t width_of(const T& val) {
-    return sizeof(T) * 8;
+    return sizeof(val) * CHAR_BIT;
 };
 
 template <typename T>

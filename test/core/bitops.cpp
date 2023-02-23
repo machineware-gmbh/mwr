@@ -21,6 +21,12 @@
 
 using namespace mwr;
 
+TEST(bitops, width_of) {
+    u32 x = 0;
+    EXPECT_EQ(width_of(x), 32);
+    EXPECT_EQ(width_of<i16>(), 16);
+}
+
 TEST(bitops, clz32) {
     EXPECT_EQ(clz(~0u), 0);
     EXPECT_EQ(clz(0u), 32);
