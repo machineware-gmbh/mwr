@@ -75,6 +75,19 @@ constexpr void set_field(typename F::base& val, typename F::base x) {
     val = deposit(val, F::OFFSET, F::LENGTH, x);
 }
 
+template <typename T>
+constexpr bool get_bit(T* bitmask, size_t pos) {
+    return bitmask[pos / width_of<T>()] & bit(pos % width_of<T>());
+}
+
+template <typename T>
+constexpr void set_bit(T* bitmask, size_t pos, bool set) {
+    if (set)
+        bitmask[pos / width_of<T>()] |= bit(pos % width_of<T>());
+    else
+        bitmask[pos / width_of<T>()] &= ~bit(pos % width_of<T>());
+}
+
 template <const u64 BIT, typename T = u64>
 constexpr void set_bit(T& val, bool set) {
     if (set)
