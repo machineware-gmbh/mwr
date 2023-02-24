@@ -19,6 +19,12 @@
 #ifndef MWR_COMPILER_H
 #define MWR_COMPILER_H
 
+#define MWR_CPLUSPLUS_97 199711L
+#define MWR_CPLUSPLUS_11 201103L
+#define MWR_CPLUSPLUS_14 201402L
+#define MWR_CPLUSPLUS_17 201703L
+#define MWR_CPLUSPLUS_20 202002L
+
 #define MWR_DECL_ALIGN(n)     __attribute__((aligned(n)))
 #define MWR_DECL_PACKED       __attribute__((packed))
 #define MWR_DECL_PRINTF(s, a) __attribute__((format(printf, s, a)))
