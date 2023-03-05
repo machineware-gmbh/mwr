@@ -26,6 +26,64 @@
 
 namespace mwr {
 
+inline void barrier() {
+    asm volatile("" : : : "memory");
+}
+
+inline void read_once(void* dest, const void* src, size_t n) {
+    switch (n) {
+    case 1:
+        *(u8*)dest = *(volatile u8*)src;
+        break;
+    case 2:
+        *(u16*)dest = *(volatile u16*)src;
+        break;
+    case 4:
+        *(u32*)dest = *(volatile u32*)src;
+        break;
+    case 8:
+        *(u64*)dest = *(volatile u64*)src;
+        break;
+    default:
+        barrier();
+        memcpy(dest, src, n);
+        barrier();
+    }
+}
+
+inline void write_once(void* dest, const void* src, size_t n) {
+    switch (n) {
+    case 1:
+        *(volatile u8*)dest = *(u8*)src;
+        break;
+    case 2:
+        *(volatile u16*)dest = *(u16*)src;
+        break;
+    case 4:
+        *(volatile u32*)dest = *(u32*)src;
+        break;
+    case 8:
+        *(volatile u64*)dest = *(u64*)src;
+        break;
+    default:
+        barrier();
+        memcpy(dest, src, n);
+        barrier();
+    }
+}
+
+template <typename T>
+inline T read_once(const void* src) {
+    T val = 0;
+    read_once(&val, src, sizeof(T));
+    return val;
+}
+
+template <typename T>
+inline void write_once(void* dest, const T& val) {
+    write_once(dest, &val, sizeof(val));
+}
+
 template <typename T, typename T2 = T, typename T3 = T>
 bool atomic_cmpxchg(T* ptr, T2 cmp, T3 val) {
     const int mo = __ATOMIC_SEQ_CST;
