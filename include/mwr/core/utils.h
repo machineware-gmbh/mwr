@@ -54,6 +54,14 @@ double timestamp();
 u64 timestamp_us();
 u64 timestamp_ns();
 
+inline void cpu_yield() {
+#if defined(__x86_64__)
+    asm volatile("pause" ::: "memory");
+#elif defined(__aarch64__)
+    asm volatile("yield" ::: "memory");
+#endif
+}
+
 } // namespace mwr
 
 #endif
