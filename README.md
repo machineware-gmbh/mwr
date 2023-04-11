@@ -7,6 +7,7 @@ LibMWR contains types and utilities shared between all MachineWare projects.
 [![Lint Status](https://github.com/machineware-gmbh/mwr/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/lint.yml)
 [![Style Status](https://github.com/machineware-gmbh/mwr/actions/workflows/style.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/style.yml)
 [![Nightly Status](https://github.com/machineware-gmbh/mwr/actions/workflows/nightly.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/nightly.yml)
+[![Cross Status](https://github.com/machineware-gmbh/mwr/actions/workflows/cross.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/cross.yml)
 
 ----
 ## Installation
