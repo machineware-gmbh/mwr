@@ -22,12 +22,22 @@
 
 using namespace mwr;
 
+static string get_test_library() {
+#if defined(__x86_64__)
+    return get_resource_path("shared-x86.so");
+#elif defined(__aarch64__)
+    return get_resource_path("shared-arm64.so");
+#else
+#error "no test library available for your host architecture"
+#endif
+}
+
 TEST(library, basic) {
-    string path = get_resource_path("shared.so");
+    string path = get_test_library();
     library lib;
 
-    EXPECT_NO_THROW(lib.open(path));
-    EXPECT_TRUE(lib.is_open());
+    ASSERT_NO_THROW(lib.open(path));
+    ASSERT_TRUE(lib.is_open());
     EXPECT_EQ(lib.path(), path);
     EXPECT_TRUE(lib.has("global"));
     EXPECT_TRUE(lib.has("function"));
