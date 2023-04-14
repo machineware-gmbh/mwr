@@ -17,7 +17,7 @@
  ##############################################################################
 
 cmake_minimum_required(VERSION 3.11)
-project(mwr VERSION 2023.03.10 LANGUAGES CXX)
+project(mwr VERSION 2023.04.14 LANGUAGES CXX)
 
 set(MWR_LINTER "" CACHE STRING "Code linter to use")
 set(MWR_BUILD_TESTS OFF CACHE BOOL "Build unit tests")
