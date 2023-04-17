@@ -131,6 +131,12 @@ TEST(bitops, is_pow2) {
     EXPECT_TRUE(is_pow2(256));
 }
 
+TEST(bitops, bitmask) {
+    EXPECT_EQ(bitmask(8, 12), 0x000ff000);
+    EXPECT_EQ(bitmask(1, 64), 0x0);
+    EXPECT_EQ(bitmask(64, 0), ~0ull);
+}
+
 TEST(bitops, fits) {
     size_t val0 = 0;
     EXPECT_TRUE(fits_i8(val0));
