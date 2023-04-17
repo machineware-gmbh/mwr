@@ -81,8 +81,11 @@ TEST(utils, filename_noext) {
     EXPECT_EQ(filename_noext("nothing"), "nothing");
 }
 
-TEST(utils, curr_dir) {
-    EXPECT_TRUE(curr_dir() != "");
+TEST(utils, info) {
+    EXPECT_NE(curr_dir(), "");
+    EXPECT_NE(temp_dir(), "");
+    EXPECT_NE(progname(), "");
+    EXPECT_NE(username(), "");
 }
 
 namespace N {
