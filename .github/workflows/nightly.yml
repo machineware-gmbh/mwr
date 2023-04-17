@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04]
+        os: [ubuntu-20.04, ubuntu-22.04, self-hosted-ubuntu-22.04-arm64]
 
     steps:
     - name: Checkout
