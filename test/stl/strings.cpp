@@ -27,15 +27,20 @@ TEST(strings, mkstr) {
 }
 
 TEST(strings, split) {
-    string s = "abc def\nghi\tjkl :.; ";
+    string s = "abc def\nghi\tjkl :\\ ; ";
     vector<string> v = split(s, [](unsigned char c) { return isspace(c); });
 
-    EXPECT_EQ(v.size(), 5);
+    ASSERT_EQ(v.size(), 5);
     EXPECT_EQ(v.at(0), "abc");
     EXPECT_EQ(v.at(1), "def");
     EXPECT_EQ(v.at(2), "ghi");
     EXPECT_EQ(v.at(3), "jkl");
-    EXPECT_EQ(v.at(4), ":.;");
+    EXPECT_EQ(v.at(4), ": ;");
+
+    vector<string> w = split("hello!world!", '!');
+    ASSERT_EQ(w.size(), 2);
+    EXPECT_EQ(w.at(0), "hello");
+    EXPECT_EQ(w.at(1), "world");
 }
 
 TEST(strings, join) {
@@ -104,4 +109,10 @@ TEST(strings, strcat) {
     EXPECT_EQ(strcat("abc", "def"), "abcdef");
     EXPECT_EQ(strcat(123, "-", 456), "123-456");
     EXPECT_EQ(strcat(true, false, true, 85), "truefalsetrue85");
+}
+
+TEST(strings, escape) {
+    string s = escape("hello world!", " !");
+    ASSERT_EQ(s, "hello\\ world\\!");
+    EXPECT_EQ(unescape(s), "hello world!");
 }
