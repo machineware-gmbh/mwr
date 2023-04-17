@@ -256,7 +256,7 @@ size_t fd_read(int fd, void* buffer, size_t buflen) {
 
 size_t fd_write(int fd, const void* buffer, size_t buflen) {
     if (fd < 0 || buffer == nullptr || buflen == 0)
-        return false;
+        return 0;
 
     const u8* ptr = reinterpret_cast<const u8*>(buffer);
 

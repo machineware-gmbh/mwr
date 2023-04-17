@@ -135,3 +135,23 @@ TEST(utils, backtrace) {
     N::struct_a<N::struct_a<std::map<int, double> > >::struct_b().func2();
     N::struct_u().unroll<5>(42.0);
 }
+
+TEST(utils, timestamp) {
+    double ts = timestamp();
+    u64 ts_us = timestamp_us();
+    u64 ts_ns = timestamp_ns();
+
+    EXPECT_GT(ts, 0.0);
+    EXPECT_GT(ts_us, 0u);
+    EXPECT_GT(ts_ns, 0u);
+    EXPECT_GT(ts_ns, ts_us);
+}
+
+TEST(utils, fd_write) {
+    const char* str = "hello world!\n";
+    size_t len = strlen(str);
+    EXPECT_EQ(fd_write(STDOUT_FILENO, str, len), len);
+    EXPECT_EQ(fd_write(-STDOUT_FILENO, str, len), 0);
+    EXPECT_EQ(fd_write(STDOUT_FILENO, nullptr, len), 0);
+    EXPECT_EQ(fd_write(STDOUT_FILENO, str, 0), 0);
+}
