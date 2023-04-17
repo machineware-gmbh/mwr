@@ -20,6 +20,7 @@ cmake_minimum_required(VERSION 3.11)
 project(mwr VERSION 2023.04.14 LANGUAGES CXX)
 
 set(MWR_LINTER "" CACHE STRING "Code linter to use")
+set(MWR_COVERAGE OFF CACHE BOOL "Coolect code coverage data")
 set(MWR_BUILD_TESTS OFF CACHE BOOL "Build unit tests")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -69,11 +70,17 @@ set_target_properties(mwr PROPERTIES CXX_CLANG_TIDY "${MWR_LINTER}")
 set_target_properties(mwr PROPERTIES VERSION "${MWR_VERSION}")
 set_target_properties(mwr PROPERTIES SOVERSION "${MWR_VERSION_MAJOR}")
 
-install(TARGETS mwr DESTINATION lib)
-install(DIRECTORY ${inc}/ DESTINATION include)
-install(DIRECTORY ${gen}/ DESTINATION include)
+if(MWR_COVERAGE)
+    target_compile_options(mwr PUBLIC --coverage)
+    target_link_libraries(mwr PUBLIC -lgcov)
+endif()
 
 if(MWR_BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
 endif()
+
+install(TARGETS mwr DESTINATION lib)
+install(DIRECTORY ${inc}/ DESTINATION include)
+install(DIRECTORY ${gen}/ DESTINATION include)
+
