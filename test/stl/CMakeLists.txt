@@ -28,3 +28,4 @@ endmacro()
 
 stl_test(strings)
 stl_test(container)
+stl_test(threads)
