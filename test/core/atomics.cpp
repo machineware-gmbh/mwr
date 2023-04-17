@@ -54,3 +54,36 @@ TEST(atomic, umax) {
     EXPECT_EQ(atomic_umax_ptr(&data, &cmp, sizeof(data)), -1);
     EXPECT_EQ(data, -1);
 }
+
+TEST(atomic, bitwise) {
+    u32 a = 1, b = 2, c = 4;
+
+    ASSERT_EQ(atomic_or(&a, 2), 1);
+    EXPECT_EQ(a, 3);
+
+    ASSERT_EQ(atomic_and(&b, 2), 2);
+    EXPECT_EQ(b, 2);
+
+    ASSERT_EQ(atomic_xor(&c, 2), 4);
+    EXPECT_EQ(c, 6);
+}
+
+TEST(atomic, ptrops) {
+    const u64 data = -1;
+    u64 dest = 0;
+
+    EXPECT_EQ(atomic_add_ptr(&dest, &data, sizeof(u8)), 0);
+    EXPECT_EQ(dest, 0xff);
+
+    dest = 0;
+    EXPECT_EQ(atomic_add_ptr(&dest, &data, sizeof(u16)), 0);
+    EXPECT_EQ(dest, 0xffff);
+
+    dest = 0;
+    EXPECT_EQ(atomic_add_ptr(&dest, &data, sizeof(u32)), 0);
+    EXPECT_EQ(dest, 0xffffffff);
+
+    dest = 0;
+    EXPECT_EQ(atomic_add_ptr(&dest, &data, sizeof(u64)), 0);
+    EXPECT_EQ(dest, 0xffffffffffffffff);
+}
