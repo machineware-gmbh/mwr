@@ -30,6 +30,7 @@ jobs:
 
     - name: Setup Dependencies
       run: sudo apt-get install libelf-dev ninja-build
+      if: !contains(runner.os, 'self-hosted')
 
     - name: Configure
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON
