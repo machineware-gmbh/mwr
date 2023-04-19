@@ -11,11 +11,13 @@ on:
 
 env:
   BUILD_TYPE: Release
+  CXX: clang++
+  CC: clang
 
 jobs:
   lint:
     name: lint
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout
