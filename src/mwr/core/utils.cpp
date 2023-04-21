@@ -114,10 +114,15 @@ string progname() {
 }
 
 string username() {
-    char uname[255];
-    if (getlogin_r(uname, sizeof(uname)))
-        return "unknown";
-    return uname;
+    char uname[256] = {};
+    if (getlogin_r(uname, sizeof(uname) - 1) == 0)
+        return uname;
+
+    const char* envuser = getenv("USER");
+    if (envuser)
+        return envuser;
+
+    return "unknown";
 }
 
 vector<string> backtrace(size_t frames, size_t skip) {
