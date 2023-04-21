@@ -12,7 +12,6 @@
  ##############################################################################
 
 home="$(cd $(dirname $(dirname ${BASH_SOURCE[0]})) &>/dev/null && pwd)"
-linter="$(which clang-tidy);--extra-arg=-std=c++17"
 builds=$@
 
 [ -z "$builds" ] && builds="DEBUG RELEASE ASAN"
@@ -26,7 +25,6 @@ for type in $builds; do (
           -DCMAKE_INSTALL_PREFIX=$prefix     \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
           -DMWR_BUILD_TESTS=ON               \
-          -DMWR_LINTER=$linter               \
           $home
 
     cmake --build $build -j $(nproc) -- install

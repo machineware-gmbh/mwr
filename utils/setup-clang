@@ -1,0 +1,56 @@
+#!/bin/bash
+
+ ##############################################################################
+ #                                                                            #
+ # Copyright 2023 MachineWare GmbH                                            #
+ #                                                                            #
+ # Licensed under the Apache License, Version 2.0 (the "License");            #
+ # you may not use this file except in compliance with the License.           #
+ # You may obtain a copy of the License at                                    #
+ #                                                                            #
+ #     http://www.apache.org/licenses/LICENSE-2.0                             #
+ #                                                                            #
+ # Unless required by applicable law or agreed to in writing, software        #
+ # distributed under the License is distributed on an "AS IS" BASIS,          #
+ # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
+ # See the License for the specific language governing permissions and        #
+ # limitations under the License.                                             #
+ #                                                                            #
+ ##############################################################################
+
+CC=$(which clang 2>/dev/null)
+test ! -z "$CC" || { echo "clang not found"; exit 1; }
+export CC
+
+CXX=$(which clang++ 2>/dev/null)
+test ! -z "$CXX" || { echo "clang++ not found"; exit 1; }
+export CXX
+
+home="$(cd $(dirname $(dirname ${BASH_SOURCE[0]})) &>/dev/null && pwd)"
+linter=$(which clang-tidy 2>/dev/null)
+bindir=$home/BUILD
+builds=$@
+
+[ -z "$builds" ] && builds="DEBUG RELEASE ASAN TSAN UBSAN"
+
+echo "CC     $CC"
+echo "CXX    $CXX"
+echo "linter $linter"
+echo "builds $builds"
+
+set -e
+
+for type in $builds; do (
+    prefix=$home/BUILD/$type
+    build=$prefix/.BUILD
+
+    cmake -B $build -G Ninja                 \
+          -DCMAKE_BUILD_TYPE=$type           \
+          -DCMAKE_INSTALL_PREFIX=$prefix     \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          -DMWR_BUILD_TESTS=ON               \
+          -DMWR_LINTER=$linter               \
+          $home
+
+    cmake --build $build -j $(nproc) -- install
+) done
