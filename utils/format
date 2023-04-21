@@ -12,8 +12,7 @@
  ##############################################################################
 
 home="$(cd $(dirname $(dirname ${BASH_SOURCE[0]} )) &>/dev/null && pwd)"
-check_dirs="$home/src $home/include $home/test/core $home/test/stl \
-            $home/test/utils"
-headers=$(find $check_dirs -name '*.h')
-sources=$(find $check_dirs -name '*.cpp')
-exec clang-format --Werror $headers $sources $@
+formatter="$home/cmake/Tools/$(uname -s)/clang-format-15.$(arch)"
+srcdirs="$home/src $home/include $home/test"
+sources=$(find $srcdirs -name '*.h' -or -name '*.cpp' | grep -v googletest)
+exec $formatter --Werror $sources $@
