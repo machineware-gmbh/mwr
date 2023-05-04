@@ -45,6 +45,16 @@ TEST(utils, tty) {
     close(fd);
 }
 
+TEST(utils, tty_restore) {
+    int fd = mwr::new_tty();
+    ASSERT_TRUE(mwr::is_tty(fd));
+    mwr::tty_push(fd, true);
+    mwr::tty_set(fd, false, false);
+    EXPECT_FALSE(mwr::tty_is_echo(fd));
+    EXPECT_FALSE(mwr::tty_is_isig(fd));
+    // fd will be closed on exit
+}
+
 TEST(utils, termcolors) {
     EXPECT_GT(strlen(mwr::termcolors::CLEAR), 1);
     EXPECT_GT(strlen(mwr::termcolors::BLACK), 1);

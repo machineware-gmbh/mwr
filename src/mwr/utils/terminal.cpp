@@ -25,20 +25,11 @@ int new_tty() {
     static int master = posix_openpt(O_RDWR | O_NOCTTY);
     MWR_ERROR_ON(master < 0, "posix_openpt() failed: %s", strerror(errno));
 
-    if (grantpt(master)) {
-        close(master);
-        MWR_ERROR("grantpt() failed: %s", strerror(errno));
-    }
-
-    if (unlockpt(master)) {
-        close(master);
-        MWR_ERROR("unlockpt() failed: %s", strerror(errno));
-    }
-
     char path[256];
-    if (ptsname_r(master, path, sizeof(path))) {
+    if (grantpt(master) || unlockpt(master) ||
+        ptsname_r(master, path, sizeof(path))) {
         close(master);
-        MWR_ERROR("ptsname_r() failed: %s", path);
+        MWR_ERROR("pty setup failed: %s", strerror(errno));
     }
 
     return open(path, O_RDWR | O_NOCTTY);
@@ -46,7 +37,6 @@ int new_tty() {
 
 bool is_tty(int fd) {
     termios attr;
-    printf("fd %d is%s a tty\n", fd, tcgetattr(fd, &attr) ? " not" : "");
     return tcgetattr(fd, &attr) == 0;
 }
 
@@ -80,8 +70,11 @@ public:
         while (!m_stack.empty()) {
             auto state = m_stack.top();
             m_stack.pop();
+
+            // try to restore the tty state. its okay if it fails, maybe the
+            // corresponding fd has already been closed.
             if (state.restore)
-                set(state.attr);
+                tcsetattr(m_fd, TCSAFLUSH, &state.attr);
         }
     }
 
