@@ -251,8 +251,8 @@ void socket::accept_async() {
     if (is_connected())
         disconnect();
 
-    m_async = thread(std::bind(&socket::accept, this));
-    set_thread_name(m_async, mkstr("socket_%hu", port()));
+    m_async = thread(&socket::accept, this);
+    set_thread_name(m_async, mkstr("socket:%hu", port()));
 }
 
 void socket::connect(const string& host, u16 port) {
