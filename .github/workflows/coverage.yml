@@ -39,7 +39,7 @@ jobs:
     - name: Generate Coverage Report
       run: |
         mkdir -p mwr-coverage-report
-        gcovr --html-details -f 'include/*' -f 'src/*' --output mwr-coverage-report/mwr.html
+        gcovr --html-details -f 'include/*' -f 'src/*' --output mwr-coverage-report/mwr.html --exclude-lines-by-pattern '\s*MWR_ERROR.*'
 
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v3

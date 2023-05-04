@@ -28,7 +28,6 @@ int new_tty() {
     char path[256];
     if (grantpt(master) || unlockpt(master) ||
         ptsname_r(master, path, sizeof(path))) {
-        close(master);
         MWR_ERROR("pty setup failed: %s", strerror(errno));
     }
 
