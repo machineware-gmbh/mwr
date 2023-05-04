@@ -20,7 +20,6 @@
 #include "mwr/core/bitfields.h"
 #include "mwr/core/muldiv.h"
 #include "mwr/core/saturate.h"
-#include "mwr/core/terminal.h"
 #include "mwr/core/utils.h"
 
 #include "mwr/stl/containers.h"
@@ -36,6 +35,7 @@
 #include "mwr/utils/options.h"
 #include "mwr/utils/socket.h"
 #include "mwr/utils/srec.h"
+#include "mwr/utils/terminal.h"
 
 #include "mwr/core/version.h"
 

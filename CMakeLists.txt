@@ -33,7 +33,6 @@ add_library(mwr STATIC
             ${src}/mwr/core/utils.cpp
             ${src}/mwr/core/report.cpp
             ${src}/mwr/core/bitops.cpp
-            ${src}/mwr/core/terminal.cpp
             ${src}/mwr/stl/strings.cpp
             ${src}/mwr/stl/threads.cpp
             ${src}/mwr/utils/aio.cpp
@@ -43,7 +42,8 @@ add_library(mwr STATIC
             ${src}/mwr/utils/modules.cpp
             ${src}/mwr/utils/options.cpp
             ${src}/mwr/utils/socket.cpp
-            ${src}/mwr/utils/srec.cpp)
+            ${src}/mwr/utils/srec.cpp
+            ${src}/mwr/utils/terminal.cpp)
 
 target_include_directories(mwr PUBLIC ${inc})
 target_include_directories(mwr PUBLIC ${gen})

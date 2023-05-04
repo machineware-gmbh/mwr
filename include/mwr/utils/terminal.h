@@ -1,6 +1,6 @@
 /******************************************************************************
  *                                                                            *
- * Copyright (C) 2022 MachineWare GmbH                                        *
+ * Copyright (C) 2023 MachineWare GmbH                                        *
  * All Rights Reserved                                                        *
  *                                                                            *
  * This is work is licensed under the terms described in the LICENSE file     *
@@ -8,10 +8,39 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_TERMINAL_H
-#define MWR_TERMINAL_H
+#ifndef MWR_UTILS_TERMINAL_H
+#define MWR_UTILS_TERMINAL_H
+
+#include "mwr/core/types.h"
+#include "mwr/core/report.h"
+#include "mwr/core/compiler.h"
+#include "mwr/core/utils.h"
+#include "mwr/core/bitfields.h"
 
 namespace mwr {
+
+int new_tty();
+bool is_tty(int fd);
+
+bool tty_is_echo(int fd);
+bool tty_is_isig(int fd);
+void tty_set(int fd, bool echo, bool isig);
+void tty_push(int fd, bool restore);
+void tty_pop(int fd);
+
+class tty_guard
+{
+private:
+    int m_fd;
+
+public:
+    tty_guard(int fd, bool echo, bool isig): m_fd(fd) {
+        tty_push(m_fd, true);
+        tty_set(m_fd, echo, isig);
+    }
+
+    virtual ~tty_guard() { tty_pop(m_fd); }
+};
 
 struct termcolors {
     static const char* const CLEAR;
