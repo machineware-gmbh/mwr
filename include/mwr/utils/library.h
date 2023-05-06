@@ -44,6 +44,7 @@ public:
     library(const string& path): library(path, -1) {}
 
     void open(const string& path, int mode = -1);
+    void mopen(const string& path, int mode = -1);
     void close();
 
     bool has(const string& name) const;

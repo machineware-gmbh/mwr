@@ -50,3 +50,45 @@ TEST(library, basic) {
     EXPECT_THROW(lib.get(global, "notfound"), mwr::report);
     EXPECT_THROW(library lib2("notfound.so"), mwr::report);
 }
+
+TEST(libary, reopen) {
+    library a, b;
+    string path = get_test_library();
+
+    ASSERT_NO_THROW(a.open(path));
+    ASSERT_NO_THROW(b.open(path));
+    EXPECT_STREQ(a.path(), b.path());
+
+    ASSERT_TRUE(a.has("global"));
+    ASSERT_TRUE(b.has("global"));
+
+    // test both libraries reference the same global
+    int* a_global = nullptr;
+    int* b_global = nullptr;
+    EXPECT_NO_THROW(a.get(a_global, "global"));
+    EXPECT_NO_THROW(b.get(b_global, "global"));
+    ASSERT_TRUE(a_global);
+    ASSERT_TRUE(b_global);
+    EXPECT_EQ(a_global, b_global);
+}
+
+TEST(libary, mopen) {
+    library a, b;
+    string path = get_test_library();
+
+    ASSERT_NO_THROW(a.mopen(path));
+    ASSERT_NO_THROW(b.mopen(path));
+    EXPECT_STREQ(a.path(), b.path());
+
+    ASSERT_TRUE(a.has("global"));
+    ASSERT_TRUE(b.has("global"));
+
+    // test both globals got their separate location in memory
+    int* a_global = nullptr;
+    int* b_global = nullptr;
+    EXPECT_NO_THROW(a.get(a_global, "global"));
+    EXPECT_NO_THROW(b.get(b_global, "global"));
+    ASSERT_TRUE(a_global);
+    ASSERT_TRUE(b_global);
+    EXPECT_NE(a_global, b_global);
+}

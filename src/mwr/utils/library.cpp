@@ -50,6 +50,18 @@ void library::open(const string& path, int mode) {
     m_path = path;
 }
 
+void library::mopen(const string& path, int mode) {
+    if (is_open())
+        close();
+
+    if (mode < 0)
+        mode = RTLD_NOW | RTLD_LOCAL;
+
+    m_handle = dlmopen(LM_ID_NEWLM, path.c_str(), mode);
+    MWR_REPORT_ON(!m_handle, "failed to open %s: %s", path.c_str(), dlerror());
+    m_path = path;
+}
+
 void library::close() {
     if (is_open()) {
         dlclose(m_handle);
