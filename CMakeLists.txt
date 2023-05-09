@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 3.11)
 project(mwr VERSION 2023.04.20 LANGUAGES CXX)
 
 set(MWR_LINTER "" CACHE STRING "Code linter to use")
-set(MWR_COVERAGE OFF CACHE BOOL "Coolect code coverage data")
+set(MWR_COVERAGE OFF CACHE BOOL "Collect code coverage data")
 set(MWR_BUILD_TESTS OFF CACHE BOOL "Build unit tests")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
