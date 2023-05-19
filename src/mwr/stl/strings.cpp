@@ -42,18 +42,31 @@ string vmkstr(const char* format, va_list args) {
     return s;
 }
 
-string trim(const string& str) {
-    static const auto nospace = [](int ch) { return ch && !std::isspace(ch); };
+static bool nospace(int ch) {
+    return ch && !std::isspace(ch);
+}
 
+string ltrim(const string& str) {
     string copy(str);
 
     auto front = std::find_if(copy.begin(), copy.end(), nospace);
     copy.erase(copy.begin(), front);
 
+    return copy;
+}
+
+string rtrim(const string& str) {
+    string copy(str);
+
     auto back = std::find_if(copy.rbegin(), copy.rend(), nospace);
     copy.erase(back.base(), copy.end());
 
     return copy;
+}
+
+string trim(const string& str) {
+    string copy = ltrim(str);
+    return rtrim(copy);
 }
 
 string pad(const string& ref, size_t max) {

@@ -53,6 +53,8 @@ TEST(strings, upper_lower) {
 }
 
 TEST(strings, trim) {
+    EXPECT_EQ(ltrim("\ntest0? \t"), "test0? \t");
+    EXPECT_EQ(rtrim("\ntest0? \t"), "\ntest0?");
     EXPECT_EQ(trim("\ntest0? \t"), "test0?");
 }
 

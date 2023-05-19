@@ -34,6 +34,8 @@ using std::function;
 
 string mkstr(const char* format, ...) MWR_DECL_PRINTF(1, 2);
 string vmkstr(const char* format, va_list args);
+string ltrim(const string& s);
+string rtrim(const string& s);
 string trim(const string& s);
 string pad(const string& s, size_t limit);
 string to_lower(const string& s);
