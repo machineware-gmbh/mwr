@@ -199,6 +199,10 @@ inline u32 bitrev(u32 val) {
     return bitrev((u16)val) << 16 | bitrev((u16)(val >> 16));
 }
 
+inline u64 bitrev(u64 val) {
+    return (u64)bitrev((u32)val) << 32 | bitrev((u32)(val >> 32));
+}
+
 constexpr u8 bswap(u8 val) {
     return val;
 }
