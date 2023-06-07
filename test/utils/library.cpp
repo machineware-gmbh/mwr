@@ -38,14 +38,16 @@ TEST(library, basic) {
     int* global = nullptr;
     EXPECT_NO_THROW(lib.get(global, "global"));
     ASSERT_TRUE(global);
-    if (global) // check to silence clang-tidy
+    if (global) { // check to silence clang-tidy
         EXPECT_EQ(*global, 42);
+    }
 
     int (*function)(int) = nullptr;
     EXPECT_NO_THROW(lib.get(function, "function"));
     ASSERT_TRUE(function);
-    if (function && global) // check to silence clang-tidy
+    if (function && global) { // check to silence clang-tidy
         EXPECT_EQ(function(1), *global + 1);
+    }
 
     EXPECT_THROW(lib.get(global, "notfound"), mwr::report);
     EXPECT_THROW(library lib2("notfound.so"), mwr::report);
