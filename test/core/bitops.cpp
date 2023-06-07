@@ -216,10 +216,17 @@ TEST(bitops, fourcc) {
 }
 
 TEST(bitops, bitrev) {
+    // 32bit
     EXPECT_EQ(bitrev((u32)0x01020304), 0x20c04080);
     EXPECT_EQ(bitrev((u32)0x77e51f08), 0x10f8a7ee);
     EXPECT_EQ(bitrev((u32)0xcb3e0121), 0x84807cd3);
     EXPECT_EQ(bitrev((u32)0xf490ee20), 0x0477092f);
+
+    // 64bit
+    EXPECT_EQ(bitrev((u64)0x48ec4111ea60e4a5), 0xa527065788823712);
+    EXPECT_EQ(bitrev((u64)0x1e657cbd6d9a8532), 0x4ca159b6bd3ea678);
+    EXPECT_EQ(bitrev((u64)0x8f5afea5ee02d82d), 0xb41b4077a57f5af1);
+    EXPECT_EQ(bitrev((u64)0x97553f96847066c6), 0x63660e2169fcaae9);
 }
 
 TEST(bitops, bswap) {
