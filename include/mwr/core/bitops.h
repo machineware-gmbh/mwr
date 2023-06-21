@@ -75,11 +75,13 @@ constexpr int fls(T val) {
 
 template <typename T>
 constexpr T rol(T val, size_t n) {
+    n &= width_of(val) - 1; // Restrict rotate amount to [0, width_of(val) - 1]
     return (val << n) | (val >> (width_of(val) - n));
 }
 
 template <typename T>
 constexpr T ror(T val, size_t n) {
+    n &= width_of(val) - 1; // Restrict rotate amount to [0, width_of(val) - 1]
     return (val >> n) | (val << (width_of(val) - n));
 }
 
