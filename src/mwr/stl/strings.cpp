@@ -114,14 +114,17 @@ string unescape(const string& s) {
 }
 
 vector<string> split(const string& str, const function<int(int)>& f) {
+    bool flag = false;
     vector<string> vec;
     string buf;
 
-    for (unsigned int i = 0; i < str.length(); i++) {
+    for (size_t i = 0; i < str.length(); i++) {
         char ch = str[i];
-        if (ch == '\\' && i < str.length() - 1) {
+        if (ch == '"' || ch == '\'') {
+            flag = !flag;
+        } else if (ch == '\\' && i < str.length() - 1) {
             buf += str[++i];
-        } else if (f(ch)) {
+        } else if (f(ch) && !flag) {
             if (!buf.empty())
                 vec.push_back(buf);
             buf = "";
@@ -137,14 +140,17 @@ vector<string> split(const string& str, const function<int(int)>& f) {
 }
 
 vector<string> split(const string& str, char predicate) {
+    bool flag = false;
     vector<string> vec;
     string buf;
 
-    for (unsigned int i = 0; i < str.length(); i++) {
+    for (size_t i = 0; i < str.length(); i++) {
         char ch = str[i];
-        if (ch == '\\' && i < str.length() - 1)
+        if (ch == '"' || ch == '\'') {
+            flag = !flag;
+        } else if (ch == '\\' && i < str.length() - 1) {
             buf += str[++i];
-        else if (ch == predicate) {
+        } else if (ch == predicate && !flag) {
             if (!buf.empty())
                 vec.push_back(buf);
             buf = "";

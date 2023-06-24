@@ -33,6 +33,16 @@ TEST(strings, split) {
     ASSERT_EQ(w.size(), 2);
     EXPECT_EQ(w.at(0), "hello");
     EXPECT_EQ(w.at(1), "world");
+
+    vector<string> u = split("\"a b\" 'c  d' \"e\\\"f", ' ');
+    ASSERT_EQ(u.size(), 3);
+    EXPECT_EQ(u.at(0), "a b");
+    EXPECT_EQ(u.at(1), "c  d");
+    EXPECT_EQ(u.at(2), "e\"f");
+
+    vector<string> t = split("\"\\\"unterminated\\\"", ' ');
+    ASSERT_EQ(t.size(), 1);
+    EXPECT_EQ(t.at(0), "\"unterminated\"");
 }
 
 TEST(strings, join) {
