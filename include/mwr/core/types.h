@@ -210,7 +210,7 @@ const size_t MiB = 1024 * KiB; // NOLINT(readability-identifier-naming)
 const size_t GiB = 1024 * MiB; // NOLINT(readability-identifier-naming)
 const size_t TiB = 1024 * GiB; // NOLINT(readability-identifier-naming)
 
-typedef std::size_t id_t;
+typedef ::id_t id_t;
 
 } // namespace mwr
 
