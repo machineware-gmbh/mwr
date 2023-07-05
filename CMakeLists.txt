@@ -35,6 +35,11 @@ add_library(mwr STATIC
             ${src}/mwr/core/bitops.cpp
             ${src}/mwr/stl/strings.cpp
             ${src}/mwr/stl/threads.cpp
+            ${src}/mwr/logging/publisher.cpp
+            ${src}/mwr/logging/publishers/file.cpp
+            ${src}/mwr/logging/publishers/stream.cpp
+            ${src}/mwr/logging/publishers/terminal.cpp
+            ${src}/mwr/logging/logger.cpp
             ${src}/mwr/utils/aio.cpp
             ${src}/mwr/utils/elf.cpp
             ${src}/mwr/utils/library.cpp

@@ -27,6 +27,12 @@
 #include "mwr/stl/streams.h"
 #include "mwr/stl/threads.h"
 
+#include "mwr/logging/publisher.h"
+#include "mwr/logging/publishers/file.h"
+#include "mwr/logging/publishers/stream.h"
+#include "mwr/logging/publishers/terminal.h"
+#include "mwr/logging/logger.h"
+
 #include "mwr/utils/aio.h"
 #include "mwr/utils/elf.h"
 #include "mwr/utils/license.h"

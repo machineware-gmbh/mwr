@@ -1,6 +1,6 @@
 /******************************************************************************
  *                                                                            *
- * Copyright (C) 2022 MachineWare GmbH                                        *
+ * Copyright (C) 2023 MachineWare GmbH                                        *
  * All Rights Reserved                                                        *
  *                                                                            *
  * This is work is licensed under the terms described in the LICENSE file     *
@@ -8,32 +8,27 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_TESTING_H
-#define MWR_TESTING_H
+#ifndef MWR_LOGGING_PUBLISHERS_STREAM_H
+#define MWR_LOGGING_PUBLISHERS_STREAM_H
 
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
+#include "mwr/logging/publisher.h"
 
-#include <string>
-#include <vector>
-#include <random>
+namespace mwr {
+namespace publishers {
 
-std::vector<std::string> args;
+class stream : public publisher
+{
+protected:
+    ostream& os;
 
-std::string get_resource_path(const std::string& name) {
-    if (args.size() < 2) {
-        ADD_FAILURE() << "test resource path information not provided";
-        std::abort();
-    }
+    virtual void publish(const logmsg& msg) override;
 
-    return args[1] + "/" + name;
-}
+public:
+    stream(ostream& os);
+    virtual ~stream();
+};
 
-int main(int argc, char** argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    for (int i = 0; i < argc; i++)
-        args.push_back(argv[i]);
-    return RUN_ALL_TESTS();
-}
+} // namespace publishers
+} // namespace mwr
 
 #endif
