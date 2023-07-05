@@ -1,6 +1,6 @@
  ##############################################################################
  #                                                                            #
- # Copyright (C) 2022 MachineWare GmbH                                        #
+ # Copyright (C) 2023 MachineWare GmbH                                        #
  # All Rights Reserved                                                        #
  #                                                                            #
  # This is work is licensed under the terms described in the LICENSE file     #
@@ -9,7 +9,7 @@
  ##############################################################################
 
 cmake_minimum_required(VERSION 3.11)
-project(mwr VERSION 2023.06.17 LANGUAGES CXX)
+project(mwr VERSION 2023.07.05 LANGUAGES CXX)
 
 set(MWR_LINTER "" CACHE STRING "Code linter to use")
 set(MWR_COVERAGE OFF CACHE BOOL "Collect code coverage data")
