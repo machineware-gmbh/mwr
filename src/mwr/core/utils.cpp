@@ -280,6 +280,13 @@ double timestamp() {
     return tp.tv_sec + tp.tv_nsec * 1e-9;
 }
 
+u64 timestamp_ms() {
+    struct timespec tp = {};
+    if (clock_gettime(CLOCK_MONOTONIC, &tp))
+        MWR_ERROR("cannot read clock: %s (%d)", strerror(errno), errno);
+    return (u64)tp.tv_sec * 1000ull + (u64)tp.tv_nsec / 1000000ull;
+}
+
 u64 timestamp_us() {
     struct timespec tp = {};
     if (clock_gettime(CLOCK_MONOTONIC, &tp))

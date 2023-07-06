@@ -13,8 +13,8 @@
 namespace mwr {
 
 MWR_DECL_WEAK mwr::u64 log_time() {
-    static mwr::u64 start = mwr::timestamp_ns();
-    return mwr::timestamp_ns() - start;
+    static mwr::u64 start = mwr::timestamp_ms();
+    return (mwr::timestamp_ms() - start) * 1000000;
 }
 
 bool publisher::print_timestamp = true;
