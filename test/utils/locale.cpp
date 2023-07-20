@@ -20,8 +20,11 @@ TEST(locale, guard) {
     {
         locale_guard guard(LC_ALL, "en_US.UTF-8");
         EXPECT_STREQ(guard.saved, "C");
-        EXPECT_STREQ(std::setlocale(LC_ALL, NULL), "en_US.UTF-8");
-        EXPECT_EQ(mkstr("%'d", 1000), "1,000");
+
+        // en_US.UTF-8 might not be installed, just expect when it is available
+        if (strcmp(std::setlocale(LC_ALL, NULL), "en_US.UTF-8") == 0) {
+            EXPECT_EQ(mkstr("%'d", 1000), "1,000");
+        }
     }
 
     EXPECT_STREQ(std::setlocale(LC_ALL, NULL), "C");
