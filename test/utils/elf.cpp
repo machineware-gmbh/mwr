@@ -38,7 +38,7 @@ TEST(elf32, segments) {
     EXPECT_TRUE(reader.is_little_endian());
 
     auto segments = reader.segments();
-    EXPECT_EQ(segments.size(), 4);
+    ASSERT_EQ(segments.size(), 4);
 
     EXPECT_EQ(segments[0].size, 0x204);
     EXPECT_TRUE(segments[0].r);
@@ -67,7 +67,7 @@ TEST(elf64, segments) {
     EXPECT_TRUE(reader.is_little_endian());
 
     auto segments = reader.segments();
-    EXPECT_EQ(segments.size(), 4);
+    ASSERT_EQ(segments.size(), 4);
 
     EXPECT_EQ(segments[0].size, 0x27c);
     EXPECT_TRUE(segments[0].r);

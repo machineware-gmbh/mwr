@@ -68,9 +68,8 @@ struct elf64_traits {
 };
 
 template <typename T>
-static vector<elf::segment> elf_segments(Elf* elf) {
+static vector<elf::segment> read_segments(Elf* elf) {
     size_t count = 0;
-
     int err = elf_getphdrnum(elf, &count);
     if (err)
         MWR_ERROR("elf_begin failed: %s", elf_errmsg(err));
@@ -90,8 +89,10 @@ static vector<elf::segment> elf_segments(Elf* elf) {
     return segments;
 }
 
-template <typename T, typename ELF>
-inline void elf::read_sections(ELF* elf) {
+template <typename T>
+static vector<elf::symbol> read_symbols(Elf* elf) {
+    vector<elf::symbol> symbols;
+
     Elf_Scn* scn = nullptr;
     while ((scn = elf_nextscn(elf, scn)) != nullptr) {
         typename T::Elf_Shdr* shdr = T::elf_getshdr(scn);
@@ -110,15 +111,17 @@ inline void elf::read_sections(ELF* elf) {
             elf::symbol symbol;
             symbol.size = syms[i].st_size;
             symbol.virt = syms[i].st_value;
-            symbol.phys = to_phys(symbol.virt);
+            symbol.phys = ~0ull; // will be patched later
             symbol.kind = get_kind(syms[i].st_info);
             symbol.bind = get_bind(syms[i].st_info);
             symbol.name = string(str);
 
-            if (symbol.kind != KIND_NONE)
-                m_symbols.push_back(symbol);
+            if (symbol.kind != elf::KIND_NONE)
+                symbols.push_back(symbol);
         }
     }
+
+    return symbols;
 }
 
 u64 elf::to_phys(u64 virt) const {
@@ -142,7 +145,7 @@ elf::elf(const string& path):
     m_fd(-1),
     m_entry(0),
     m_big_endian(false),
-    m_machine(EM_NONE),
+    m_machine(NONE),
     m_symbols(),
     m_segments() {
     if (elf_version(EV_CURRENT) == EV_NONE)
@@ -163,24 +166,27 @@ elf::elf(const string& path):
     Elf64_Ehdr* ehdr64 = elf64_getehdr(elf);
 
     if (ehdr32) {
-        m_elf_class64 = false;
+        m_asize = 4;
         m_entry = ehdr32->e_entry;
-        m_machine = ehdr32->e_machine;
+        m_machine = (elf_machine)ehdr32->e_machine;
         m_big_endian = ehdr32->e_ident[EI_DATA] == ELFDATA2MSB;
-        m_segments = elf_segments<elf32_traits>(elf);
-        read_sections<elf32_traits>(elf);
+        m_segments = read_segments<elf32_traits>(elf);
+        m_symbols = read_symbols<elf32_traits>(elf);
     } else if (ehdr64) {
-        m_elf_class64 = true;
+        m_asize = 8;
         m_entry = ehdr64->e_entry;
-        m_segments = elf_segments<elf64_traits>(elf);
-        m_machine = ehdr64->e_machine;
+        m_machine = (elf_machine)ehdr64->e_machine;
         m_big_endian = ehdr64->e_ident[EI_DATA] == ELFDATA2MSB;
-        read_sections<elf64_traits>(elf);
+        m_segments = read_segments<elf64_traits>(elf);
+        m_symbols = read_symbols<elf64_traits>(elf);
     } else {
         MWR_ERROR("unable to determine elf class: %s", filename());
     }
 
     elf_end(elf);
+
+    for (auto& sym : m_symbols)
+        sym.phys = to_phys(sym.virt);
 }
 
 elf::~elf() {
@@ -191,13 +197,13 @@ elf::~elf() {
 u64 elf::read_segment(const segment& seg, u8* dest) {
     MWR_ERROR_ON(m_fd < 0, "ELF file '%s' not open", filename());
 
-    if (lseek(m_fd, seg.offset, SEEK_SET) != (ssize_t)seg.offset)
+    if (fd_seek(m_fd, seg.offset) != seg.offset)
         MWR_ERROR("cannot seek within ELF file '%s'", filename());
 
     if (fd_read(m_fd, dest, seg.filesz) != seg.filesz)
         MWR_ERROR("cannot read ELF file '%s'", filename());
 
-    if (lseek(m_fd, 0, SEEK_SET) != 0)
+    if (fd_seek(m_fd, 0) != 0u)
         MWR_ERROR("cannot seek within ELF file '%s'", filename());
 
     if (seg.filesz < seg.size)

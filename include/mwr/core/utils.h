@@ -42,6 +42,10 @@ size_t fd_peek(int fd, time_t timeout_ms = 0);
 size_t fd_read(int fd, void* buffer, size_t buflen);
 size_t fd_write(int fd, const void* buffer, size_t buflen);
 
+size_t fd_seek(int fd, size_t pos);
+size_t fd_seek_cur(int fd, off_t pos);
+size_t fd_seek_end(int fd, off_t pos);
+
 double timestamp();
 u64 timestamp_ms();
 u64 timestamp_us();

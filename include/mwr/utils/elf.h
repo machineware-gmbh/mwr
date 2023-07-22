@@ -74,12 +74,12 @@ public:
     const char* filename() const { return m_filename.c_str(); }
 
     u64 entry() const { return m_entry; }
-    u16 machine() const { return m_machine; }
+    elf_machine machine() const { return m_machine; }
 
     bool is_big_endian() const { return m_big_endian; }
     bool is_little_endian() const { return !is_big_endian(); }
 
-    bool is_64bit() const { return m_elf_class64; }
+    bool is_64bit() const { return m_asize == 8; }
     bool is_32bit() const { return !is_64bit(); }
 
     const vector<segment>& segments() const { return m_segments; }
@@ -98,14 +98,11 @@ private:
     int m_fd;
     u64 m_entry;
     bool m_big_endian;
-    bool m_elf_class64;
-    u8 m_machine;
+    size_t m_asize;
+    elf_machine m_machine;
 
     vector<symbol> m_symbols;
     vector<segment> m_segments;
-
-    template <typename TRAITS, typename ELF>
-    void read_sections(ELF* elf);
 
     u64 to_phys(u64 virt) const;
 

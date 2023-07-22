@@ -274,6 +274,18 @@ size_t fd_write(int fd, const void* buffer, size_t buflen) {
     return written;
 }
 
+size_t fd_seek(int fd, size_t pos) {
+    return (size_t)lseek(fd, pos, SEEK_SET);
+}
+
+size_t fd_seek_cur(int fd, off_t pos) {
+    return (size_t)lseek(fd, pos, SEEK_CUR);
+}
+
+size_t fd_seek_end(int fd, off_t pos) {
+    return (size_t)lseek(fd, pos, SEEK_END);
+}
+
 double timestamp() {
     struct timespec tp;
     clock_gettime(CLOCK_MONOTONIC, &tp);
