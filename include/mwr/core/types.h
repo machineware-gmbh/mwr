@@ -195,14 +195,6 @@ struct narrow<f64> {
 using std::min;
 using std::max;
 
-using ::clock_t;
-
-const clock_t Hz = 1;           // NOLINT(readability-identifier-naming)
-const clock_t kHz = 1000 * Hz;  // NOLINT(readability-identifier-naming)
-const clock_t MHz = 1000 * kHz; // NOLINT(readability-identifier-naming)
-const clock_t GHz = 1000 * MHz; // NOLINT(readability-identifier-naming)
-const clock_t THz = 1000 * GHz; // NOLINT(readability-identifier-naming)
-
 using std::size_t;
 
 const size_t KiB = 1024;       // NOLINT(readability-identifier-naming)
@@ -210,7 +202,13 @@ const size_t MiB = 1024 * KiB; // NOLINT(readability-identifier-naming)
 const size_t GiB = 1024 * MiB; // NOLINT(readability-identifier-naming)
 const size_t TiB = 1024 * GiB; // NOLINT(readability-identifier-naming)
 
-typedef ::id_t id_t;
+using hz_t = size_t;
+
+const hz_t Hz = 1;           // NOLINT(readability-identifier-naming)
+const hz_t kHz = 1000 * Hz;  // NOLINT(readability-identifier-naming)
+const hz_t MHz = 1000 * kHz; // NOLINT(readability-identifier-naming)
+const hz_t GHz = 1000 * MHz; // NOLINT(readability-identifier-naming)
+const hz_t THz = 1000 * GHz; // NOLINT(readability-identifier-naming)
 
 } // namespace mwr
 
