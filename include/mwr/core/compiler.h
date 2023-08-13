@@ -17,20 +17,47 @@
 #define MWR_CPLUSPLUS_17 201703L
 #define MWR_CPLUSPLUS_20 202002L
 
+#ifndef _MSC_VER
 #define MWR_DECL_ALIGN(n)     __attribute__((aligned(n)))
-#define MWR_DECL_PACKED       __attribute__((packed))
 #define MWR_DECL_PRINTF(s, a) __attribute__((format(printf, s, a)))
-#define MWR_DECL_CONSTRUCTOR  __attribute__((constructor))
-#define MWR_DECL_DESTRUCTOR   __attribute__((destructor))
-#define MWR_DECL_WEAK         __attribute__((weak))
-#define MWR_DECL_USED         __attribute__((used))
-#define MWR_DECL_UNUSED       __attribute__((unused))
 #define MWR_DECL_INLINE       __attribute__((always_inline))
 #define MWR_DECL_NOINLINE     __attribute__((noinline))
 #define MWR_DECL_NORETURN     __attribute__((noreturn))
 #define MWR_DECL_DEPRECATED   __attribute__((deprecated))
+#else
+#define MWR_DECL_ALIGN(n)     __declspec(align(n))
+#define MWR_DECL_PRINTF(s, a) /* MSVC does not support this */
+#define MWR_DECL_INLINE       __declspec(inline)
+#define MWR_DECL_NOINLINE     __declspec(noinline)
+#define MWR_DECL_NORETURN     __declspec(noreturn)
+#define MWR_DECL_DEPRECATED   __declspec(deprecated)
+#endif
 
+#define MWR_CONSTRUCTOR(fn) \
+    static void fn();       \
+    struct fn##_t {         \
+        fn##_t() {          \
+            fn();           \
+        }                   \
+    };                      \
+    static fn##_t g_##fn;   \
+    static void fn()
+
+#define MWR_DESTRUCTOR(fn) \
+    static void fn();      \
+    struct fn##_t {        \
+        ~fn##_t() {        \
+            fn();          \
+        }                  \
+    };                     \
+    static fn##_t g_##fn;  \
+    static void fn()
+
+#ifndef _MSC_VER
 #define MWR_UNREACHABLE __builtin_unreachable()
+#else
+#define MWR_UNREACHABLE __assume(0)
+#endif
 
 #define MWR_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
@@ -44,12 +71,20 @@ namespace mwr {
 
 template <typename T>
 constexpr int likely(const T& x) {
+#ifndef _MSC_VER
     return __builtin_expect(!!(x), 1);
+#else
+    return !!(x);
+#endif
 }
 
 template <typename T>
 constexpr int unlikely(const T& x) {
+#ifndef _MSC_VER
     return __builtin_expect(!!(x), 0);
+#else
+    return !!(x);
+#endif
 }
 
 } // namespace mwr

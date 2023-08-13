@@ -13,13 +13,21 @@
 
 #include <algorithm>
 
+#ifdef _MSC_VER
+#include <Windows.h>
+#endif
+
 #include "mwr/core/types.h"
 #include "mwr/core/report.h"
 
 namespace mwr {
 
 inline void barrier() {
+#ifndef _MSC_VER
     asm volatile("" : : : "memory");
+#else
+    _ReadWriteBarrier();
+#endif
 }
 
 inline void read_once(void* dest, const void* src, size_t n) {
@@ -68,7 +76,8 @@ template <typename T>
 inline T read_once(const void* src) {
     T val = 0;
     read_once(&val, src, sizeof(T));
-    return val;
+    return 
+        val;
 }
 
 template <typename T>
@@ -78,8 +87,12 @@ inline void write_once(void* dest, const T& val) {
 
 template <typename T, typename T2 = T, typename T3 = T>
 bool atomic_cmpxchg(T* ptr, T2 cmp, T3 val) {
+#ifndef _MSC_VER
     const int mo = __ATOMIC_SEQ_CST;
     return __atomic_compare_exchange(ptr, (T*)&cmp, (T*)&val, false, mo, mo);
+#else
+    return _InterlockedCompareExchange(ptr, val, cmp);
+#endif
 }
 
 template <typename T, typename T2 = T>

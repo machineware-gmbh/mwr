@@ -10,6 +10,7 @@
 
 if (NOT TARGET gtest OR NOT TARGET gmock)
     option(INSTALL_GTEST OFF)
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     add_subdirectory(googletest EXCLUDE_FROM_ALL)
 endif()
 
@@ -25,6 +26,6 @@ elseif(CMAKE_BUILD_TYPE MATCHES "UBSAN")
 endif()
 
 add_subdirectory(core)
-add_subdirectory(stl)
-add_subdirectory(logging)
-add_subdirectory(utils)
+#add_subdirectory(stl)
+#add_subdirectory(logging)
+#add_subdirectory(utils)

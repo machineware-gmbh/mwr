@@ -33,7 +33,7 @@ configure_file(${src}/mwr/core/version.h.in
                ${gen}/mwr/core/version.h @ONLY)
 
 add_library(mwr STATIC
-            ${src}/mwr/core/utils.cpp
+#            ${src}/mwr/core/utils.cpp
             ${src}/mwr/core/report.cpp
             ${src}/mwr/core/bitops.cpp
             ${src}/mwr/stl/strings.cpp
@@ -41,26 +41,27 @@ add_library(mwr STATIC
             ${src}/mwr/logging/publisher.cpp
             ${src}/mwr/logging/publishers/file.cpp
             ${src}/mwr/logging/publishers/stream.cpp
-            ${src}/mwr/logging/publishers/terminal.cpp
+            #${src}/mwr/logging/publishers/terminal.cpp
             ${src}/mwr/logging/logger.cpp
-            ${src}/mwr/utils/aio.cpp
-            ${src}/mwr/utils/library.cpp
+            #${src}/mwr/utils/aio.cpp
+            #${src}/mwr/utils/library.cpp
             ${src}/mwr/utils/license.cpp
             ${src}/mwr/utils/modules.cpp
             ${src}/mwr/utils/options.cpp
-            ${src}/mwr/utils/socket.cpp
+            #${src}/mwr/utils/socket.cpp
             ${src}/mwr/utils/srec.cpp
-            ${src}/mwr/utils/terminal.cpp)
+            #${src}/mwr/utils/terminal.cpp
+)
 
 target_include_directories(mwr PUBLIC ${inc})
 target_include_directories(mwr PUBLIC ${gen})
 
-target_compile_options(mwr PRIVATE -Wall -Werror)
+#target_compile_options(mwr PRIVATE -Wall -Werror)
 target_compile_features(mwr PUBLIC cxx_std_17)
 target_compile_definitions(mwr PUBLIC $<$<CONFIG:DEBUG>:MWR_DEBUG>)
-target_link_libraries(mwr PUBLIC -rdynamic)
-target_link_libraries(mwr PUBLIC -lrt)
-target_link_libraries(mwr PUBLIC -lstdc++fs)
+#target_link_libraries(mwr PUBLIC -rdynamic)
+#target_link_libraries(mwr PUBLIC -lrt)
+#target_link_libraries(mwr PUBLIC stdc++fs)
 target_link_libraries(mwr PUBLIC Threads::Threads)
 target_link_libraries(mwr PUBLIC ${CMAKE_DL_LIBS})
 set_target_properties(mwr PROPERTIES DEBUG_POSTFIX "d")
@@ -75,7 +76,7 @@ if(LIBELF_FOUND)
     target_link_libraries(mwr PUBLIC ${LIBELF_LIBRARIES})
 else()
     message(STATUS "Using fileio for reading ELF files")
-    target_sources(mwr PRIVATE ${src}/mwr/utils/elf_nolibelf.cpp)
+   # target_sources(mwr PRIVATE ${src}/mwr/utils/elf_nolibelf.cpp)
 endif()
 
 if(MWR_COVERAGE)

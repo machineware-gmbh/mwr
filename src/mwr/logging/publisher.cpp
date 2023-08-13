@@ -12,11 +12,7 @@
 
 namespace mwr {
 
-MWR_DECL_WEAK mwr::u64 log_time() {
-    static mwr::u64 start = mwr::timestamp_ms();
-    return (mwr::timestamp_ms() - start) * 1000000;
-}
-
+u64 (*publisher::current_timestamp)() = nullptr;
 bool publisher::print_timestamp = true;
 bool publisher::print_sender = true;
 bool publisher::print_source = false;
@@ -59,8 +55,19 @@ ostream& operator<<(ostream& os, const logmsg& msg) {
     return os;
 }
 
+static u64 current_timestamp() {
+    if (publisher::current_timestamp)
+        return publisher::current_timestamp();
+    static mwr::u64 start = mwr::timestamp_ms();
+    return (mwr::timestamp_ms() - start) * 1000000;
+}
+
 logmsg::logmsg(log_level lvl, const string& s):
-    level(lvl), timestamp(log_time()), sender(s), source({ "", -1 }), lines() {
+    level(lvl),
+    timestamp(current_timestamp()),
+    sender(s),
+    source({ "", -1 }),
+    lines() {
 }
 
 void publisher::register_publisher() {
