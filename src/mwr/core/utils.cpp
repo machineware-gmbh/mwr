@@ -132,7 +132,6 @@ string username() {
 
 vector<string> backtrace(size_t frames, size_t skip) {
     vector<string> sv;
-
  #ifdef __linux__
     void* symbols[frames + skip];
     size_t size = (size_t)::backtrace(symbols, frames + skip);
@@ -177,7 +176,6 @@ vector<string> backtrace(size_t frames, size_t skip) {
     free(names);
     free(dmbuf);
 #endif
-
     return sv;
 }
 
