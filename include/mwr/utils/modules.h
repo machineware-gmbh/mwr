@@ -35,6 +35,7 @@ struct module {
     module(string name, string license, size_t version, size_t version_major,
            size_t version_minor, size_t version_patch, string version_string,
            string git_rev, string git_rev_short);
+    ~module() { std::cout << "destroying " << name << std::endl; }
 };
 
 ostream& operator<<(ostream& os, const module& mod);
