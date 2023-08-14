@@ -22,11 +22,11 @@ TEST(bitops, extract32) {
 }
 
 TEST(bitops, extract64) {
-    EXPECT_EQ(extract(0b01011001ul, 3, 2), 0b11ul);
-    EXPECT_EQ(extract(0b11000110ul, 2, 3), 0b001ul);
-    EXPECT_EQ(extract(0b10100000ul, 5, 3), 0b101ul);
-    EXPECT_EQ(extract(0b11111111ul, 0, 0), 0);
-    EXPECT_EQ(extract(0b11111111ul, 63, 0), 0);
+    EXPECT_EQ(extract(0b01011001ull, 3, 2), 0b11ul);
+    EXPECT_EQ(extract(0b11000110ull, 2, 3), 0b001ul);
+    EXPECT_EQ(extract(0b10100000ull, 5, 3), 0b101ul);
+    EXPECT_EQ(extract(0b11111111ull, 0, 0), 0);
+    EXPECT_EQ(extract(0b11111111ull, 63, 0), 0);
 }
 
 TEST(bitops, deposit32) {
@@ -36,9 +36,9 @@ TEST(bitops, deposit32) {
 }
 
 TEST(bitops, deposit64) {
-    EXPECT_EQ(deposit(0ul, 3, 2, 0b101), 0b1000ul);
-    EXPECT_EQ(deposit(0ul, 2, 3, 0b101), 0b10100ul);
-    EXPECT_EQ(deposit(0ul, 5, 3, 0b101), 0b10100000ul);
+    EXPECT_EQ(deposit(0ull, 3, 2, 0b101), 0b1000ul);
+    EXPECT_EQ(deposit(0ull, 2, 3, 0b101), 0b10100ul);
+    EXPECT_EQ(deposit(0ull, 5, 3, 0b101), 0b10100000ul);
 }
 
 typedef field<0, 3, u32> TEST_FIELD1;

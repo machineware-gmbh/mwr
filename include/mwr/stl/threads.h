@@ -30,6 +30,10 @@ using std::lock_guard;
 string get_thread_name(const thread& t = std::thread());
 bool set_thread_name(thread& t, const string& name);
 
+void sleep(unsigned long long seconds);
+void usleep(unsigned long long microseconds);
+void nanosleep(unsigned long long nanoseconds);
+
 } // namespace mwr
 
 #endif

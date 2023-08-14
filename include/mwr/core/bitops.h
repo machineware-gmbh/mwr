@@ -11,6 +11,10 @@
 #ifndef MWR_BITOPS_H
 #define MWR_BITOPS_H
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 #include <limits.h>
 #include <type_traits>
 
@@ -30,12 +34,20 @@ constexpr size_t width_of(const T& val) {
 
 template <typename T>
 constexpr size_t popcnt(const T& val) {
+#ifndef _MSC_VER
     return __builtin_popcountll((unsigned long long)val);
+#else
+    return __popcnt64((unsigned long long)val);
+#endif
 }
 
 template <typename T>
 constexpr size_t parity(const T& val) {
+#ifndef _MSC_VER
     return __builtin_parityll((unsigned long long)val);
+#else
+    return popcnt(val) & 1ull;
+#endif
 }
 
 template <typename T>
@@ -55,22 +67,34 @@ constexpr bool is_aligned(T addr, size_t size) {
 
 template <typename T>
 constexpr size_t ctz(const T& val) { // count trailing zeroes
+#ifndef _MSC_VER
     return val ? __builtin_ctzll(val) : width_of(val);
+#else
+    return val ? _tzcnt_u64(val) : width_of(val);
+#endif
 }
 
 template <typename T>
 constexpr size_t clz(const T& val) { // count leading zeroes
+#ifndef _MSC_VER
     return val ? __builtin_clzll(val) - (64 - width_of(val)) : width_of(val);
+#else
+    return val ? __lzcnt64(val) - (64 - width_of(val)) : width_of(val);
+#endif
 }
 
 template <typename T>
 constexpr int ffs(const T& val) {
+#ifndef _MSC_VER
     return __builtin_ffsll(val) - 1;
+#else
+    return val ? (int)ctz(val) : -1;
+#endif
 }
 
 template <typename T>
 constexpr int fls(T val) {
-    return width_of(val) - clz(val) - 1;
+    return (int)width_of(val) - (int)clz(val) - 1;
 }
 
 template <typename T>
@@ -94,7 +118,7 @@ constexpr bool is_pow2(const T& val) {
 
 template <typename T>
 constexpr int log2i(T val) {
-    return ctz(val); // value must be power of two
+    return (int)ctz(val); // value must be power of two
 }
 
 constexpr u64 bit(size_t offset) {
@@ -185,7 +209,7 @@ constexpr int encode_size(T val) {
         return 32;
     if (fits<T, typename traits::t64>(val))
         return 64;
-    return width_of(val);
+    return (int)width_of(val);
 }
 
 extern const u8 BITREV_TABLE[256];

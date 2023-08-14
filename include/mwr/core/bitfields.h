@@ -34,7 +34,7 @@ constexpr RET sextract(T val, size_t start, size_t w) {
 template <typename T, typename T2>
 constexpr T deposit(T val, size_t start, size_t width, T2 in) {
     assert(start + width <= width_of(val) && "bit range exceeded");
-    const T mask = bitmask(width, start);
+    const T mask = (T)bitmask(width, start);
     return (val & ~mask) | (((T)in << start) & mask);
 }
 
