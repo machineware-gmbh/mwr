@@ -100,9 +100,8 @@ inline bool atomic_cmpxchg(T* ptr, T2 expected, T3 desired) {
         return _InterlockedCompareExchange((volatile long*)ptr, (long)desired,
                                            (long)expected);
     if constexpr (sizeof(T) == sizeof(long long))
-        return _InterlockedCompareExchange64((volatile long long*)ptr, 
-                                             (long long)desired, 
-                                             (long long)expected);
+        return _InterlockedCompareExchange64(
+            (volatile long long*)ptr, (long long)desired, (long long)expected);
     MWR_UNREACHABLE;
 #endif
 }
@@ -170,7 +169,8 @@ static T atomic_add(T* mem, T2 val) {
     if constexpr (sizeof(T) == sizeof(long))
         return _InterlockedExchangeAdd((volatile long*)mem, (long)val);
     if constexpr (sizeof(T) == sizeof(long long))
-        return _InterlockedExchangeAdd64((volatile long long*)mem, (long long)val);
+        return _InterlockedExchangeAdd64((volatile long long*)mem,
+                                         (long long)val);
     MWR_UNREACHABLE;
 #endif
 }
@@ -209,7 +209,8 @@ inline T atomic_swap(T* mem, T2 val) {
     if constexpr (sizeof(T) == sizeof(long))
         return _InterlockedExchange((volatile long*)mem, (long)val);
     if constexpr (sizeof(T) == sizeof(long long))
-        return _InterlockedExchange64((volatile long long*)mem, (long long)val);
+        return _InterlockedExchange64((volatile long long*)mem,
+                                      (long long)val);
     MWR_UNREACHABLE;
 #endif
 }

@@ -17,7 +17,7 @@ TEST(threads, name) {
     atomic<bool> exitreq = false;
     thread t([&]() -> void {
         while (!exitreq)
-            usleep(1);
+            mwr::usleep(1);
     });
 
     ASSERT_TRUE(set_thread_name(t, "test_thread"));
