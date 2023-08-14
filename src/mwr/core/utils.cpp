@@ -15,10 +15,13 @@
 
 #include <string.h>
 #include <signal.h>
-#include <unistd.h>
 #include <limits.h>
+
+#ifdef __linux__
+#include <unistd.h>
 #include <execinfo.h>
 #include <cxxabi.h>
+#endif
 
 #include <filesystem>
 
@@ -80,10 +83,14 @@ string filename_noext(const string& path) {
 }
 
 string curr_dir() {
+#ifdef __linux__
     char path[PATH_MAX];
     if (getcwd(path, sizeof(path)) != path)
         MWR_ERROR("cannot read current directory: %s", strerror(errno));
     return string(path);
+#else
+    return "";
+#endif
 }
 
 string temp_dir() {
@@ -95,6 +102,7 @@ string temp_dir() {
 }
 
 string progname() {
+#ifdef __linux__
     char path[PATH_MAX];
     ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
 
@@ -103,9 +111,13 @@ string progname() {
 
     path[len] = '\0';
     return path;
+#else
+    return "unknown";
+#endif
 }
 
 string username() {
+#ifdef __linux__
     char uname[256] = {};
     if (getlogin_r(uname, sizeof(uname) - 1) == 0)
         return uname;
@@ -113,6 +125,7 @@ string username() {
     const char* envuser = getenv("USER");
     if (envuser)
         return envuser;
+#endif
 
     return "unknown";
 }
@@ -120,6 +133,7 @@ string username() {
 vector<string> backtrace(size_t frames, size_t skip) {
     vector<string> sv;
 
+ #ifdef __linux__
     void* symbols[frames + skip];
     size_t size = (size_t)::backtrace(symbols, frames + skip);
     if (size <= skip)
@@ -162,6 +176,7 @@ vector<string> backtrace(size_t frames, size_t skip) {
 
     free(names);
     free(dmbuf);
+#endif
 
     return sv;
 }

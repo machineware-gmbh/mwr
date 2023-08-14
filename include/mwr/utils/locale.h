@@ -12,18 +12,19 @@
 #define MWR_UTILS_LOCALE_H
 
 #include <clocale>
+#include <string>
 
 namespace mwr {
 
 struct locale_guard {
     int cat;
-    char* saved;
+    std::string saved;
 
     locale_guard(int category, const char* locale):
         cat(category), saved(std::setlocale(category, NULL)) {
         std::setlocale(category, locale);
     }
-    ~locale_guard() { std::setlocale(cat, saved); }
+    ~locale_guard() { std::setlocale(cat, saved.c_str()); }
 };
 
 } // namespace mwr

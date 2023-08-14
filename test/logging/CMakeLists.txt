@@ -19,5 +19,5 @@ macro(logging_test test)
     set_tests_properties(logging/${test} PROPERTIES TIMEOUT 4)
 endmacro()
 
-logging_test(levels)
-logging_test(publisher)
+#logging_test(levels)
+#logging_test(publisher)

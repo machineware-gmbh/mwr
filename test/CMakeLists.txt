@@ -27,5 +27,5 @@ endif()
 
 add_subdirectory(core)
 add_subdirectory(stl)
-#add_subdirectory(logging)
-#add_subdirectory(utils)
+add_subdirectory(logging)
+add_subdirectory(utils)

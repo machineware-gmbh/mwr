@@ -11,22 +11,23 @@
 #ifndef MWR_ATOMICS_H
 #define MWR_ATOMICS_H
 
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
-
 #include <algorithm>
 
+#include "mwr/core/compiler.h"
 #include "mwr/core/types.h"
 #include "mwr/core/report.h"
+
+#ifdef GCC_MSVC
+#include <intrin.h>
+#endif
 
 namespace mwr {
 
 inline void barrier() {
-#ifndef _MSC_VER
-    asm volatile("" : : : "memory");
-#else
+#ifdef MWR_MSVC
     _ReadWriteBarrier();
+#else
+    asm volatile("" : : : "memory");
 #endif
 }
 
@@ -86,7 +87,7 @@ inline void write_once(void* dest, const T& val) {
 
 template <typename T, typename T2 = T, typename T3 = T>
 inline bool atomic_cmpxchg(T* ptr, T2 expected, T3 desired) {
-#ifndef _MSC_VER
+#ifndef MWR_MSVC
     return __atomic_compare_exchange(ptr, (T*)&expected, (T*)&desired, false,
                                      __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 #else
@@ -108,7 +109,7 @@ inline bool atomic_cmpxchg(T* ptr, T2 expected, T3 desired) {
 
 template <typename T, typename T2 = T>
 inline T atomic_or(T* mem, T2 val) {
-#ifndef _MSC_VER
+#ifndef MWR_MSVC
     return __atomic_fetch_or(mem, (T)val, __ATOMIC_SEQ_CST);
 #else
     if constexpr (sizeof(T) == sizeof(char))
@@ -125,7 +126,7 @@ inline T atomic_or(T* mem, T2 val) {
 
 template <typename T, typename T2 = T>
 inline T atomic_xor(T* mem, T2 val) {
-#ifndef _MSC_VER
+#ifndef MWR_MSVC
     return __atomic_fetch_xor(mem, (T)val, __ATOMIC_SEQ_CST);
 #else
     if constexpr (sizeof(T) == sizeof(char))
@@ -142,7 +143,7 @@ inline T atomic_xor(T* mem, T2 val) {
 
 template <typename T, typename T2 = T>
 inline T atomic_and(T* mem, T2 val) {
-#ifndef _MSC_VER
+#ifndef MWR_MSVC
     return __atomic_fetch_and(mem, (T)val, __ATOMIC_SEQ_CST);
 #else
     if constexpr (sizeof(T) == sizeof(char))
@@ -159,7 +160,7 @@ inline T atomic_and(T* mem, T2 val) {
 
 template <typename T, typename T2 = T>
 static T atomic_add(T* mem, T2 val) {
-#ifndef _MSC_VER
+#ifndef MWR_MSVC
     return __atomic_fetch_add(mem, (T)val, __ATOMIC_SEQ_CST);
 #else
     if constexpr (sizeof(T) == sizeof(char))
@@ -199,7 +200,7 @@ inline T atomic_max(T* mem, T2 val) {
 
 template <typename T, typename T2 = T>
 inline T atomic_swap(T* mem, T2 val) {
-#ifndef _MSC_VER
+#ifndef MWR_MSVC
     return __atomic_exchange_n(mem, (T2)val, __ATOMIC_SEQ_CST);
 #else
     if constexpr (sizeof(T) == sizeof(char))

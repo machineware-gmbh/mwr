@@ -11,14 +11,15 @@
 #ifndef MWR_BITOPS_H
 #define MWR_BITOPS_H
 
-#ifdef _MSC_VER
+#include "mwr/core/compiler.h"
+#include "mwr/core/types.h"
+
+#ifdef MWR_MSVC
 #include <intrin.h>
 #endif
 
 #include <limits.h>
 #include <type_traits>
-
-#include "mwr/core/types.h"
 
 namespace mwr {
 
@@ -34,7 +35,7 @@ constexpr size_t width_of(const T& val) {
 
 template <typename T>
 constexpr size_t popcnt(const T& val) {
-#ifndef _MSC_VER
+#ifndef MWR_MSVC
     return __builtin_popcountll((unsigned long long)val);
 #else
     return __popcnt64((unsigned long long)val);
@@ -43,7 +44,7 @@ constexpr size_t popcnt(const T& val) {
 
 template <typename T>
 constexpr size_t parity(const T& val) {
-#ifndef _MSC_VER
+#ifndef MWR_MSVC
     return __builtin_parityll((unsigned long long)val);
 #else
     return popcnt(val) & 1ull;
@@ -67,7 +68,7 @@ constexpr bool is_aligned(T addr, size_t size) {
 
 template <typename T>
 constexpr size_t ctz(const T& val) { // count trailing zeroes
-#ifndef _MSC_VER
+#ifndef MWR_MSVC
     return val ? __builtin_ctzll(val) : width_of(val);
 #else
     return val ? _tzcnt_u64(val) : width_of(val);
@@ -76,7 +77,7 @@ constexpr size_t ctz(const T& val) { // count trailing zeroes
 
 template <typename T>
 constexpr size_t clz(const T& val) { // count leading zeroes
-#ifndef _MSC_VER
+#ifndef MWR_MSVC
     return val ? __builtin_clzll(val) - (64 - width_of(val)) : width_of(val);
 #else
     return val ? __lzcnt64(val) - (64 - width_of(val)) : width_of(val);
@@ -85,7 +86,7 @@ constexpr size_t clz(const T& val) { // count leading zeroes
 
 template <typename T>
 constexpr int ffs(const T& val) {
-#ifndef _MSC_VER
+#ifndef MWR_MSVC
     return __builtin_ffsll(val) - 1;
 #else
     return val ? (int)ctz(val) : -1;
