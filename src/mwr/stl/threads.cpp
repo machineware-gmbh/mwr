@@ -13,7 +13,6 @@
 
 #ifdef _MSC_VER
 #include <Windows.h>
-#include <codecvt>
 #endif
 
 namespace mwr {
@@ -36,8 +35,13 @@ string get_thread_name(const thread& t) {
     if (FAILED(hr))
         return "unknown";
 
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t> > converter;
-    return converter.to_bytes(name);
+    int len = WideCharToMultiByte(CP_UTF8, 0, name, -1, NULL, 0, NULL, NULL);
+    if (len <= 0)
+        return "unknown";
+
+    string result(len - 1, '\0');
+    WideCharToMultiByte(CP_UTF8, 0, name, -1, &result[0], len, NULL, NULL);
+    return result;
 #else
     return "unknown";
 #endif
@@ -48,9 +52,14 @@ bool set_thread_name(thread& t, const string& nm) {
     MWR_ERROR_ON(nm.length() > 15, "thread name too long: %s", nm.c_str());
     return pthread_setname_np(t.native_handle(), nm.c_str()) == 0;
 #elif defined(_MSC_VER)
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t> > converter;
-    std::wstring wide = converter.from_bytes(nm);
-    auto hr = SetThreadDescription(t.native_handle(), wide.c_str());
+    int len = MultiByteToWideChar(CP_UTF8, 0, nm.c_str(), -1, NULL, 0);
+    if (len <= 0)
+        return false;
+
+    PWSTR wnm = new WCHAR[len];
+    MultiByteToWideChar(CP_UTF8, 0, nm.c_str(), -1, wnm, len);
+    auto hr = SetThreadDescription(t.native_handle(), wnm);
+    delete[] wnm;
     return SUCCEEDED(hr);
 #endif
     return false;
