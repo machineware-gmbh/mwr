@@ -16,16 +16,22 @@
 #include <string.h>
 #include <signal.h>
 #include <limits.h>
+#include <chrono>
+#include <filesystem>
 
-#ifdef __linux__
+namespace chrono = std::chrono;
+namespace fs = std::filesystem;
+
+#ifdef MWR_LINUX
 #include <unistd.h>
 #include <execinfo.h>
 #include <cxxabi.h>
 #endif
 
-#include <filesystem>
-
-namespace fs = std::filesystem;
+#ifdef MWR_WINDOWS
+#include <Windows.h>
+#include <DbgHelp.h>
+#endif
 
 namespace mwr {
 
@@ -57,23 +63,14 @@ bool directory_exists(const string& dir) {
 }
 
 string dirname(const string& path) {
-#ifdef _WIN32
-    const char separator = '\\';
-#else
-    const char separator = '/';
-#endif
-    size_t i = path.rfind(separator, path.length());
-    return (i == string::npos) ? "." : path.substr(0, i);
+    fs::path full(path);
+    string result = full.parent_path().string();
+    return result.empty() ? "." : result;
 }
 
 string filename(const string& path) {
-#ifdef _WIN32
-    const char separator = '\\';
-#else
-    const char separator = '/';
-#endif
-    size_t i = path.rfind(separator, path.length());
-    return (i == string::npos) ? path : path.substr(i + 1);
+    fs::path full(path);
+    return full.filename().string();
 }
 
 string filename_noext(const string& path) {
@@ -83,26 +80,23 @@ string filename_noext(const string& path) {
 }
 
 string curr_dir() {
-#ifdef __linux__
-    char path[PATH_MAX];
-    if (getcwd(path, sizeof(path)) != path)
-        MWR_ERROR("cannot read current directory: %s", strerror(errno));
-    return string(path);
-#else
-    return "";
-#endif
+    auto path = std::filesystem::current_path();
+    return path.string();
 }
 
 string temp_dir() {
-#ifdef _WIN32
-    // ToDo: implement tempdir for windows
-#else
-    return "/tmp/";
+#if defined(MWR_LINUX)
+    return "/tmp";
+#elif defined(MWR_WINDOWS)
+    TCHAR path[MAX_PATH] = {};
+    if (GetTempPath(MAX_PATH, path) == 0)
+        MWR_ERROR("failed to retrieve temp dir");
+    return string(path);
 #endif
 }
 
 string progname() {
-#ifdef __linux__
+#if defined(MWR_LINUX)
     char path[PATH_MAX];
     ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
 
@@ -111,13 +105,16 @@ string progname() {
 
     path[len] = '\0';
     return path;
-#else
-    return "unknown";
+#elif defined(MWR_WINDOWS)
+    TCHAR path[MAX_PATH] = {};
+    if (GetModuleFileName(NULL, path, MAX_PATH) == 0)
+        MWR_ERROR("failed to get the program name");
+    return string(path);
 #endif
 }
 
 string username() {
-#ifdef __linux__
+#if defined(MWR_LINUX)
     char uname[256] = {};
     if (getlogin_r(uname, sizeof(uname) - 1) == 0)
         return uname;
@@ -125,14 +122,20 @@ string username() {
     const char* envuser = getenv("USER");
     if (envuser)
         return envuser;
+#elif defined(MWR_WINDOWS)
+    TCHAR name[MAX_PATH] = {};
+    DWORD namelen = sizeof(name);
+    if (GetUserName(name, &namelen))
+        return string(name);
 #endif
-
-    return "unknown";
+    return "unkown";
 }
 
 vector<string> backtrace(size_t frames, size_t skip) {
     vector<string> sv;
-#ifdef __linux__
+
+#if defined(MWR_LINUX)
+
     void* symbols[frames + skip];
     size_t size = (size_t)::backtrace(symbols, frames + skip);
     if (size <= skip)
@@ -175,11 +178,38 @@ vector<string> backtrace(size_t frames, size_t skip) {
 
     free(names);
     free(dmbuf);
+
+#elif defined(MWR_WINDOWS)
+
+    void* symbols[256];
+    if (frames > MWR_ARRAY_SIZE(symbols))
+        frames = MWR_ARRAY_SIZE(symbols);
+    size_t size = CaptureStackBackTrace((DWORD)skip, (DWORD)frames, symbols, NULL);
+
+    SymInitialize(GetCurrentProcess(), NULL, TRUE);
+    for (size_t i = 0; i < size; i++) {
+        DWORD64 address = (DWORD64)symbols[i];
+        DWORD64 offset = 0;
+
+        char buffer[sizeof(SYMBOL_INFO) + MAX_PATH];
+        SYMBOL_INFO* symbol = (SYMBOL_INFO*)buffer;
+        symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+        symbol->MaxNameLen = MAX_PATH;
+
+        if (SymFromAddr(GetCurrentProcess(), address, &offset, symbol))
+            sv.push_back(mkstr("%s+0x%x", symbol->Name, offset));
+        else
+            sv.push_back(mkstr("<unknown> [%p]", symbols[i]));
+    }
+
 #endif
+
     return sv;
 }
 
 size_t max_backtrace_length = 16;
+
+#ifdef MWR_LINUX
 static struct sigaction oldact;
 
 static void handle_segfault(int sig, siginfo_t* info, void* context) {
@@ -220,6 +250,7 @@ void report_segfaults() {
     if (::sigaction(SIGSEGV, &newact, &oldact) < 0)
         MWR_ERROR("failed to install SIGSEGV signal handler");
 }
+#endif
 
 size_t fd_peek(int fd, time_t timeoutms) {
     if (fd < 0)
@@ -233,8 +264,13 @@ size_t fd_peek(int fd, time_t timeoutms) {
     FD_ZERO(&out);
     FD_ZERO(&err);
 
+#if defined(MWR_LINUX)
     timeout.tv_sec = (timeoutms / 1000ull);
     timeout.tv_usec = (timeoutms % 1000ull) * 1000ull;
+#elif defined(MWR_WINDOWS)
+    timeout.tv_sec = (long)(timeoutms / 1000ul);
+    timeout.tv_usec = (long)(timeoutms % 1000ul) * 1000ul;
+#endif
 
     struct timeval* ptimeout = ~timeoutms ? &timeout : nullptr;
     int ret = select(fd + 1, &in, &out, &err, ptimeout);
@@ -247,6 +283,7 @@ size_t fd_read(int fd, void* buffer, size_t buflen) {
 
     u8* ptr = reinterpret_cast<u8*>(buffer);
 
+#if defined(MWR_LINUX)
     ssize_t len;
     size_t numread = 0;
 
@@ -262,6 +299,8 @@ size_t fd_read(int fd, void* buffer, size_t buflen) {
     }
 
     return numread;
+#endif
+    return 0;
 }
 
 size_t fd_write(int fd, const void* buffer, size_t buflen) {
@@ -270,6 +309,7 @@ size_t fd_write(int fd, const void* buffer, size_t buflen) {
 
     const u8* ptr = reinterpret_cast<const u8*>(buffer);
 
+#if defined(MWR_LINUX)
     ssize_t len;
     size_t written = 0;
 
@@ -285,45 +325,51 @@ size_t fd_write(int fd, const void* buffer, size_t buflen) {
     }
 
     return written;
+#endif
+    return 0;
 }
 
 size_t fd_seek(int fd, size_t pos) {
+#ifdef MWR_LINUX
     return (size_t)lseek(fd, pos, SEEK_SET);
+#endif
+    return 0;
 }
 
 size_t fd_seek_cur(int fd, off_t pos) {
+#if defined(MWR_LINUX)
     return (size_t)lseek(fd, pos, SEEK_CUR);
+#endif
+    return 0;
 }
 
 size_t fd_seek_end(int fd, off_t pos) {
+#if defined(MWR_LINUX)
     return (size_t)lseek(fd, pos, SEEK_END);
+#endif
+    return 0;
 }
 
+static const auto g_start = chrono::steady_clock::now();
+
 double timestamp() {
-    struct timespec tp;
-    clock_gettime(CLOCK_MONOTONIC, &tp);
-    return tp.tv_sec + tp.tv_nsec * 1e-9;
+    chrono::duration<double> delta = chrono::steady_clock::now() - g_start;
+    return delta.count();
 }
 
 u64 timestamp_ms() {
-    struct timespec tp = {};
-    if (clock_gettime(CLOCK_MONOTONIC, &tp))
-        MWR_ERROR("cannot read clock: %s (%d)", strerror(errno), errno);
-    return (u64)tp.tv_sec * 1000ull + (u64)tp.tv_nsec / 1000000ull;
+    auto delta = chrono::steady_clock::now() - g_start;
+    return chrono::duration_cast<chrono::milliseconds>(delta).count();
 }
 
 u64 timestamp_us() {
-    struct timespec tp = {};
-    if (clock_gettime(CLOCK_MONOTONIC, &tp))
-        MWR_ERROR("cannot read clock: %s (%d)", strerror(errno), errno);
-    return (u64)tp.tv_sec * 1000000ull + (u64)tp.tv_nsec / 1000ull;
+    auto delta = chrono::steady_clock::now() - g_start;
+    return chrono::duration_cast<chrono::microseconds>(delta).count();
 }
 
 u64 timestamp_ns() {
-    struct timespec tp = {};
-    if (clock_gettime(CLOCK_MONOTONIC, &tp))
-        MWR_ERROR("cannot read clock: %s (%d)", strerror(errno), errno);
-    return (u64)tp.tv_sec * 1000000000ull + (u64)tp.tv_nsec;
+    auto delta = chrono::steady_clock::now() - g_start;
+    return chrono::duration_cast<chrono::nanoseconds>(delta).count();
 }
 
 } // namespace mwr

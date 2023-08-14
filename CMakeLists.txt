@@ -33,7 +33,7 @@ configure_file(${src}/mwr/core/version.h.in
                ${gen}/mwr/core/version.h @ONLY)
 
 add_library(mwr STATIC
-            #${src}/mwr/core/utils.cpp
+            ${src}/mwr/core/utils.cpp
             ${src}/mwr/core/report.cpp
             ${src}/mwr/core/bitops.cpp
             ${src}/mwr/stl/strings.cpp
@@ -68,6 +68,8 @@ set_target_properties(mwr PROPERTIES SOVERSION "${MWR_VERSION_MAJOR}")
 if(MSVC)
     target_compile_options(mwr PRIVATE /W3 /WX)
     target_link_options(mwr PUBLIC /OPT:NOREF)
+    target_link_libraries(mwr PUBLIC Dbghelp.lib)
+    target_link_libraries(mwr PUBLIC ws2_32)
 else()
     target_compile_options(mwr PRIVATE -Wall -Werror)
     target_link_libraries(mwr PUBLIC -rdynamic rt stdc++fs)
