@@ -65,7 +65,7 @@ public:
 
 #define MWR_DECLARE_MODULE_EX(prefix, name, license, version, major, minor, \
                               patch, verstr, gitrev, shortrev)              \
-    MWR_DECL_WEAK mwr::module MWR_CAT(module_##prefix##_, version)(         \
+    extern const MWR_DECL_WEAK mwr::module MWR_CAT(module_##prefix##_, version)(         \
         name, license, version, major, minor, patch, verstr, gitrev,        \
         shortrev);
 

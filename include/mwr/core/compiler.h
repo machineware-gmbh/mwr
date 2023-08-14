@@ -45,7 +45,7 @@
 #define MWR_DECL_DEPRECATED   __attribute__((deprecated))
 #elif defined(MWR_MSVC)
 #define MWR_DECL_ALIGN(n)     __declspec(align(n))
-#define MWR_DECL_WEAK         /* __declspec(selectany)*/
+#define MWR_DECL_WEAK         __declspec(selectany)
 #define MWR_DECL_PRINTF(s, a) /* MSVC does not support this */
 #define MWR_DECL_INLINE       __declspec(inline)
 #define MWR_DECL_NOINLINE     __declspec(noinline)
