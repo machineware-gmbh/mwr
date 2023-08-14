@@ -11,11 +11,11 @@
 #ifndef MWR_ATOMICS_H
 #define MWR_ATOMICS_H
 
-#include <algorithm>
-
 #ifdef _MSC_VER
-#include <Windows.h>
+#include <intrin.h>
 #endif
+
+#include <algorithm>
 
 #include "mwr/core/types.h"
 #include "mwr/core/report.h"
@@ -76,8 +76,7 @@ template <typename T>
 inline T read_once(const void* src) {
     T val = 0;
     read_once(&val, src, sizeof(T));
-    return 
-        val;
+    return val;
 }
 
 template <typename T>
@@ -86,37 +85,94 @@ inline void write_once(void* dest, const T& val) {
 }
 
 template <typename T, typename T2 = T, typename T3 = T>
-bool atomic_cmpxchg(T* ptr, T2 cmp, T3 val) {
+inline bool atomic_cmpxchg(T* ptr, T2 expected, T3 desired) {
 #ifndef _MSC_VER
-    const int mo = __ATOMIC_SEQ_CST;
-    return __atomic_compare_exchange(ptr, (T*)&cmp, (T*)&val, false, mo, mo);
+    return __atomic_compare_exchange(ptr, (T*)&expected, (T*)&desired, false,
+                                     __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 #else
-    return _InterlockedCompareExchange(ptr, val, cmp);
+    if constexpr (sizeof(T) == sizeof(char))
+        return _InterlockedCompareExchange8((volatile char*)ptr, (char)desired,
+                                            (char)expected);
+    if constexpr (sizeof(T) == sizeof(short))
+        return _InterlockedCompareExchange16((volatile short*)ptr,
+                                             (short)desired, (short)expected);
+    if constexpr (sizeof(T) == sizeof(long))
+        return _InterlockedCompareExchange((volatile long*)ptr, (long)desired,
+                                           (long)expected);
+    if constexpr (sizeof(T) == sizeof(long long))
+        return _InterlockedCompareExchange64((volatile long long*)ptr, 
+                                             (long long)desired, 
+                                             (long long)expected);
+    MWR_UNREACHABLE;
 #endif
 }
 
 template <typename T, typename T2 = T>
 inline T atomic_or(T* mem, T2 val) {
-    const int mo = __ATOMIC_SEQ_CST;
-    return __atomic_fetch_or(mem, (T)val, mo);
+#ifndef _MSC_VER
+    return __atomic_fetch_or(mem, (T)val, __ATOMIC_SEQ_CST);
+#else
+    if constexpr (sizeof(T) == sizeof(char))
+        return _InterlockedOr8((volatile char*)mem, (char)val);
+    if constexpr (sizeof(T) == sizeof(short))
+        return _InterlockedOr16((volatile short*)mem, (short)val);
+    if constexpr (sizeof(T) == sizeof(long))
+        return _InterlockedOr((volatile long*)mem, (long)val);
+    if constexpr (sizeof(T) == sizeof(long long))
+        return _InterlockedOr64((volatile long long*)mem, (long long)val);
+    MWR_UNREACHABLE;
+#endif
 }
 
 template <typename T, typename T2 = T>
 inline T atomic_xor(T* mem, T2 val) {
-    const int mo = __ATOMIC_SEQ_CST;
-    return __atomic_fetch_xor(mem, (T)val, mo);
+#ifndef _MSC_VER
+    return __atomic_fetch_xor(mem, (T)val, __ATOMIC_SEQ_CST);
+#else
+    if constexpr (sizeof(T) == sizeof(char))
+        return _InterlockedXor8((volatile char*)mem, (char)val);
+    if constexpr (sizeof(T) == sizeof(short))
+        return _InterlockedXor16((volatile short*)mem, (short)val);
+    if constexpr (sizeof(T) == sizeof(long))
+        return _InterlockedXor((volatile long*)mem, (long)val);
+    if constexpr (sizeof(T) == sizeof(long long))
+        return _InterlockedXor64((volatile long long*)mem, (long long)val);
+    MWR_UNREACHABLE;
+#endif
 }
 
 template <typename T, typename T2 = T>
 inline T atomic_and(T* mem, T2 val) {
-    const int mo = __ATOMIC_SEQ_CST;
-    return __atomic_fetch_and(mem, (T)val, mo);
+#ifndef _MSC_VER
+    return __atomic_fetch_and(mem, (T)val, __ATOMIC_SEQ_CST);
+#else
+    if constexpr (sizeof(T) == sizeof(char))
+        return _InterlockedAnd8((volatile char*)mem, (char)val);
+    if constexpr (sizeof(T) == sizeof(short))
+        return _InterlockedAnd16((volatile short*)mem, (short)val);
+    if constexpr (sizeof(T) == sizeof(long))
+        return _InterlockedAnd((volatile long*)mem, (long)val);
+    if constexpr (sizeof(T) == sizeof(long long))
+        return _InterlockedAnd64((volatile long long*)mem, (long long)val);
+    MWR_UNREACHABLE;
+#endif
 }
 
 template <typename T, typename T2 = T>
 static T atomic_add(T* mem, T2 val) {
-    const int mo = __ATOMIC_SEQ_CST;
-    return __atomic_fetch_add(mem, (T)val, mo);
+#ifndef _MSC_VER
+    return __atomic_fetch_add(mem, (T)val, __ATOMIC_SEQ_CST);
+#else
+    if constexpr (sizeof(T) == sizeof(char))
+        return _InterlockedExchangeAdd8((volatile char*)mem, (char)val);
+    if constexpr (sizeof(T) == sizeof(short))
+        return _InterlockedExchangeAdd16((volatile short*)mem, (short)val);
+    if constexpr (sizeof(T) == sizeof(long))
+        return _InterlockedExchangeAdd((volatile long*)mem, (long)val);
+    if constexpr (sizeof(T) == sizeof(long long))
+        return _InterlockedExchangeAdd64((volatile long long*)mem, (long long)val);
+    MWR_UNREACHABLE;
+#endif
 }
 
 template <typename T, typename T2 = T>
@@ -143,8 +199,19 @@ inline T atomic_max(T* mem, T2 val) {
 
 template <typename T, typename T2 = T>
 inline T atomic_swap(T* mem, T2 val) {
-    const int mo = __ATOMIC_SEQ_CST;
-    return __atomic_exchange_n(mem, (T2)val, mo);
+#ifndef _MSC_VER
+    return __atomic_exchange_n(mem, (T2)val, __ATOMIC_SEQ_CST);
+#else
+    if constexpr (sizeof(T) == sizeof(char))
+        return _InterlockedExchange8((volatile char*)mem, (char)val);
+    if constexpr (sizeof(T) == sizeof(short))
+        return _InterlockedExchange16((volatile short*)mem, (short)val);
+    if constexpr (sizeof(T) == sizeof(long))
+        return _InterlockedExchange((volatile long*)mem, (long)val);
+    if constexpr (sizeof(T) == sizeof(long long))
+        return _InterlockedExchange64((volatile long long*)mem, (long long)val);
+    MWR_UNREACHABLE;
+#endif
 }
 
 template <typename FN>

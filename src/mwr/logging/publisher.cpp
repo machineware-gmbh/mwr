@@ -147,8 +147,8 @@ void publisher::publish(log_level level, const string& sender,
     if (print_backtrace) {
         const vector<string>& bt = rep.backtrace();
         ss << "Backtrace(" << bt.size() << ")" << std::endl;
-        for (size_t i = bt.size() - 1; i < bt.size(); i--)
-            ss << "#" << i << ": " << bt[i] << std::endl;
+        for (size_t i = bt.size(); i > 0; i--)
+            ss << "#" << i - 1 << ": " << bt[i - 1] << std::endl;
     }
 
     ss << rep.message();
@@ -156,7 +156,7 @@ void publisher::publish(log_level level, const string& sender,
     // always force printing of source locations of reports
     bool print = print_source;
     print_source = true;
-    publish(level, sender, ss.str(), rep.file(), rep.line());
+    publish(level, sender, ss.str(), rep.file(), (int)rep.line());
     print_source = print;
 }
 

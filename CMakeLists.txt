@@ -33,7 +33,7 @@ configure_file(${src}/mwr/core/version.h.in
                ${gen}/mwr/core/version.h @ONLY)
 
 add_library(mwr STATIC
-#            ${src}/mwr/core/utils.cpp
+            #${src}/mwr/core/utils.cpp
             ${src}/mwr/core/report.cpp
             ${src}/mwr/core/bitops.cpp
             ${src}/mwr/stl/strings.cpp
@@ -56,18 +56,21 @@ add_library(mwr STATIC
 target_include_directories(mwr PUBLIC ${inc})
 target_include_directories(mwr PUBLIC ${gen})
 
-#target_compile_options(mwr PRIVATE -Wall -Werror)
 target_compile_features(mwr PUBLIC cxx_std_17)
 target_compile_definitions(mwr PUBLIC $<$<CONFIG:DEBUG>:MWR_DEBUG>)
-#target_link_libraries(mwr PUBLIC -rdynamic)
-#target_link_libraries(mwr PUBLIC -lrt)
-#target_link_libraries(mwr PUBLIC stdc++fs)
 target_link_libraries(mwr PUBLIC Threads::Threads)
 target_link_libraries(mwr PUBLIC ${CMAKE_DL_LIBS})
 set_target_properties(mwr PROPERTIES DEBUG_POSTFIX "d")
 set_target_properties(mwr PROPERTIES CXX_CLANG_TIDY "${MWR_LINTER}")
 set_target_properties(mwr PROPERTIES VERSION "${MWR_VERSION}")
 set_target_properties(mwr PROPERTIES SOVERSION "${MWR_VERSION_MAJOR}")
+
+if(MSVC)
+    target_compile_definitions(mwr PRIVATE /W3 /WX)
+else()
+    target_compile_definitions(mwr PRIVATE -Wall -Werror)
+    target_link_libraries(mwr PUBLIC rdynamic rt stdc++fs)
+endif()
 
 if(LIBELF_FOUND)
     message(STATUS "Using libelf for reading ELF files")

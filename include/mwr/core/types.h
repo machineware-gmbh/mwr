@@ -46,45 +46,29 @@ typedef double f64;
 static_assert(sizeof(f32) == 4, "f32 invalid size");
 static_assert(sizeof(f64) == 8, "f64 invalid size");
 
-enum i8_limits : i8 {
-    I8_MIN = std::numeric_limits<i8>::min(),
-    I8_MAX = std::numeric_limits<i8>::max(),
-};
+constexpr i8 I8_MIN = std::numeric_limits<i8>::min();
+constexpr i8 I8_MAX = std::numeric_limits<i8>::max();
 
-enum i16_limits : i16 {
-    I16_MIN = std::numeric_limits<i16>::min(),
-    I16_MAX = std::numeric_limits<i16>::max(),
-};
+constexpr u8 U8_MIN = std::numeric_limits<u8>::min();
+constexpr u8 U8_MAX = std::numeric_limits<u8>::max();
 
-enum i32_limits : i32 {
-    I32_MIN = std::numeric_limits<i32>::min(),
-    I32_MAX = std::numeric_limits<i32>::max(),
-};
+constexpr i16 I16_MIN = std::numeric_limits<i16>::min();
+constexpr i16 I16_MAX = std::numeric_limits<i16>::max();
 
-enum i64_limits : i64 {
-    I64_MIN = std::numeric_limits<i64>::min(),
-    I64_MAX = std::numeric_limits<i64>::max(),
-};
+constexpr u16 U16_MIN = std::numeric_limits<u16>::min();
+constexpr u16 U16_MAX = std::numeric_limits<u16>::max();
 
-enum u8_limits : u8 {
-    U8_MIN = std::numeric_limits<u8>::min(),
-    U8_MAX = std::numeric_limits<u8>::max(),
-};
+constexpr i32 I32_MIN = std::numeric_limits<i32>::min();
+constexpr i32 I32_MAX = std::numeric_limits<i32>::max();
 
-enum u16_limits : u16 {
-    U16_MIN = std::numeric_limits<u16>::min(),
-    U16_MAX = std::numeric_limits<u16>::max(),
-};
+constexpr u32 U32_MIN = std::numeric_limits<u32>::min();
+constexpr u32 U32_MAX = std::numeric_limits<u32>::max();
 
-enum u32_limits : u32 {
-    U32_MIN = std::numeric_limits<u32>::min(),
-    U32_MAX = std::numeric_limits<u32>::max(),
-};
+constexpr i64 I64_MIN = std::numeric_limits<i64>::min();
+constexpr i64 I64_MAX = std::numeric_limits<i64>::max();
 
-enum u64_limits : u64 {
-    U64_MIN = std::numeric_limits<u64>::min(),
-    U64_MAX = std::numeric_limits<u64>::max(),
-};
+constexpr u64 U64_MIN = std::numeric_limits<u64>::min();
+constexpr u64 U64_MAX = std::numeric_limits<u64>::max();
 
 template <typename T>
 struct widen;

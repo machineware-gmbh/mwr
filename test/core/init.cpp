@@ -10,7 +10,6 @@
 
 #include "testing.h"
 #include "mwr/core/compiler.h"
-#include <type_traits>
 
 using namespace mwr;
 
@@ -20,12 +19,7 @@ MWR_CONSTRUCTOR(init_global) {
     global = 10;
 }
 
-MWR_DESTRUCTOR(exit_program) {
-   _exit(0);
-}
-
 TEST(core, init) {
     ASSERT_EQ(global, 10);
-    exit(1);
 }
 

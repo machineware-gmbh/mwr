@@ -36,21 +36,17 @@
 #define MWR_CONSTRUCTOR(fn) \
     static void fn();       \
     struct fn##_t {         \
-        fn##_t() {          \
-            fn();           \
-        }                   \
+        fn##_t() { fn(); }  \
     };                      \
     static fn##_t g_##fn;   \
     static void fn()
 
-#define MWR_DESTRUCTOR(fn) \
-    static void fn();      \
-    struct fn##_t {        \
-        ~fn##_t() {        \
-            fn();          \
-        }                  \
-    };                     \
-    static fn##_t g_##fn;  \
+#define MWR_DESTRUCTOR(fn)  \
+    static void fn();       \
+    struct fn##_t {         \
+        ~fn##_t() { fn(); } \
+    };                      \
+    static fn##_t g_##fn;   \
     static void fn()
 
 #ifndef _MSC_VER

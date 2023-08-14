@@ -13,6 +13,16 @@
 
 using namespace mwr;
 
+TEST(atomic, add) {
+    i32 val32 = 7;
+    EXPECT_EQ(atomic_add(&val32, 19), 7);
+    EXPECT_EQ(val32, 26);
+
+    i64 val64 = 12;
+    EXPECT_EQ(atomic_add(&val64, 5), 12);
+    EXPECT_EQ(val64, 17);
+}
+
 TEST(atomic, max) {
     i64 cmp, data = 5;
     EXPECT_EQ(atomic_max(&data, 6), 5);
