@@ -184,7 +184,8 @@ vector<string> backtrace(size_t frames, size_t skip) {
     void* symbols[256];
     if (frames > MWR_ARRAY_SIZE(symbols))
         frames = MWR_ARRAY_SIZE(symbols);
-    size_t size = CaptureStackBackTrace((DWORD)skip, (DWORD)frames, symbols, NULL);
+    size_t size = CaptureStackBackTrace((DWORD)skip, (DWORD)frames, symbols,
+                                        NULL);
 
     SymInitialize(GetCurrentProcess(), NULL, TRUE);
     for (size_t i = 0; i < size; i++) {
@@ -350,7 +351,7 @@ size_t fd_seek_end(int fd, off_t pos) {
     return 0;
 }
 
-static const auto g_start = chrono::steady_clock::now();
+static auto g_start = chrono::steady_clock::now();
 
 double timestamp() {
     chrono::duration<double> delta = chrono::steady_clock::now() - g_start;
