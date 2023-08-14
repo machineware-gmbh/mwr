@@ -67,6 +67,7 @@ set_target_properties(mwr PROPERTIES SOVERSION "${MWR_VERSION_MAJOR}")
 
 if(MSVC)
     target_compile_options(mwr PRIVATE /W3 /WX)
+    target_link_options(mwr PUBLIC /OPT:NOREF)
 else()
     target_compile_options(mwr PRIVATE -Wall -Werror)
     target_link_libraries(mwr PUBLIC -rdynamic rt stdc++fs)

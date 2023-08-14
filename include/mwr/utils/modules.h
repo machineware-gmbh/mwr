@@ -35,7 +35,6 @@ struct module {
     module(string name, string license, size_t version, size_t version_major,
            size_t version_minor, size_t version_patch, string version_string,
            string git_rev, string git_rev_short);
-    ~module() { std::cout << "destroying " << name << std::endl; }
 };
 
 ostream& operator<<(ostream& os, const module& mod);
@@ -65,7 +64,7 @@ public:
 
 #define MWR_DECLARE_MODULE_EX(prefix, name, license, version, major, minor, \
                               patch, verstr, gitrev, shortrev)              \
-    extern const MWR_DECL_WEAK mwr::module MWR_CAT(module_##prefix##_, version)(         \
+    MWR_DECL_WEAK extern const mwr::module MWR_CAT(module_##prefix##_, version)(         \
         name, license, version, major, minor, patch, verstr, gitrev,        \
         shortrev);
 
