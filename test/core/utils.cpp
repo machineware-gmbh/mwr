@@ -142,13 +142,13 @@ TEST(utils, timestamp) {
     EXPECT_GT(ts_ns, ts_us);
 }
 
-#ifdef __linux__
 TEST(utils, fd_write) {
     const char* str = "hello world!\n";
     size_t len = strlen(str);
-    EXPECT_EQ(fd_write(STDOUT_FILENO, str, len), len);
-    EXPECT_EQ(fd_write(-STDOUT_FILENO, str, len), 0);
-    EXPECT_EQ(fd_write(STDOUT_FILENO, nullptr, len), 0);
-    EXPECT_EQ(fd_write(STDOUT_FILENO, str, 0), 0);
+    int fd = 1; // STDOUT_FILENO
+    EXPECT_EQ(fd_write(fd, str, len), len);
+    EXPECT_EQ(fd_write(-fd, str, len), 0);
+    EXPECT_EQ(fd_write(fd, nullptr, len), 0);
+    EXPECT_EQ(fd_write(fd, str, 0), 0);
 }
-#endif
+

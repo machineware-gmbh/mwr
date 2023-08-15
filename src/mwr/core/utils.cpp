@@ -31,6 +31,7 @@ namespace fs = std::filesystem;
 #ifdef MWR_WINDOWS
 #include <Windows.h>
 #include <DbgHelp.h>
+#include <io.h>
 #endif
 
 namespace mwr {
@@ -210,9 +211,30 @@ vector<string> backtrace(size_t frames, size_t skip) {
 
 size_t max_backtrace_length = 16;
 
-#ifdef MWR_LINUX
-static struct sigaction oldact;
+#if defined(MWR_MSVC)
 
+static LONG WINAPI handle_exception(EXCEPTION_POINTERS* info) {
+    if (info->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_CONTINUE_SEARCH;
+
+    fprintf(stderr, "Backtrace\n");
+    auto symbols = backtrace(max_backtrace_length, 2);
+    for (size_t i = symbols.size() - 1; i < symbols.size(); i--)
+        fprintf(stderr, "# %2zu: %s\n", i, symbols[i].c_str());
+    fprintf(stderr,
+            "EXCEPTION_ACCESS_VIOLATION while accessing memory at %p\n",
+            (void*)info->ExceptionRecord->ExceptionInformation[1]);
+    fflush(stderr);
+
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+void report_segfaults() {
+    SetUnhandledExceptionFilter(handle_exception);
+}
+
+#else
+static struct sigaction oldact;
 static void handle_segfault(int sig, siginfo_t* info, void* context) {
     fprintf(stderr, "Backtrace\n");
     auto symbols = backtrace(max_backtrace_length, 2);
@@ -284,13 +306,17 @@ size_t fd_read(int fd, void* buffer, size_t buflen) {
 
     u8* ptr = reinterpret_cast<u8*>(buffer);
 
-#if defined(MWR_LINUX)
-    ssize_t len;
+    long long len;
     size_t numread = 0;
 
     while (numread < buflen) {
         do {
-            len = ::read(fd, ptr + numread, buflen - numread);
+#ifdef MWR_MSVC
+            size_t n = min(buflen - numread, U32_MAX);
+            len = _read(fd, ptr + numread, (u32)n);
+#else
+            len = read(fd, ptr + numread, buflen - numread);
+#endif
         } while (len < 0 && errno == EINTR);
 
         if (len <= 0)
@@ -300,8 +326,6 @@ size_t fd_read(int fd, void* buffer, size_t buflen) {
     }
 
     return numread;
-#endif
-    return 0;
 }
 
 size_t fd_write(int fd, const void* buffer, size_t buflen) {
@@ -310,13 +334,17 @@ size_t fd_write(int fd, const void* buffer, size_t buflen) {
 
     const u8* ptr = reinterpret_cast<const u8*>(buffer);
 
-#if defined(MWR_LINUX)
-    ssize_t len;
+    long long len;
     size_t written = 0;
 
     while (written < buflen) {
         do {
-            len = ::write(fd, ptr + written, buflen - written);
+#ifdef MWR_MSVC
+            size_t n = min(buflen - written, U32_MAX);
+            len = _write(fd, ptr + written, (u32)n);
+#else
+            len = write(fd, ptr + written, buflen - written);
+#endif
         } while (len < 0 && errno == EINTR);
 
         if (len <= 0)
@@ -326,29 +354,30 @@ size_t fd_write(int fd, const void* buffer, size_t buflen) {
     }
 
     return written;
-#endif
-    return 0;
 }
 
 size_t fd_seek(int fd, size_t pos) {
-#ifdef MWR_LINUX
+#ifdef MWR_MSVC
+    return (size_t)_lseeki64(fd, pos, SEEK_SET);
+#else
     return (size_t)lseek(fd, pos, SEEK_SET);
 #endif
-    return 0;
 }
 
 size_t fd_seek_cur(int fd, off_t pos) {
-#if defined(MWR_LINUX)
+#ifdef MWR_MSVC
+    return (size_t)_lseeki64(fd, pos, SEEK_CUR);
+#else
     return (size_t)lseek(fd, pos, SEEK_CUR);
 #endif
-    return 0;
 }
 
 size_t fd_seek_end(int fd, off_t pos) {
-#if defined(MWR_LINUX)
+#ifdef MWR_MSVC
+    return (size_t)_lseeki64(fd, pos, SEEK_END);
+#else
     return (size_t)lseek(fd, pos, SEEK_END);
 #endif
-    return 0;
 }
 
 static auto g_start = chrono::steady_clock::now();

@@ -12,6 +12,7 @@
 
 #include "mwr.h"
 
+#ifndef MWR_MSVC
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -54,6 +55,7 @@ TEST(utils, tty_restore) {
     EXPECT_FALSE(mwr::tty_is_isig(fd));
     // fd will be closed on exit
 }
+#endif
 
 TEST(utils, termcolors) {
     EXPECT_GT(strlen(mwr::termcolors::CLEAR), 1);
