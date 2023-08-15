@@ -10,7 +10,6 @@
 
 #include "mwr/core/utils.h"
 #include "mwr/core/report.h"
-#include "mwr/core/compiler.h"
 #include "mwr/stl/strings.h"
 
 #include <string.h>
@@ -32,6 +31,7 @@ namespace fs = std::filesystem;
 #include <Windows.h>
 #include <DbgHelp.h>
 #include <io.h>
+#include <fcntl.h>
 #endif
 
 namespace mwr {
@@ -212,25 +212,28 @@ vector<string> backtrace(size_t frames, size_t skip) {
 size_t max_backtrace_length = 16;
 
 #if defined(MWR_MSVC)
-
+static LPTOP_LEVEL_EXCEPTION_FILTER prev_handler;
 static LONG WINAPI handle_exception(EXCEPTION_POINTERS* info) {
-    if (info->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION)
+    if (info->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
+        fprintf(stderr, "Backtrace\n");
+        auto symbols = backtrace(max_backtrace_length, 2);
+        for (size_t i = symbols.size(); i > 0; i--)
+            fprintf(stderr, "# %2zu: %s\n", i - 1, symbols[i - 1].c_str());
+        fprintf(stderr,
+                "EXCEPTION_ACCESS_VIOLATION while accessing memory at %p\n",
+                (void*)info->ExceptionRecord->ExceptionInformation[1]);
+        fflush(stderr);
+        return EXCEPTION_EXECUTE_HANDLER;
+    }
+
+    if (prev_handler)
+        return prev_handler(info);
+    else
         return EXCEPTION_CONTINUE_SEARCH;
-
-    fprintf(stderr, "Backtrace\n");
-    auto symbols = backtrace(max_backtrace_length, 2);
-    for (size_t i = symbols.size() - 1; i < symbols.size(); i--)
-        fprintf(stderr, "# %2zu: %s\n", i, symbols[i].c_str());
-    fprintf(stderr,
-            "EXCEPTION_ACCESS_VIOLATION while accessing memory at %p\n",
-            (void*)info->ExceptionRecord->ExceptionInformation[1]);
-    fflush(stderr);
-
-    return EXCEPTION_CONTINUE_SEARCH;
 }
 
 void report_segfaults() {
-    SetUnhandledExceptionFilter(handle_exception);
+    prev_handler = SetUnhandledExceptionFilter(handle_exception);
 }
 
 #else
@@ -238,8 +241,8 @@ static struct sigaction oldact;
 static void handle_segfault(int sig, siginfo_t* info, void* context) {
     fprintf(stderr, "Backtrace\n");
     auto symbols = backtrace(max_backtrace_length, 2);
-    for (size_t i = symbols.size() - 1; i < symbols.size(); i--)
-        fprintf(stderr, "# %2zu: %s\n", i, symbols[i].c_str());
+    for (size_t i = symbols.size(); i > 0; i--)
+        fprintf(stderr, "# %2zu: %s\n", i - 1, symbols[i - 1].c_str());
     fprintf(stderr,
             "Caught signal %d (%s) while accessing memory at location %p\n",
             sig, strsignal(sig), info->si_addr);
@@ -275,10 +278,79 @@ void report_segfaults() {
 }
 #endif
 
+int fd_open(const string& path, int flags, int perms) {
+#ifdef MWR_MSVC
+    perms &= ~077;
+
+    int opts = 0;
+    if (flags & FD_RDONLY)
+        opts |= _O_RDONLY;
+    if (flags & FD_WRONLY)
+        opts |= _O_WRONLY;
+    if (flags & FD_RDWR)
+        opts |= _O_RDWR;
+    if (flags & FD_CREATE)
+        opts |= _O_CREAT;
+    if (flags & FD_EXCL)
+        opts |= _O_EXCL;
+    if (flags & FD_TRUNCATE)
+        opts |= _O_TRUNC;
+    if (flags & FD_APPEND)
+        opts |= _O_APPEND;
+    if (flags & FD_TEXT)
+        opts |= _O_TEXT;
+    if (flags & FD_BINARY)
+        opts |= _O_BINARY;
+
+    int fd = -1;
+    errno_t err = _sopen_s(&fd, path.c_str(), opts, _SH_DENYNO, perms);
+    if (err) {
+        MWR_ERROR("failed to open file: %d", errno);
+        errno = err;
+        return -1;
+    }
+
+    return fd;
+#else
+    flags &= ~(FD_BINARY | FD_TEXT)
+    return open(path.c_str(), flags, perms);
+#endif
+}
+
+void fd_close(int fd) {
+    if (fd < 0)
+        return;
+
+#ifdef MWR_MSVC
+    _close(fd);
+#else
+    close(fd);
+#endif
+}
+
+
 size_t fd_peek(int fd, time_t timeoutms) {
     if (fd < 0)
         return 0;
 
+#if defined(MWR_MSVC)
+    switch (fd) {
+    case STDIN_FILENO: {
+        auto handle = GetStdHandle(STD_INPUT_HANDLE);
+        DWORD nevents = 0;
+        if (GetNumberOfConsoleInputEvents(handle, &nevents))
+            return nevents;
+        return 0;
+    }
+
+    case STDOUT_FILENO: 
+    case STDERR_FILENO:
+        return 0;
+
+    default:
+        MWR_ERROR("not implemented");
+    }
+#else
     fd_set in, out, err;
     struct timeval timeout;
 
@@ -287,17 +359,13 @@ size_t fd_peek(int fd, time_t timeoutms) {
     FD_ZERO(&out);
     FD_ZERO(&err);
 
-#if defined(MWR_LINUX)
     timeout.tv_sec = (timeoutms / 1000ull);
     timeout.tv_usec = (timeoutms % 1000ull) * 1000ull;
-#elif defined(MWR_WINDOWS)
-    timeout.tv_sec = (long)(timeoutms / 1000ul);
-    timeout.tv_usec = (long)(timeoutms % 1000ul) * 1000ul;
-#endif
 
     struct timeval* ptimeout = ~timeoutms ? &timeout : nullptr;
     int ret = select(fd + 1, &in, &out, &err, ptimeout);
     return ret > 0 ? 1 : 0;
+#endif
 }
 
 size_t fd_read(int fd, void* buffer, size_t buflen) {

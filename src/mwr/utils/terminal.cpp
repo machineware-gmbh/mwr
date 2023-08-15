@@ -15,13 +15,25 @@
 
 #include <errno.h>
 #include <string.h>
+
+#if defined(MWR_LINUX)
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
+#endif
+
+#if defined(MWR_MSVC)
+#include <Windows.h>
+#include <io.h>
+#endif
 
 namespace mwr {
 
 int new_tty() {
+#if defined(MWR_WINDOWS)
+    errno = ENOSYS;
+    return -1;
+#else
     static int master = posix_openpt(O_RDWR | O_NOCTTY);
     MWR_ERROR_ON(master < 0, "posix_openpt() failed: %s", strerror(errno));
 
@@ -32,24 +44,48 @@ int new_tty() {
     }
 
     return open(path, O_RDWR | O_NOCTTY);
+#endif
 }
 
 bool is_tty(int fd) {
+#ifdef MWR_MSVC
+    return fd >= 0 && _isatty(fd);
+#else
     termios attr;
     return tcgetattr(fd, &attr) == 0;
+#endif
 }
 
 class tty
 {
 private:
     struct ttystate {
+#ifdef MWR_MSVC
+        DWORD attr;
+#else
         termios attr;
+#endif
         bool restore;
     };
 
     int m_fd;
     std::stack<ttystate> m_stack;
 
+#ifdef MWR_MSVC
+    DWORD get() const { 
+        DWORD mode;
+        HANDLE console = (HANDLE)_get_osfhandle(m_fd);
+        if (!GetConsoleMode(console, &mode))
+            MWR_ERROR("failed to get console attributes");
+        return mode;
+    }
+
+    void set(DWORD mode) const {
+        HANDLE console = (HANDLE)_get_osfhandle(m_fd);
+        if (!SetConsoleMode(console, mode))
+            MWR_ERROR("failed to set console attributes");
+    }
+#else
     termios get() const {
         termios attr;
         if (tcgetattr(m_fd, &attr))
@@ -61,9 +97,10 @@ private:
         if (tcsetattr(m_fd, TCSAFLUSH, &attr))
             MWR_ERROR("failed to get termios attributes: %s", strerror(errno));
     }
+#endif
 
 public:
-    tty(int fd): m_fd(fd) { MWR_ERROR_ON(!isatty(fd), "not a tty: %d", fd); }
+    tty(int fd): m_fd(fd) { MWR_ERROR_ON(!is_tty(fd), "not a tty: %d", fd); }
 
     ~tty() {
         while (!m_stack.empty()) {
@@ -72,15 +109,34 @@ public:
 
             // try to restore the tty state. its okay if it fails, maybe the
             // corresponding fd has already been closed.
-            if (state.restore)
+            if (state.restore) {
+#ifdef MWR_MSVC
+                HANDLE console = (HANDLE)_get_osfhandle(m_fd);
+                SetConsoleMode(console, state.attr);
+#else
                 tcsetattr(m_fd, TCSAFLUSH, &state.attr);
+#endif
+            }
         }
     }
 
+#ifdef MWR_MSVC
+    bool is_echo() const { return get() & ENABLE_ECHO_INPUT; }
+    bool is_isig() const { return get() & ENABLE_PROCESSED_INPUT; }
+#else
     bool is_echo() const { return get().c_lflag & ECHO; }
     bool is_isig() const { return get().c_lflag & ISIG; }
+#endif
 
     void set(bool echo, bool isig) {
+#ifdef MWR_MSVC
+        DWORD attr = get();
+        attr &= ~(ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT);
+        if (echo)
+            attr |= ENABLE_ECHO_INPUT;
+        if (isig)
+            attr |= ENABLE_PROCESSED_INPUT;
+#else
         termios attr = get();
         set_bit<ICANON>(attr.c_lflag, echo);
         set_bit<ECHONL>(attr.c_lflag, echo);
@@ -88,6 +144,7 @@ public:
         set_bit<ISIG>(attr.c_lflag, isig);
         attr.c_cc[VMIN] = 1;
         attr.c_cc[VTIME] = 0;
+#endif
         set(attr);
     }
 

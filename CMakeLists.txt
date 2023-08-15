@@ -41,7 +41,7 @@ add_library(mwr STATIC
             ${src}/mwr/logging/publisher.cpp
             ${src}/mwr/logging/publishers/file.cpp
             ${src}/mwr/logging/publishers/stream.cpp
-            #${src}/mwr/logging/publishers/terminal.cpp
+            ${src}/mwr/logging/publishers/terminal.cpp
             ${src}/mwr/logging/logger.cpp
             #${src}/mwr/utils/aio.cpp
             #${src}/mwr/utils/library.cpp
@@ -50,8 +50,7 @@ add_library(mwr STATIC
             ${src}/mwr/utils/options.cpp
             #${src}/mwr/utils/socket.cpp
             ${src}/mwr/utils/srec.cpp
-            #${src}/mwr/utils/terminal.cpp
-)
+            ${src}/mwr/utils/terminal.cpp)
 
 target_include_directories(mwr PUBLIC ${inc})
 target_include_directories(mwr PUBLIC ${gen})

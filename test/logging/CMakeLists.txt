@@ -20,4 +20,4 @@ macro(logging_test test)
 endmacro()
 
 logging_test(levels)
-#logging_test(publisher)
+logging_test(publisher)

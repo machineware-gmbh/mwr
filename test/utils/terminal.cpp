@@ -12,13 +12,17 @@
 
 #include "mwr.h"
 
-#ifndef MWR_MSVC
-#include <fcntl.h>
-#include <unistd.h>
-
 TEST(utils, tty) {
+    // Try to get a new pseudo terminal, if the operating system supports
+    // that. Otherwise try STDIN (0), that should usually be a terminal as
+    // well, unless it has been redirected to a file. If we can not get a 
+    // file descriptor for a terminal, just skip this test quietly.
     int fd = mwr::new_tty();
-    ASSERT_TRUE(mwr::is_tty(fd));
+    if (fd < 0)
+        fd = 0;
+    if (!mwr::is_tty(fd))
+        return;
+
     mwr::tty_push(fd, false);
 
     EXPECT_TRUE(mwr::tty_is_echo(fd));
@@ -43,19 +47,23 @@ TEST(utils, tty) {
     EXPECT_TRUE(mwr::tty_is_echo(fd));
     EXPECT_TRUE(mwr::tty_is_isig(fd));
 
-    close(fd);
+    if (fd != 0)
+        mwr::fd_close(fd);
 }
 
 TEST(utils, tty_restore) {
+    // Try to get a new pseudo terminal, if the operating system supports
+    // that. If we can not get one, just skip this test quietly.
     int fd = mwr::new_tty();
-    ASSERT_TRUE(mwr::is_tty(fd));
+    if (!mwr::is_tty(fd))
+        return;
+
     mwr::tty_push(fd, true);
     mwr::tty_set(fd, false, false);
     EXPECT_FALSE(mwr::tty_is_echo(fd));
     EXPECT_FALSE(mwr::tty_is_isig(fd));
     // fd will be closed on exit
 }
-#endif
 
 TEST(utils, termcolors) {
     EXPECT_GT(strlen(mwr::termcolors::CLEAR), 1);

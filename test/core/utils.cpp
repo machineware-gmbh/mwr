@@ -152,3 +152,20 @@ TEST(utils, fd_write) {
     EXPECT_EQ(fd_write(fd, str, 0), 0);
 }
 
+TEST(utils, fd_io) {
+    int fd = fd_open("testfile", FD_CREATE | FD_TRUNCATE | FD_RDWR);
+    ASSERT_GE(fd, 0);
+
+    const char* text = "hello world";
+    size_t n = strlen(text);
+    ASSERT_EQ(fd_write(fd, text, n), n);
+
+    ASSERT_EQ(mwr::fd_seek(fd, 0), 0);
+
+    char buffer[20] = {};
+    ASSERT_EQ(fd_read(fd, buffer, n), n);
+    EXPECT_STREQ(text, buffer);
+
+    fd_close(fd);
+    std::filesystem::remove_all("testfile");
+}
