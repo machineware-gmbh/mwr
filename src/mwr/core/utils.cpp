@@ -15,6 +15,7 @@
 #include <string.h>
 #include <signal.h>
 #include <limits.h>
+#include <fcntl.h>
 #include <chrono>
 #include <filesystem>
 
@@ -31,7 +32,6 @@ namespace fs = std::filesystem;
 #include <Windows.h>
 #include <DbgHelp.h>
 #include <io.h>
-#include <fcntl.h>
 #endif
 
 namespace mwr {
@@ -312,7 +312,7 @@ int fd_open(const string& path, int flags, int perms) {
 
     return fd;
 #else
-    flags &= ~(FD_BINARY | FD_TEXT)
+    flags &= ~(FD_BINARY | FD_TEXT);
     return open(path.c_str(), flags, perms);
 #endif
 }
@@ -328,7 +328,6 @@ void fd_close(int fd) {
 #endif
 }
 
-
 size_t fd_peek(int fd, time_t timeoutms) {
     if (fd < 0)
         return 0;
@@ -343,7 +342,7 @@ size_t fd_peek(int fd, time_t timeoutms) {
         return 0;
     }
 
-    case STDOUT_FILENO: 
+    case STDOUT_FILENO:
     case STDERR_FILENO:
         return 0;
 

@@ -72,7 +72,7 @@ private:
     std::stack<ttystate> m_stack;
 
 #ifdef MWR_MSVC
-    DWORD get() const { 
+    DWORD get() const {
         DWORD mode;
         HANDLE console = (HANDLE)_get_osfhandle(m_fd);
         if (!GetConsoleMode(console, &mode))

@@ -40,20 +40,20 @@ void report_segfaults();
 extern size_t max_backtrace_length;
 
 #ifdef MWR_MSVC
-#define STDIN_FILENO 0
+#define STDIN_FILENO  0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 #endif
 
-constexpr int FD_RDONLY   = 00000000;
-constexpr int FD_WRONLY   = 00000001;
-constexpr int FD_RDWR     = 00000002;
-constexpr int FD_CREATE   = 00000100;
-constexpr int FD_EXCL     = 00000200;
+constexpr int FD_RDONLY = 00000000;
+constexpr int FD_WRONLY = 00000001;
+constexpr int FD_RDWR = 00000002;
+constexpr int FD_CREATE = 00000100;
+constexpr int FD_EXCL = 00000200;
 constexpr int FD_TRUNCATE = 00001000;
-constexpr int FD_APPEND   = 00002000;
-constexpr int FD_TEXT     = 00004000;
-constexpr int FD_BINARY   = 00010000;
+constexpr int FD_APPEND = 00002000;
+constexpr int FD_TEXT = 00004000;
+constexpr int FD_BINARY = 00010000;
 
 int fd_open(const string& path, int flags, int perms = 0644);
 void fd_close(int fd);

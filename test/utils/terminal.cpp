@@ -15,7 +15,7 @@
 TEST(utils, tty) {
     // Try to get a new pseudo terminal, if the operating system supports
     // that. Otherwise try STDIN (0), that should usually be a terminal as
-    // well, unless it has been redirected to a file. If we can not get a 
+    // well, unless it has been redirected to a file. If we can not get a
     // file descriptor for a terminal, just skip this test quietly.
     int fd = mwr::new_tty();
     if (fd < 0)
