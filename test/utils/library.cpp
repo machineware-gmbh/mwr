@@ -15,7 +15,9 @@
 using namespace mwr;
 
 static string get_test_library() {
-#if defined(__x86_64__)
+#if defined(_MSC_VER)
+    return get_resource_path("shared-x86.dll");
+#elif defined(__x86_64__)
     return get_resource_path("shared-x86.so");
 #elif defined(__aarch64__)
     return get_resource_path("shared-arm64.so");

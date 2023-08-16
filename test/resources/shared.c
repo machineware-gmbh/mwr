@@ -11,6 +11,4 @@ API int function(int arg) {
 }
 
 // gcc -fPIC -shared -Wl,-soname,shared.so -o shared.so shared.c
-
-// cl.exe /c shared.c
-// link.exe /DLL /OUT:shared.dll shared.obj
+// cl.exe /LD shared.c /link /OUT:shared-x86.dll
