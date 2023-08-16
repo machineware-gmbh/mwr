@@ -8,7 +8,6 @@
  *                                                                            *
  ******************************************************************************/
 
-#include "mwr/core/bitops.h"
 #include "mwr/core/utils.h"
 #include "mwr/stl/strings.h"
 #include "mwr/utils/elf.h"
@@ -124,9 +123,9 @@ struct ehdr64 {
 };
 
 constexpr u32 PT_LOAD = 1;
-constexpr u32 PF_R = bit(2);
-constexpr u32 PF_W = bit(1);
-constexpr u32 PF_X = bit(0);
+constexpr u32 PF_R = 4;
+constexpr u32 PF_W = 2;
+constexpr u32 PF_X = 1;
 constexpr u32 SHT_SYMTAB = 2;
 
 constexpr elf::elf_sym_bind get_bind(u8 info) {
