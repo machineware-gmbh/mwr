@@ -20,7 +20,7 @@ macro(util_test test)
 endmacro()
 
 #util_test(aio)
-#util_test(elf)
+util_test(elf)
 util_test(license)
 #util_test(library)
 util_test(locale)
