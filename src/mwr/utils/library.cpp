@@ -29,7 +29,7 @@ static const char* get_last_error() {
     if (FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0, buffer,
                        sizeof(buffer), NULL)) {
         return buffer;
-    } 
+    }
 
     snprintf(buffer, sizeof(buffer), "error 0x%08x", err);
     return buffer;
@@ -39,7 +39,8 @@ static const char* get_last_error() {
 void* library::lookup(const string& name) const {
 #ifdef MWR_WINDOWS
     void* sym = GetProcAddress((HMODULE)m_handle, name.c_str());
-    MWR_REPORT_ON(!sym, "error loading %s: %s", name.c_str(), get_last_error());
+    MWR_REPORT_ON(!sym, "error loading %s: %s", name.c_str(),
+                  get_last_error());
     return sym;
 #else
     void* sym = dlsym(m_handle, name.c_str());
