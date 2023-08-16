@@ -278,32 +278,40 @@ void report_segfaults() {
 }
 #endif
 
-int fd_open(const string& path, int flags, int perms) {
+int fd_open(const string& path, const string& mode, int perms) {
 #ifdef MWR_MSVC
     perms &= ~077;
 
-    int opts = 0;
-    if (flags & FD_RDONLY)
-        opts |= _O_RDONLY;
-    if (flags & FD_WRONLY)
-        opts |= _O_WRONLY;
-    if (flags & FD_RDWR)
-        opts |= _O_RDWR;
-    if (flags & FD_CREATE)
-        opts |= _O_CREAT;
-    if (flags & FD_EXCL)
-        opts |= _O_EXCL;
-    if (flags & FD_TRUNCATE)
-        opts |= _O_TRUNC;
-    if (flags & FD_APPEND)
-        opts |= _O_APPEND;
-    if (flags & FD_TEXT)
-        opts |= _O_TEXT;
-    if (flags & FD_BINARY)
-        opts |= _O_BINARY;
+    int flags = 0;
+    if (mode == "r")
+        flags = _O_RDONLY;
+    else if (mode == "rb")
+        flags = _O_RDONLY | _O_BINARY;
+    else if (mode == "w")
+        flags = _O_WRONLY | _O_CREAT | _O_TRUNC;
+    else if (mode == "wb")
+        flags = _O_WRONLY | _O_CREAT | _O_TRUNC | _O_BINARY;
+    else if (mode == "a")
+        flags = _O_WRONLY | _O_CREAT | _O_APPEND;
+    else if (mode == "ab")
+        flags = _O_WRONLY | _O_CREAT | _O_APPEND | _O_BINARY;
+    else if (mode == "r+")
+        flags = _O_RDWR;
+    else if (mode == "rb+")
+        flags = _O_RDWR | _O_BINARY;
+    else if (mode == "w+")
+        flags = _O_RDWR | _O_CREAT | _O_TRUNC;
+    else if (mode == "wb+")
+        flags = _O_RDWR | _O_CREAT | _O_TRUNC | _O_BINARY;
+    else if (mode == "a+")
+        flags = _O_RDWR | _O_CREAT | _O_APPEND;
+    else if (mode == "ab+")
+        flags = _O_RDWR | _O_CREAT | _O_APPEND | _O_BINARY;
+    else
+        MWR_ERROR("invalid openmode '%s'", mode.c_str());
 
     int fd = -1;
-    errno_t err = _sopen_s(&fd, path.c_str(), opts, _SH_DENYNO, perms);
+    errno_t err = _sopen_s(&fd, path.c_str(), flags, _SH_DENYNO, perms);
     if (err) {
         MWR_ERROR("failed to open file: %d", errno);
         errno = err;
@@ -312,7 +320,21 @@ int fd_open(const string& path, int flags, int perms) {
 
     return fd;
 #else
-    flags &= ~(FD_BINARY | FD_TEXT);
+    int flags = 0;
+    if (mode == "r" || mode == "rb")
+        flags = O_RDONLY;
+    else if (mode == "w" || mode == "wb")
+        flags = O_WRONLY | O_CREAT | O_TRUNC;
+    else if (mode == "a" || mode == "ab")
+        flags = O_WRONLY | O_CREAT | O_APPEND;
+    else if (mode == "r+" || mode == "rb+")
+        flags = O_RDWR;
+    else if (mode == "w+" || mode == "wb+")
+        flags = O_RDWR | O_CREAT | O_TRUNC;
+    else if (mode == "a+" || mode == "ab+")
+        flags = O_RDWR | O_CREAT | O_APPEND;
+    else
+        MWR_ERROR("invalid openmode '%s'", mode.c_str());
     return open(path.c_str(), flags, perms);
 #endif
 }

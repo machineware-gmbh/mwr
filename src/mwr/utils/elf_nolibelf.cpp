@@ -13,10 +13,6 @@
 #include "mwr/stl/strings.h"
 #include "mwr/utils/elf.h"
 
-#include <memory>
-#include <unistd.h>
-#include <fcntl.h>
-
 namespace mwr {
 
 struct shdr32 {
@@ -287,7 +283,7 @@ elf::elf(const string& path):
     m_machine(),
     m_symbols(),
     m_segments() {
-    m_fd = open(filename(), O_RDONLY, 0);
+    m_fd = fd_open(filename(), "rb");
     if (m_fd < 0)
         MWR_ERROR("cannot open elf file '%s'", filename());
 
@@ -328,7 +324,7 @@ elf::elf(const string& path):
 
 elf::~elf() {
     if (m_fd >= 0)
-        close(m_fd);
+        fd_close(m_fd);
 }
 
 u64 elf::read_segment(const segment& seg, u8* dest) {

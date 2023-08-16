@@ -153,7 +153,7 @@ TEST(utils, fd_write) {
 }
 
 TEST(utils, fd_io) {
-    int fd = fd_open("testfile", FD_CREATE | FD_TRUNCATE | FD_RDWR);
+    int fd = fd_open("testfile", "w+");
     ASSERT_GE(fd, 0);
 
     const char* text = "hello world";

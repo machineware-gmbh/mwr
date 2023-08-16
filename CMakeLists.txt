@@ -81,7 +81,7 @@ if(LIBELF_FOUND)
     target_link_libraries(mwr PUBLIC ${LIBELF_LIBRARIES})
 else()
     message(STATUS "Using fileio for reading ELF files")
-   # target_sources(mwr PRIVATE ${src}/mwr/utils/elf_nolibelf.cpp)
+    target_sources(mwr PRIVATE ${src}/mwr/utils/elf_nolibelf.cpp)
 endif()
 
 if(MWR_COVERAGE)
