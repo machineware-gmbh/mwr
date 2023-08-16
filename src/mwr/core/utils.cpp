@@ -359,7 +359,7 @@ size_t fd_peek(int fd, time_t timeoutms) {
     if (handle == INVALID_HANDLE_VALUE)
         MWR_ERROR("invalid file descriptor: %d", fd);
 
-    switch (GetFileType(handle)) { 
+    switch (GetFileType(handle)) {
     case FILE_TYPE_CHAR: {
         DWORD nevents = 0;
         if (GetNumberOfConsoleInputEvents(handle, &nevents))
@@ -378,7 +378,7 @@ size_t fd_peek(int fd, time_t timeoutms) {
         LARGE_INTEGER size, pos;
         if (!GetFileSizeEx(handle, &size))
             MWR_ERROR("failed to get size of fd %d", fd);
-        if (!SetFilePointerEx(handle, {0}, &pos, FILE_CURRENT))
+        if (!SetFilePointerEx(handle, { 0 }, &pos, FILE_CURRENT))
             MWR_ERROR("failed to possition of fd %d", fd);
         if (pos.QuadPart < size.QuadPart)
             return size.QuadPart - pos.QuadPart - 1;

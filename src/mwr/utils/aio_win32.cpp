@@ -60,8 +60,8 @@ private:
 
             for (size_t i = 0; i < polls.size(); i += MAXIMUM_WAIT_OBJECTS) {
                 DWORD n = (DWORD)min(polls.size() - i, MAXIMUM_WAIT_OBJECTS);
-                int ret = WaitForMultipleObjects(n, polls.data() + i,
-                                                 FALSE, TIMEOUT_MS);
+                int ret = WaitForMultipleObjects(n, polls.data() + i, FALSE,
+                                                 TIMEOUT_MS);
                 if (!m_running)
                     return;
 
