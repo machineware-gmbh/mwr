@@ -19,7 +19,7 @@ macro(util_test test)
     set_tests_properties(utils/${test} PROPERTIES TIMEOUT 4)
 endmacro()
 
-#util_test(aio)
+util_test(aio)
 util_test(elf)
 util_test(license)
 util_test(library)

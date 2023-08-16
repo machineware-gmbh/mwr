@@ -355,21 +355,38 @@ size_t fd_peek(int fd, time_t timeoutms) {
         return 0;
 
 #if defined(MWR_MSVC)
-    switch (fd) {
-    case STDIN_FILENO: {
-        auto handle = GetStdHandle(STD_INPUT_HANDLE);
+    HANDLE handle = (HANDLE)_get_osfhandle(fd);
+    if (handle == INVALID_HANDLE_VALUE)
+        MWR_ERROR("invalid file descriptor: %d", fd);
+
+    switch (GetFileType(handle)) { 
+    case FILE_TYPE_CHAR: {
         DWORD nevents = 0;
         if (GetNumberOfConsoleInputEvents(handle, &nevents))
             return nevents;
         return 0;
     }
 
-    case STDOUT_FILENO:
-    case STDERR_FILENO:
+    case FILE_TYPE_PIPE: {
+        DWORD avail = 0;
+        if (PeekNamedPipe(handle, NULL, 0, NULL, &avail, NULL))
+            return avail;
         return 0;
+    }
+
+    case FILE_TYPE_DISK: {
+        LARGE_INTEGER size, pos;
+        if (!GetFileSizeEx(handle, &size))
+            MWR_ERROR("failed to get size of fd %d", fd);
+        if (!SetFilePointerEx(handle, {0}, &pos, FILE_CURRENT))
+            MWR_ERROR("failed to possition of fd %d", fd);
+        if (pos.QuadPart < size.QuadPart)
+            return size.QuadPart - pos.QuadPart - 1;
+        return 0;
+    }
 
     default:
-        MWR_ERROR("not implemented");
+        return 0;
     }
 #else
     fd_set in, out, err;
@@ -466,6 +483,22 @@ size_t fd_seek_end(int fd, off_t pos) {
     return (size_t)_lseeki64(fd, pos, SEEK_END);
 #else
     return (size_t)lseek(fd, pos, SEEK_END);
+#endif
+}
+
+int fd_dup(int fd) {
+#ifdef MWR_MSVC
+    return _dup(fd);
+#else
+    return dup(fd);
+#endif
+}
+
+int fd_pipe(int fds[2]) {
+#ifdef MWR_MSVC
+    return _pipe(fds, 2, _O_TEXT);
+#else
+    return pipe(fds);
 #endif
 }
 

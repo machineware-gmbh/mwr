@@ -43,7 +43,6 @@ add_library(mwr STATIC
             ${src}/mwr/logging/publishers/stream.cpp
             ${src}/mwr/logging/publishers/terminal.cpp
             ${src}/mwr/logging/logger.cpp
-            #${src}/mwr/utils/aio.cpp
             ${src}/mwr/utils/library.cpp
             ${src}/mwr/utils/license.cpp
             ${src}/mwr/utils/modules.cpp
@@ -65,11 +64,13 @@ set_target_properties(mwr PROPERTIES VERSION "${MWR_VERSION}")
 set_target_properties(mwr PROPERTIES SOVERSION "${MWR_VERSION_MAJOR}")
 
 if(MSVC)
+    target_sources(mwr PRIVATE ${src}/mwr/utils/aio_win32.cpp)
     target_compile_options(mwr PRIVATE /W3 /WX)
     target_link_options(mwr PUBLIC /OPT:NOREF)
     target_link_libraries(mwr PUBLIC Dbghelp.lib)
     target_link_libraries(mwr PUBLIC ws2_32)
 else()
+    target_sources(mwr PRIVATE ${src}/mwr/utils/aio_posix.cpp)
     target_compile_options(mwr PRIVATE -Wall -Werror)
     target_link_libraries(mwr PUBLIC -rdynamic rt stdc++fs)
 endif()
@@ -97,4 +98,3 @@ endif()
 install(TARGETS mwr DESTINATION lib)
 install(DIRECTORY ${inc}/ DESTINATION include)
 install(DIRECTORY ${gen}/ DESTINATION include)
-

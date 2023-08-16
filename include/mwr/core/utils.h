@@ -56,6 +56,9 @@ size_t fd_seek(int fd, size_t pos);
 size_t fd_seek_cur(int fd, off_t pos);
 size_t fd_seek_end(int fd, off_t pos);
 
+int fd_dup(int fd);
+int fd_pipe(int fds[2]);
+
 double timestamp();
 u64 timestamp_ms();
 u64 timestamp_us();
