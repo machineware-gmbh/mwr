@@ -53,22 +53,6 @@
 #define MWR_DECL_DEPRECATED   __declspec(deprecated)
 #endif
 
-#define MWR_CONSTRUCTOR(fn) \
-    static void fn();       \
-    struct fn##_t {         \
-        fn##_t() { fn(); }  \
-    };                      \
-    static fn##_t g_##fn;   \
-    static void fn()
-
-#define MWR_DESTRUCTOR(fn)  \
-    static void fn();       \
-    struct fn##_t {         \
-        ~fn##_t() { fn(); } \
-    };                      \
-    static fn##_t g_##fn;   \
-    static void fn()
-
 #if defined(MWR_GCC) || defined(MWR_CLANG)
 #define MWR_UNREACHABLE __builtin_unreachable()
 #elif defined(MWR_MSVC)
@@ -82,6 +66,22 @@
 #define MWR_CAT(a, b)  MWR_XCAT(a, b)
 #define MWR_XSTR(str)  #str
 #define MWR_STR(str)   MWR_XSTR(str)
+
+#define MWR_CONSTRUCTOR(fn)                 \
+    static void fn();                       \
+    struct MWR_CAT(fn, _t) {                \
+        MWR_CAT(fn, _t)() { fn(); }         \
+    };                                      \
+    static MWR_CAT(fn, _t) MWR_CAT(g_, fn); \
+    static void fn()
+
+#define MWR_DESTRUCTOR(fn)                  \
+    static void fn();                       \
+    struct MWR_CAT(fn, _t) {                \
+        ~MWR_CAT(fn, _t)() { fn(); }        \
+    };                                      \
+    static MWR_CAT(fn, _t) MWR_CAT(g_, fn); \
+    static void fn()
 
 namespace mwr {
 
