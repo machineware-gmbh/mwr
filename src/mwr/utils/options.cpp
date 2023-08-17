@@ -132,7 +132,7 @@ bool options::parse(int argc, const char* const* argv, vector<string>& extra) {
     while (i < argc) {
         if (argv[i][0] == '-') {
             option_base* opt = find(argv[i]);
-            i += 1 + (opt ? opt->argc() : 0);
+            i += 1 + (opt ? (int)opt->argc() : 0);
         } else {
             extra.push_back(argv[i++]);
         }

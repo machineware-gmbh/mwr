@@ -145,8 +145,27 @@ TEST(utils, timestamp) {
 TEST(utils, fd_write) {
     const char* str = "hello world!\n";
     size_t len = strlen(str);
-    EXPECT_EQ(fd_write(STDOUT_FILENO, str, len), len);
-    EXPECT_EQ(fd_write(-STDOUT_FILENO, str, len), 0);
-    EXPECT_EQ(fd_write(STDOUT_FILENO, nullptr, len), 0);
-    EXPECT_EQ(fd_write(STDOUT_FILENO, str, 0), 0);
+    int fd = 1; // STDOUT_FILENO
+    EXPECT_EQ(fd_write(fd, str, len), len);
+    EXPECT_EQ(fd_write(-fd, str, len), 0);
+    EXPECT_EQ(fd_write(fd, nullptr, len), 0);
+    EXPECT_EQ(fd_write(fd, str, 0), 0);
+}
+
+TEST(utils, fd_io) {
+    int fd = fd_open("testfile", "w+");
+    ASSERT_GE(fd, 0);
+
+    const char* text = "hello world";
+    size_t n = strlen(text);
+    ASSERT_EQ(fd_write(fd, text, n), n);
+
+    ASSERT_EQ(mwr::fd_seek(fd, 0), 0);
+
+    char buffer[20] = {};
+    ASSERT_EQ(fd_read(fd, buffer, n), n);
+    EXPECT_STREQ(text, buffer);
+
+    fd_close(fd);
+    std::filesystem::remove_all("testfile");
 }

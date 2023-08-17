@@ -8,23 +8,28 @@
  *                                                                            *
  ******************************************************************************/
 
-#include <poll.h>
-#include <string.h>
-
 #include "mwr/core/types.h"
 #include "mwr/core/report.h"
+#include "mwr/core/utils.h"
 #include "mwr/stl/threads.h"
 #include "mwr/stl/containers.h"
 #include "mwr/utils/aio.h"
 
+#include <Windows.h>
+#include <io.h>
+
 namespace mwr {
 
-#ifdef __linux__
 class aio
 {
 private:
+    struct aio_info {
+        int fd;
+        aio_handler handler;
+    };
+
     mutable mutex m_mtx;
-    unordered_map<int, aio_handler> m_handlers;
+    unordered_map<HANDLE, aio_info> m_handlers;
     atomic<u64> m_gen;
 
     atomic<bool> m_running;
@@ -33,9 +38,8 @@ private:
     static const int TIMEOUT_MS = 10;
 
     void aio_thread() {
-        vector<struct pollfd> polls;
+        vector<HANDLE> polls;
         u64 curgen = 0;
-        int ret = 0;
 
         while (m_running) {
             if (curgen != m_gen) {
@@ -43,7 +47,7 @@ private:
 
                 lock_guard<mutex> guard(m_mtx);
                 for (const auto& it : m_handlers)
-                    polls.push_back({ it.first, POLLIN | POLLPRI, 0 });
+                    polls.push_back(it.first);
 
                 curgen = m_gen;
             }
@@ -54,34 +58,30 @@ private:
                 continue;
             }
 
-            do {
-                ret = poll(polls.data(), polls.size(), TIMEOUT_MS);
-            } while (ret < 0 && errno == EINTR);
-            MWR_ERROR_ON(ret < 0, "aio error: %s", strerror(errno));
-            vector<pair<int, aio_handler>> scheduled;
+            for (size_t i = 0; i < polls.size(); i += MAXIMUM_WAIT_OBJECTS) {
+                DWORD n = (DWORD)min(polls.size() - i, MAXIMUM_WAIT_OBJECTS);
+                int ret = WaitForMultipleObjects(n, polls.data() + i, FALSE,
+                                                 TIMEOUT_MS);
+                if (!m_running)
+                    return;
 
-            if (ret > 0 && m_running) {
-                lock_guard<mutex> guard(m_mtx);
-                for (const auto& pfd : polls) {
-                    if (m_handlers.count(pfd.fd) == 0)
+                if (ret >= WAIT_OBJECT_0 && ret < polls.size()) {
+                    lock_guard<mutex> guard(m_mtx);
+                    auto handle = polls[ret];
+                    if (m_handlers.count(handle) == 0)
                         continue; // fd has been removed
 
-                    if (pfd.revents & POLLNVAL)
-                        MWR_ERROR("invalid file descriptor: %d", pfd.fd);
-
-                    if (pfd.revents & (POLLIN | POLLPRI))
-                        scheduled.emplace_back(pfd.fd, m_handlers[pfd.fd]);
+                    auto& triggered = m_handlers[handle];
+                    if (fd_peek(triggered.fd))
+                        triggered.handler(triggered.fd);
                 }
             }
-
-            for (const auto& handler : scheduled)
-                handler.second(handler.first);
         }
     }
 
 public:
     aio(): m_mtx(), m_handlers(), m_gen(), m_running(true), m_thread() {
-        m_thread = thread(std::bind(&aio::aio_thread, this));
+        m_thread = thread(&aio::aio_thread, this);
         mwr::set_thread_name(m_thread, "aio_thread");
     }
 
@@ -93,13 +93,20 @@ public:
 
     void notify(int fd, aio_handler handler) {
         lock_guard<mutex> guard(m_mtx);
-        m_handlers[fd] = std::move(handler);
+        HANDLE handle = (HANDLE)_get_osfhandle(fd);
+        if (handle == INVALID_HANDLE_VALUE)
+            MWR_ERROR("invalid file descriptor: %d", fd);
+        m_handlers[handle].fd = fd;
+        m_handlers[handle].handler = std::move(handler);
         m_gen++;
     }
 
     void cancel(int fd) {
         lock_guard<mutex> guard(m_mtx);
-        m_handlers.erase(fd);
+        HANDLE handle = (HANDLE)_get_osfhandle(fd);
+        if (handle == INVALID_HANDLE_VALUE)
+            MWR_ERROR("invalid file descriptor: %d", fd);
+        m_handlers.erase(handle);
         m_gen++;
     }
 
@@ -108,7 +115,6 @@ public:
         return singleton;
     }
 };
-#endif // __linux__
 
 void aio_notify(int fd, aio_handler handler) {
     aio::instance().notify(fd, std::move(handler));

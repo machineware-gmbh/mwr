@@ -102,6 +102,7 @@ public:
     static void publish(log_level level, const string& sender,
                         const report& rep);
 
+    static u64 (*current_timestamp)(void);
     static bool print_timestamp;
     static bool print_sender;
     static bool print_source;

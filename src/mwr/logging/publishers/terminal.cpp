@@ -11,13 +11,11 @@
 #include "mwr/logging/publishers/terminal.h"
 #include "mwr/utils/terminal.h"
 
-#include <unistd.h>
-
 namespace mwr {
 namespace publishers {
 
 terminal::terminal(bool use_cerr):
-    terminal(use_cerr, isatty(use_cerr ? STDERR_FILENO : STDIN_FILENO)) {
+    terminal(use_cerr, is_tty(use_cerr ? 2 : 1)) {
     // nothing to do
 }
 

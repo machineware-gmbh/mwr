@@ -26,9 +26,9 @@ TEST(bitops, clz32) {
 }
 
 TEST(bitops, clz64) {
-    EXPECT_EQ(clz(~0ul), 0);
-    EXPECT_EQ(clz(0ul), 64);
-    EXPECT_EQ(clz(0x8ul), 60);
+    EXPECT_EQ(clz(~0ull), 0);
+    EXPECT_EQ(clz(0ull), 64);
+    EXPECT_EQ(clz(0x8ull), 60);
 }
 
 TEST(bitops, ctz32) {
@@ -39,10 +39,10 @@ TEST(bitops, ctz32) {
 }
 
 TEST(bitops, ctz64) {
-    EXPECT_EQ(ctz(~0ul), 0);
-    EXPECT_EQ(ctz(0ul), 64);
-    EXPECT_EQ(ctz(0x8ul), 3);
-    EXPECT_EQ(ctz(0x8000000000000000ul), 63);
+    EXPECT_EQ(ctz(~0ull), 0);
+    EXPECT_EQ(ctz(0ull), 64);
+    EXPECT_EQ(ctz(0x8ull), 3);
+    EXPECT_EQ(ctz(0x8000000000000000ull), 63);
 }
 
 TEST(bitops, ffs32) {
@@ -54,12 +54,12 @@ TEST(bitops, ffs32) {
 }
 
 TEST(bitops, ffs64) {
-    EXPECT_EQ(ffs(0ul), -1);
-    EXPECT_EQ(ffs(1ul << 63 | 1ul << 0), 0);
-    EXPECT_EQ(ffs(1ul << 63 | 1ul << 7), 7);
-    EXPECT_EQ(ffs(1ul << 63 | 1ul << 15), 15);
-    EXPECT_EQ(ffs(1ul << 63 | 1ul << 31), 31);
-    EXPECT_EQ(ffs(1ul << 63), 63);
+    EXPECT_EQ(ffs(0ull), -1);
+    EXPECT_EQ(ffs(1ull << 63 | 1ull << 0), 0);
+    EXPECT_EQ(ffs(1ull << 63 | 1ull << 7), 7);
+    EXPECT_EQ(ffs(1ull << 63 | 1ull << 15), 15);
+    EXPECT_EQ(ffs(1ull << 63 | 1ull << 31), 31);
+    EXPECT_EQ(ffs(1ull << 63), 63);
 }
 
 TEST(bitops, fls32) {
@@ -71,12 +71,12 @@ TEST(bitops, fls32) {
 }
 
 TEST(bitops, fls64) {
-    EXPECT_EQ(fls(0ul), -1);
-    EXPECT_EQ(fls(1ul | 1ul << 0), 0);
-    EXPECT_EQ(fls(1ul | 1ul << 7), 7);
-    EXPECT_EQ(fls(1ul | 1ul << 15), 15);
-    EXPECT_EQ(fls(1ul | 1ul << 31), 31);
-    EXPECT_EQ(fls(1ul | 1ul << 63), 63);
+    EXPECT_EQ(fls(0ull), -1);
+    EXPECT_EQ(fls(1ull | 1ull << 0), 0);
+    EXPECT_EQ(fls(1ull | 1ull << 7), 7);
+    EXPECT_EQ(fls(1ull | 1ull << 15), 15);
+    EXPECT_EQ(fls(1ull | 1ull << 31), 31);
+    EXPECT_EQ(fls(1ull | 1ull << 63), 63);
 }
 
 TEST(bitops, popcnt32) {
@@ -87,11 +87,11 @@ TEST(bitops, popcnt32) {
 }
 
 TEST(bitops, popcnt64) {
-    EXPECT_EQ(popcnt(0ul), 0);
-    EXPECT_EQ(popcnt(~0ul), 64);
-    EXPECT_EQ(popcnt(1ul), 1);
-    EXPECT_EQ(popcnt(0b10110111101000011u), 10);
-    EXPECT_EQ(popcnt(0xf0f0f0f0f0f0f0f0ul), 32);
+    EXPECT_EQ(popcnt(0ull), 0);
+    EXPECT_EQ(popcnt(~0ull), 64);
+    EXPECT_EQ(popcnt(1ull), 1);
+    EXPECT_EQ(popcnt(0b10110111101000011ull), 10);
+    EXPECT_EQ(popcnt(0xf0f0f0f0f0f0f0f0ull), 32);
 }
 
 TEST(bitops, parity32) {
@@ -101,8 +101,8 @@ TEST(bitops, parity32) {
 }
 
 TEST(bitops, parity64) {
-    EXPECT_EQ(parity(0x1f00000000000000ul), 1u);
-    EXPECT_EQ(parity(0x0f00000000000000ul), 0u);
+    EXPECT_EQ(parity(0x1f00000000000000ull), 1u);
+    EXPECT_EQ(parity(0x0f00000000000000ull), 0u);
 }
 
 TEST(bitops, parity8) {

@@ -8,14 +8,9 @@
  *                                                                            *
  ******************************************************************************/
 
-#include "mwr/core/bitops.h"
 #include "mwr/core/utils.h"
 #include "mwr/stl/strings.h"
 #include "mwr/utils/elf.h"
-
-#include <memory>
-#include <unistd.h>
-#include <fcntl.h>
 
 namespace mwr {
 
@@ -128,9 +123,9 @@ struct ehdr64 {
 };
 
 constexpr u32 PT_LOAD = 1;
-constexpr u32 PF_R = bit(2);
-constexpr u32 PF_W = bit(1);
-constexpr u32 PF_X = bit(0);
+constexpr u32 PF_R = 4;
+constexpr u32 PF_W = 2;
+constexpr u32 PF_X = 1;
 constexpr u32 SHT_SYMTAB = 2;
 
 constexpr elf::elf_sym_bind get_bind(u8 info) {
@@ -287,7 +282,7 @@ elf::elf(const string& path):
     m_machine(),
     m_symbols(),
     m_segments() {
-    m_fd = open(filename(), O_RDONLY, 0);
+    m_fd = fd_open(filename(), "rb");
     if (m_fd < 0)
         MWR_ERROR("cannot open elf file '%s'", filename());
 
@@ -328,7 +323,7 @@ elf::elf(const string& path):
 
 elf::~elf() {
     if (m_fd >= 0)
-        close(m_fd);
+        fd_close(m_fd);
 }
 
 u64 elf::read_segment(const segment& seg, u8* dest) {

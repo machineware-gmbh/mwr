@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "mwr/core/compiler.h"
 #include "mwr/core/types.h"
 
 namespace mwr {
@@ -38,6 +39,15 @@ vector<string> backtrace(size_t frames = 63, size_t skip = 1);
 void report_segfaults();
 extern size_t max_backtrace_length;
 
+#ifdef MWR_MSVC
+#define STDIN_FILENO  0
+#define STDOUT_FILENO 1
+#define STDERR_FILENO 2
+#endif
+
+int fd_open(const string& path, const string& mode, int perms = 0644);
+void fd_close(int fd);
+
 size_t fd_peek(int fd, time_t timeout_ms = 0);
 size_t fd_read(int fd, void* buffer, size_t buflen);
 size_t fd_write(int fd, const void* buffer, size_t buflen);
@@ -45,6 +55,9 @@ size_t fd_write(int fd, const void* buffer, size_t buflen);
 size_t fd_seek(int fd, size_t pos);
 size_t fd_seek_cur(int fd, off_t pos);
 size_t fd_seek_end(int fd, off_t pos);
+
+int fd_dup(int fd);
+int fd_pipe(int fds[2]);
 
 double timestamp();
 u64 timestamp_ms();

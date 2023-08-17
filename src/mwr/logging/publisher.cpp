@@ -12,11 +12,7 @@
 
 namespace mwr {
 
-MWR_DECL_WEAK mwr::u64 log_time() {
-    static mwr::u64 start = mwr::timestamp_ms();
-    return (mwr::timestamp_ms() - start) * 1000000;
-}
-
+u64 (*publisher::current_timestamp)() = nullptr;
 bool publisher::print_timestamp = true;
 bool publisher::print_sender = true;
 bool publisher::print_source = false;
@@ -59,8 +55,19 @@ ostream& operator<<(ostream& os, const logmsg& msg) {
     return os;
 }
 
+static u64 current_timestamp() {
+    if (publisher::current_timestamp)
+        return publisher::current_timestamp();
+    static mwr::u64 start = mwr::timestamp_ms();
+    return (mwr::timestamp_ms() - start) * 1000000;
+}
+
 logmsg::logmsg(log_level lvl, const string& s):
-    level(lvl), timestamp(log_time()), sender(s), source({ "", -1 }), lines() {
+    level(lvl),
+    timestamp(current_timestamp()),
+    sender(s),
+    source({ "", -1 }),
+    lines() {
 }
 
 void publisher::register_publisher() {
@@ -140,8 +147,8 @@ void publisher::publish(log_level level, const string& sender,
     if (print_backtrace) {
         const vector<string>& bt = rep.backtrace();
         ss << "Backtrace(" << bt.size() << ")" << std::endl;
-        for (size_t i = bt.size() - 1; i < bt.size(); i--)
-            ss << "#" << i << ": " << bt[i] << std::endl;
+        for (size_t i = bt.size(); i > 0; i--)
+            ss << "#" << i - 1 << ": " << bt[i - 1] << std::endl;
     }
 
     ss << rep.message();
@@ -149,7 +156,7 @@ void publisher::publish(log_level level, const string& sender,
     // always force printing of source locations of reports
     bool print = print_source;
     print_source = true;
-    publish(level, sender, ss.str(), rep.file(), rep.line());
+    publish(level, sender, ss.str(), rep.file(), (int)rep.line());
     print_source = print;
 }
 

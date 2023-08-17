@@ -57,7 +57,7 @@ struct socket_addr {
     string peer() const;
 };
 
-socket_addr::socket_addr(const sockaddr* addr) {
+socket_addr::socket_addr(const sockaddr* addr): socket_addr() {
     switch (addr->sa_family) {
     case AF_INET:
         memcpy(&ipv4, addr, sizeof(ipv4));
@@ -70,7 +70,7 @@ socket_addr::socket_addr(const sockaddr* addr) {
     }
 }
 
-socket_addr::socket_addr(int family, u16 port) {
+socket_addr::socket_addr(int family, u16 port): socket_addr() {
     switch (family) {
     case AF_INET:
         ipv4.sin_family = AF_INET;
@@ -128,6 +128,14 @@ string socket_addr::peer() const {
     return mkstr("%s:%hu", host().c_str(), port());
 }
 
+bool socket::is_listening() const {
+    return m_socket >= 0;
+}
+
+bool socket::is_connected() const {
+    return m_conn >= 0;
+}
+
 socket::socket():
     m_host(),
     m_peer(),
@@ -138,25 +146,11 @@ socket::socket():
     m_async() {
 }
 
-socket::socket(u16 port):
-    m_host(),
-    m_peer(),
-    m_ipv6(),
-    m_port(0),
-    m_socket(-1),
-    m_conn(-1),
-    m_async() {
+socket::socket(u16 port): socket() {
     listen(port);
 }
 
-socket::socket(const string& host, u16 port):
-    m_host(),
-    m_peer(),
-    m_ipv6(),
-    m_port(0),
-    m_socket(-1),
-    m_conn(-1),
-    m_async() {
+socket::socket(const string& host, u16 port): socket() {
     connect(host, port);
 }
 
@@ -209,7 +203,7 @@ void socket::unlisten() {
     if (!is_listening())
         return;
 
-    int fd = m_socket;
+    socket_t fd = m_socket;
 
     m_socket = -1;
     ::shutdown(fd, SHUT_RDWR);
@@ -295,7 +289,7 @@ void socket::disconnect() {
     if (!is_connected())
         return;
 
-    int fd = m_conn;
+    socket_t fd = m_conn;
     m_conn = -1;
     ::shutdown(fd, SHUT_RDWR);
 
@@ -327,7 +321,7 @@ void socket::send(const void* data, size_t size) {
     if (m_async.joinable())
         m_async.join();
 
-    MWR_REPORT_ON(!is_connected(), "error receiving data: not connected");
+    MWR_REPORT_ON(!is_connected(), "error sending data: not connected");
 
     const u8* ptr = (const u8*)data;
     size_t n = 0;

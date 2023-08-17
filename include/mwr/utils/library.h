@@ -23,6 +23,7 @@ class library
 {
 private:
     string m_path;
+    string m_copy;
     void* m_handle;
     bool m_keep;
 
