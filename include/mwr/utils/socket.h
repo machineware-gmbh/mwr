@@ -25,12 +25,18 @@ namespace mwr {
 class socket
 {
 private:
+#ifdef MWR_WINDOWS
+    using socket_t = unsigned long long;
+#else
+    using socket_t = int;
+#endif
+
     string m_host;
     string m_peer;
     bool m_ipv6;
     atomic<u16> m_port;
-    atomic<int> m_socket;
-    atomic<int> m_conn;
+    atomic<socket_t> m_socket;
+    atomic<socket_t> m_conn;
     thread m_async;
 
 public:
@@ -41,8 +47,8 @@ public:
     bool is_ipv4() const { return !m_ipv6; }
     bool is_ipv6() const { return m_ipv6; }
 
-    bool is_listening() const { return m_socket >= 0; }
-    bool is_connected() const { return m_conn >= 0; }
+    bool is_listening() const;
+    bool is_connected() const;
 
     socket();
     socket(u16 port);

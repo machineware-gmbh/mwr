@@ -11,8 +11,6 @@
 #include "testing.h"
 #include "mwr/utils/socket.h"
 
-#include <arpa/inet.h>
-
 TEST(socket, server) {
     mwr::socket server(12345);
     EXPECT_EQ(server.port(), 12345);
@@ -63,7 +61,7 @@ TEST(socket, connect_v4) {
 
 TEST(socket, send) {
     const char* str = "Hello World";
-    char buf[strlen(str) + 1];
+    char buf[12] = {};
     memset(buf, 0, strlen(str) + 1);
 
     mwr::socket server(0);
@@ -82,7 +80,7 @@ TEST(socket, async) {
 
     for (int i = 1; i < 4; i++) {
         const char* str = "Hello World";
-        char buf[strlen(str) + 1];
+        char buf[12] = {};
         memset(buf, 0, strlen(str) + 1);
 
         server.listen(0);

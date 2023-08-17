@@ -47,7 +47,6 @@ add_library(mwr STATIC
             ${src}/mwr/utils/license.cpp
             ${src}/mwr/utils/modules.cpp
             ${src}/mwr/utils/options.cpp
-            #${src}/mwr/utils/socket.cpp
             ${src}/mwr/utils/srec.cpp
             ${src}/mwr/utils/terminal.cpp)
 
@@ -65,12 +64,14 @@ set_target_properties(mwr PROPERTIES SOVERSION "${MWR_VERSION_MAJOR}")
 
 if(MSVC)
     target_sources(mwr PRIVATE ${src}/mwr/utils/aio_win32.cpp)
+    target_sources(mwr PRIVATE ${src}/mwr/utils/socket_win32.cpp)
     target_compile_options(mwr PRIVATE /W3 /WX)
     target_link_options(mwr PUBLIC /OPT:NOREF)
     target_link_libraries(mwr PUBLIC Dbghelp.lib)
     target_link_libraries(mwr PUBLIC ws2_32)
 else()
     target_sources(mwr PRIVATE ${src}/mwr/utils/aio_posix.cpp)
+    target_sources(mwr PRIVATE ${src}/mwr/utils/socket_posix.cpp)
     target_compile_options(mwr PRIVATE -Wall -Werror)
     target_link_libraries(mwr PUBLIC -rdynamic rt stdc++fs)
 endif()

@@ -1,6 +1,6 @@
 /******************************************************************************
  *                                                                            *
- * Copyright (C) 2022 MachineWare GmbH                                        *
+ * Copyright (C) 2023 MachineWare GmbH                                        *
  * All Rights Reserved                                                        *
  *                                                                            *
  * This is work is licensed under the terms described in the LICENSE file     *
@@ -8,28 +8,57 @@
  *                                                                            *
  ******************************************************************************/
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-
 #include "mwr/utils/socket.h"
 
-namespace mwr {
-
-static int socket_default_address_family() {
-    return getenv("MWR_NO_IPv6") ? AF_INET : AF_INET6;
-}
+#include <WinSock2.h>
+#include <WS2tcpip.h>
 
 #define SET_SOCKOPT(s, lvl, opt, set)                                      \
     do {                                                                   \
         int val = (set);                                                   \
-        if (setsockopt(s, lvl, opt, (const void*)&val, sizeof(val)))       \
-            MWR_REPORT("setsockopt %s failed: %s", #opt, strerror(errno)); \
+        if (setsockopt(s, lvl, opt, (const char*)&val, sizeof(val)) == SOCKET_ERROR)       \
+            MWR_REPORT("setsockopt %s failed: %d", #opt, WSAGetLastError()); \
     } while (0)
+
+namespace mwr {
+
+static int socket_default_address_family() {
+    if (GetEnvironmentVariable("MWR_NO_IPv6", NULL, 0) > 0)
+        return AF_INET;
+    return AF_INET6;
+}
+
+static void socket_exit() {
+    WSACleanup();
+}
+
+static void socket_init() {
+    static bool done = false;
+    if (done)
+        return;
+
+    WSADATA data;
+    if (WSAStartup(MAKEWORD(2, 2), &data)) {
+        int err = WSAGetLastError();
+        MWR_ERROR("Failed to start winsock2: 0x%x", err);
+    }
+
+    atexit(socket_exit);
+    done = true;
+}
+
+static const char* socket_strerror(DWORD err = WSAGetLastError()) {
+    static char buffer[256];
+    memset(buffer, 0, sizeof(buffer));
+
+    if (FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0, buffer,
+                       sizeof(buffer), NULL)) {
+        return buffer;
+    }
+
+    snprintf(buffer, sizeof(buffer), "0x%08x", err);
+    return buffer;
+}
 
 struct socket_addr {
     union {
@@ -57,7 +86,7 @@ struct socket_addr {
     string peer() const;
 };
 
-socket_addr::socket_addr(const sockaddr* addr) {
+socket_addr::socket_addr(const sockaddr* addr): socket_addr() {
     switch (addr->sa_family) {
     case AF_INET:
         memcpy(&ipv4, addr, sizeof(ipv4));
@@ -70,7 +99,7 @@ socket_addr::socket_addr(const sockaddr* addr) {
     }
 }
 
-socket_addr::socket_addr(int family, u16 port) {
+socket_addr::socket_addr(int family, u16 port): socket_addr() {
     switch (family) {
     case AF_INET:
         ipv4.sin_family = AF_INET;
@@ -128,6 +157,14 @@ string socket_addr::peer() const {
     return mkstr("%s:%hu", host().c_str(), port());
 }
 
+bool socket::is_listening() const {
+    return m_socket != INVALID_SOCKET;
+}
+
+bool socket::is_connected() const {
+    return m_conn != INVALID_SOCKET;
+}
+
 socket::socket():
     m_host(),
     m_peer(),
@@ -136,27 +173,16 @@ socket::socket():
     m_socket(-1),
     m_conn(-1),
     m_async() {
+    socket_init();
 }
 
 socket::socket(u16 port):
-    m_host(),
-    m_peer(),
-    m_ipv6(),
-    m_port(0),
-    m_socket(-1),
-    m_conn(-1),
-    m_async() {
+    socket() {
     listen(port);
 }
 
 socket::socket(const string& host, u16 port):
-    m_host(),
-    m_peer(),
-    m_ipv6(),
-    m_port(0),
-    m_socket(-1),
-    m_conn(-1),
-    m_async() {
+    socket() {
     connect(host, port);
 }
 
@@ -176,28 +202,25 @@ void socket::listen(u16 port) {
     int family = socket_default_address_family();
 
     m_socket = ::socket(family, SOCK_STREAM, 0);
-    if (m_socket < 0)
-        MWR_REPORT("failed to create socket: %s", strerror(errno));
+    if (m_socket == INVALID_SOCKET)
+        MWR_ERROR("failed to create socket: %s", socket_strerror());
 
     SET_SOCKOPT(m_socket, SOL_SOCKET, SO_REUSEADDR, 1);
     if (family == AF_INET6)
         SET_SOCKOPT(m_socket, IPPROTO_IPV6, IPV6_V6ONLY, 0);
 
-    if (port > 0) {
-        socket_addr addr(family, port);
-        if (::bind(m_socket, &addr.base, sizeof(addr))) {
-            MWR_REPORT("binding socket to port %hu failed: %s", port,
-                       strerror(errno));
-        }
+    socket_addr addr(family, port);
+    if (::bind(m_socket, &addr.base, sizeof(addr))) {
+        MWR_REPORT("binding socket to port %hu failed: %s", port,
+                   socket_strerror());
     }
 
     if (::listen(m_socket, 1))
-        MWR_REPORT("listen for connections failed: %s", strerror(errno));
+        MWR_REPORT("listen for connections failed: %s", socket_strerror());
 
-    socket_addr addr;
     socklen_t len = sizeof(addr);
     if (getsockname(m_socket, &addr.base, &len) < 0)
-        MWR_ERROR("getsockname failed: %s", strerror(errno));
+        MWR_ERROR("getsockname failed: %s", socket_strerror());
 
     m_ipv6 = family == AF_INET6;
     m_host = m_ipv6 ? "::1" : "127.0.0.1";
@@ -209,10 +232,10 @@ void socket::unlisten() {
     if (!is_listening())
         return;
 
-    int fd = m_socket;
+    socket_t sock = m_socket;
 
-    m_socket = -1;
-    ::shutdown(fd, SHUT_RDWR);
+    m_socket = INVALID_SOCKET;
+    closesocket(sock);
 
     if (m_async.joinable())
         m_async.join();
@@ -229,11 +252,11 @@ bool socket::accept() {
     socklen_t len = sizeof(addr);
 
     m_conn = ::accept(m_socket, &addr.base, &len);
-    if (m_conn < 0 && m_socket < 0)
+    if (m_conn == INVALID_SOCKET && m_socket == INVALID_SOCKET)
         return false; // shutdown while waiting for connections
 
     if (m_conn < 0)
-        MWR_ERROR("failed to accept connection: %s", strerror(errno));
+        MWR_ERROR("failed to accept connection: %s", socket_strerror());
 
     SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
 
@@ -275,10 +298,10 @@ void socket::connect(const string& host, u16 port) {
     for (; ai != nullptr; ai = ai->ai_next) {
         m_conn = ::socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
         if (m_conn < 0)
-            MWR_REPORT("failed to create socket: %s", strerror(errno));
+            MWR_REPORT("failed to create socket: %s", socket_strerror());
 
-        if (::connect(m_conn, ai->ai_addr, ai->ai_addrlen) < 0) {
-            close(m_conn);
+        if (::connect(m_conn, ai->ai_addr, (int)ai->ai_addrlen) < 0) {
+            closesocket(m_conn);
             continue;
         }
 
@@ -288,16 +311,16 @@ void socket::connect(const string& host, u16 port) {
     }
 
     freeaddrinfo(ai);
-    MWR_REPORT_ON(m_peer.empty(), "connect failed: %s", strerror(errno));
+    MWR_REPORT_ON(m_peer.empty(), "connect failed: %s", socket_strerror());
 }
 
 void socket::disconnect() {
     if (!is_connected())
         return;
 
-    int fd = m_conn;
-    m_conn = -1;
-    ::shutdown(fd, SHUT_RDWR);
+    socket_t fd = m_conn;
+    m_conn = INVALID_SOCKET;
+    ::shutdown(fd, SD_BOTH);
 
     m_peer.clear();
 }
@@ -309,36 +332,31 @@ size_t socket::peek(time_t timeoutms) {
     if (m_async.joinable())
         m_async.join();
 
-    if (!mwr::fd_peek(m_conn, timeoutms))
-        return 0;
+    
+    u_long avail = 0;
+    if (ioctlsocket(m_conn, FIONREAD, &avail) == SOCKET_ERROR)
+        MWR_REPORT("error receiving data: %s", socket_strerror());
 
-    char buf[32];
-    int err = ::recv(m_conn, buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT);
-    if (err <= 0)
-        disconnect();
-
-    MWR_REPORT_ON(err == 0, "error receiving data: disconnected");
-    MWR_REPORT_ON(err < 0, "error receiving data: %s", strerror(errno));
-
-    return err;
+    return avail;
 }
 
 void socket::send(const void* data, size_t size) {
     if (m_async.joinable())
         m_async.join();
 
-    MWR_REPORT_ON(!is_connected(), "error receiving data: not connected");
+    MWR_REPORT_ON(!is_connected(), "error sending data: not connected");
 
-    const u8* ptr = (const u8*)data;
+    const char* ptr = (const char*)data;
     size_t n = 0;
 
     while (n < size) {
-        int r = ::send(m_conn, ptr + n, size - n, 0);
+
+        int r = ::send(m_conn, ptr + n, (int)(size - n), 0);
         if (r <= 0)
             disconnect();
 
         MWR_REPORT_ON(r == 0, "error sending data: disconnected");
-        MWR_REPORT_ON(r < 0, "error sending data: %s", strerror(errno));
+        MWR_REPORT_ON(r < 0, "error sending data: %s", socket_strerror());
 
         n += r;
     }
@@ -350,16 +368,16 @@ void socket::recv(void* data, size_t size) {
 
     MWR_REPORT_ON(!is_connected(), "error receiving data: not connected");
 
-    u8* ptr = (u8*)data;
+    char* ptr = (char*)data;
     size_t n = 0;
 
     while (n < size) {
-        int r = ::recv(m_conn, ptr + n, size - n, 0);
+        int r = ::recv(m_conn, ptr + n, (int)(size - n), 0);
         if (r <= 0)
             disconnect();
 
         MWR_REPORT_ON(r == 0, "error receiving data: disconnected");
-        MWR_REPORT_ON(r < 0, "error receiving data: %s", strerror(errno));
+        MWR_REPORT_ON(r < 0, "error receiving data: %s", socket_strerror());
 
         n += r;
     }
