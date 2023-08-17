@@ -146,13 +146,11 @@ socket::socket():
     m_async() {
 }
 
-socket::socket(u16 port):
-    socket() {
+socket::socket(u16 port): socket() {
     listen(port);
 }
 
-socket::socket(const string& host, u16 port):
-    socket() {
+socket::socket(const string& host, u16 port): socket() {
     connect(host, port);
 }
 

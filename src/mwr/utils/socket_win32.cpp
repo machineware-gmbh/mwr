@@ -13,10 +13,11 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 
-#define SET_SOCKOPT(s, lvl, opt, set)                                      \
-    do {                                                                   \
-        int val = (set);                                                   \
-        if (setsockopt(s, lvl, opt, (const char*)&val, sizeof(val)) == SOCKET_ERROR)       \
+#define SET_SOCKOPT(s, lvl, opt, set)                                        \
+    do {                                                                     \
+        int val = (set);                                                     \
+        if (setsockopt(s, lvl, opt, (const char*)&val, sizeof(val)) ==       \
+            SOCKET_ERROR)                                                    \
             MWR_REPORT("setsockopt %s failed: %d", #opt, WSAGetLastError()); \
     } while (0)
 
@@ -176,13 +177,11 @@ socket::socket():
     socket_init();
 }
 
-socket::socket(u16 port):
-    socket() {
+socket::socket(u16 port): socket() {
     listen(port);
 }
 
-socket::socket(const string& host, u16 port):
-    socket() {
+socket::socket(const string& host, u16 port): socket() {
     connect(host, port);
 }
 
@@ -332,7 +331,6 @@ size_t socket::peek(time_t timeoutms) {
     if (m_async.joinable())
         m_async.join();
 
-    
     u_long avail = 0;
     if (ioctlsocket(m_conn, FIONREAD, &avail) == SOCKET_ERROR)
         MWR_REPORT("error receiving data: %s", socket_strerror());
@@ -350,7 +348,6 @@ void socket::send(const void* data, size_t size) {
     size_t n = 0;
 
     while (n < size) {
-
         int r = ::send(m_conn, ptr + n, (int)(size - n), 0);
         if (r <= 0)
             disconnect();
