@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, ubuntu-22.04, self-hosted-ubuntu-22.04-arm64]
+        os: [ubuntu-20.04, ubuntu-22.04, self-hosted-ubuntu-22.04-arm64, windows-2019]
 
     steps:
     - name: Checkout
@@ -25,7 +25,7 @@ jobs:
 
     - name: Setup Dependencies
       run: sudo apt-get install libelf-dev ninja-build
-      if: contains(matrix.os, 'self-hosted') == false
+      if: contains(matrix.os, 'self-hosted') == false && contains(matrix.os, 'windows') == false
 
     - name: Configure
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON
