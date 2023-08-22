@@ -13,6 +13,7 @@
 
 #include <string>
 #include <vector>
+#include <optional>
 
 #include "mwr/core/compiler.h"
 #include "mwr/core/types.h"
@@ -21,6 +22,7 @@ namespace mwr {
 
 using std::string;
 using std::vector;
+using std::optional;
 
 bool file_exists(const string& file);
 bool directory_exists(const string& file);
@@ -34,6 +36,9 @@ string temp_dir();
 
 string progname();
 string username();
+
+optional<string> getenv(const string& name);
+void setenv(const string& name, const string& value);
 
 vector<string> backtrace(size_t frames = 63, size_t skip = 1);
 void report_segfaults();

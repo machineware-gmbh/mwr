@@ -24,7 +24,7 @@
 namespace mwr {
 
 static int socket_default_address_family() {
-    if (GetEnvironmentVariable("MWR_NO_IPv6", NULL, 0) > 0)
+    if (getenv("MWR_NO_IPv6"))
         return AF_INET;
     return AF_INET6;
 }

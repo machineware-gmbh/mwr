@@ -11,6 +11,7 @@
 #include "testing.h"
 #include "mwr/core/utils.h"
 
+#include <stdlib.h>
 #include <fstream>
 #include <filesystem>
 
@@ -168,4 +169,13 @@ TEST(utils, fd_io) {
 
     fd_close(fd);
     std::filesystem::remove_all("testfile");
+}
+
+TEST(utils, getenv) {
+    ASSERT_FALSE(mwr::getenv("NONEXISTENT"));
+
+    mwr::setenv("TESTVAR", "somevalue");
+    auto var = mwr::getenv("TESTVAR");
+    ASSERT_TRUE(var);
+    EXPECT_EQ(var, "somevalue");
 }

@@ -12,6 +12,7 @@
 #include "mwr/core/report.h"
 #include "mwr/stl/strings.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <limits.h>
@@ -130,6 +131,34 @@ string username() {
         return string(name);
 #endif
     return "unkown";
+}
+
+optional<string> getenv(const string& env) {
+#if defined(MWR_MSVC)
+    DWORD n = GetEnvironmentVariable(env.c_str(), NULL, 0);
+    if (n == 0)
+        return optional<string>();
+
+    string var(n - 1, 0);
+    GetEnvironmentVariableA(env.c_str(), var.data(), n);
+    return var;
+#else
+    const char* val = std::getenv(env.c_str());
+    if (val == nullptr)
+        return optional<string>();
+    return val;
+#endif
+}
+
+void setenv(const string& name, const string& value) {
+#if defined(MWR_MSVC)
+    auto err = _putenv_s(name.c_str(), value.c_str());
+    if (err != 0)
+        MWR_ERROR("failed to set %s (%d)", name.c_str(), err);
+#else
+    if (setenv(name.c_str(), value.c_str()))
+        MWR_ERROR("failed to set %s (%s)", name.c_str(), strerror(errno));
+#endif
 }
 
 vector<string> backtrace(size_t frames, size_t skip) {
