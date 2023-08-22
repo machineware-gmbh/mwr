@@ -57,7 +57,7 @@ constexpr bool parity_odd(const T& val) {
 }
 
 template <typename T>
-constexpr size_t parity_even(const T& val) {
+constexpr bool parity_even(const T& val) {
     return parity(val) == 0u;
 }
 
