@@ -121,16 +121,16 @@ string username() {
     if (getlogin_r(uname, sizeof(uname) - 1) == 0)
         return uname;
 
-    const char* envuser = getenv("USER");
+    auto envuser = getenv("USER");
     if (envuser)
-        return envuser;
+        return envuser.value();
 #elif defined(MWR_WINDOWS)
     TCHAR name[MAX_PATH] = {};
     DWORD namelen = sizeof(name);
     if (GetUserName(name, &namelen))
         return string(name);
 #endif
-    return "unkown";
+    return "unknown";
 }
 
 optional<string> getenv(const string& env) {
@@ -156,7 +156,7 @@ void setenv(const string& name, const string& value) {
     if (err != 0)
         MWR_ERROR("failed to set %s (%d)", name.c_str(), err);
 #else
-    if (setenv(name.c_str(), value.c_str()))
+    if (::setenv(name.c_str(), value.c_str(), 1))
         MWR_ERROR("failed to set %s (%s)", name.c_str(), strerror(errno));
 #endif
 }
