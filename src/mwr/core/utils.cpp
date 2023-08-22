@@ -163,7 +163,7 @@ void setenv(const string& name, const string& value) {
 
 int getpid() {
 #if defined(MWR_MSVC)
-    return (int)_getpid();
+    return (int)GetCurrentProcessId();
 #else
     return (int)::getpid();
 #endif
