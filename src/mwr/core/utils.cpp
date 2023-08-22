@@ -161,6 +161,14 @@ void setenv(const string& name, const string& value) {
 #endif
 }
 
+int getpid() {
+#if defined(MWR_MSVC)
+    return (int)_getpid();
+#else
+    return (int)::getpid();
+#endif
+}
+
 vector<string> backtrace(size_t frames, size_t skip) {
     vector<string> sv;
 

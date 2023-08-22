@@ -146,7 +146,7 @@ TEST(utils, timestamp) {
 TEST(utils, fd_write) {
     const char* str = "hello world!\n";
     size_t len = strlen(str);
-    int fd = 1; // STDOUT_FILENO
+    int fd = STDOUT_FDNO;
     EXPECT_EQ(fd_write(fd, str, len), len);
     EXPECT_EQ(fd_write(-fd, str, len), 0);
     EXPECT_EQ(fd_write(fd, nullptr, len), 0);

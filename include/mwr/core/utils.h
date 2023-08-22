@@ -40,15 +40,15 @@ string username();
 optional<string> getenv(const string& name);
 void setenv(const string& name, const string& value);
 
+int getpid();
+
 vector<string> backtrace(size_t frames = 63, size_t skip = 1);
 void report_segfaults();
 extern size_t max_backtrace_length;
 
-#ifdef MWR_MSVC
-#define STDIN_FILENO  0
-#define STDOUT_FILENO 1
-#define STDERR_FILENO 2
-#endif
+constexpr int STDIN_FDNO = 0;
+constexpr int STDOUT_FDNO = 1;
+constexpr int STDERR_FDNO = 2;
 
 int fd_open(const string& path, const string& mode, int perms = 0644);
 void fd_close(int fd);
