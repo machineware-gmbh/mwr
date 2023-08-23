@@ -169,6 +169,16 @@ int getpid() {
 #endif
 }
 
+size_t get_page_size() {
+#if defined(MWR_WINDOWS)
+    SYSTEM_INFO info;
+    GetSystemInfo(&info);
+    return info.dwPageSize;
+#else
+    return sysconf(_SC_PAGE_SIZE);
+#endif
+}
+
 vector<string> backtrace(size_t frames, size_t skip) {
     vector<string> sv;
 
@@ -559,6 +569,42 @@ u64 timestamp_us() {
 u64 timestamp_ns() {
     auto delta = chrono::steady_clock::now() - g_start;
     return chrono::duration_cast<chrono::nanoseconds>(delta).count();
+}
+
+bool fill_random(void* buffer, size_t bufsz) {
+#if defined(MWR_WINDOWS)
+
+    HCRYPTPROV ctx;
+    if (!CryptAcquireContext(&ctx, NULL, NULL, PROV_RSA_FULL,
+                             CRYPT_VERIFYCONTEXT)) {
+        return false;
+    }
+
+    BYTE* ptr = (BYTE*)buffer;
+    size_t len = 0;
+    while (len < bufsz) {
+        DWORD n = min(bufsz - len, ~0u);
+        if (!CryptGenRandom(ctx, n, ptr + n))
+            break;
+
+        len += n;
+        ptr += n;
+    }
+
+    CryptReleaseContext(ctx, 0);
+    return len == bufsz;
+
+#else
+
+    int fd = open("/dev/urandom", O_RDONLY);
+    if (fd < 0)
+        return false;
+
+    bool ok = fd_read(fd, buffer, bufsz);
+    fd_close(fd);
+    return ok;
+
+#endif
 }
 
 } // namespace mwr

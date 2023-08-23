@@ -42,6 +42,8 @@ void setenv(const string& name, const string& value);
 
 int getpid();
 
+size_t get_page_size();
+
 vector<string> backtrace(size_t frames = 63, size_t skip = 1);
 void report_segfaults();
 extern size_t max_backtrace_length;
@@ -76,6 +78,8 @@ inline void cpu_yield() {
     asm volatile("yield" ::: "memory");
 #endif
 }
+
+bool fill_random(void* buffer, size_t bufsz);
 
 } // namespace mwr
 

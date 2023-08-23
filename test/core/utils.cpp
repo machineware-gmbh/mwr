@@ -179,3 +179,21 @@ TEST(utils, getenv) {
     ASSERT_TRUE(var);
     EXPECT_EQ(var, "somevalue");
 }
+
+TEST(utils, getpid) {
+    EXPECT_GT(mwr::getpid(), 0);
+}
+
+TEST(utils, page_size) {
+    EXPECT_EQ(mwr::get_page_size(), 4 * mwr::KiB);
+}
+
+TEST(utils, fill_random) {
+    vector<char> buf1(100);
+    vector<char> buf2(100);
+
+    ASSERT_TRUE(mwr::fill_random(buf1.data(), buf1.size()));
+    ASSERT_TRUE(mwr::fill_random(buf2.data(), buf2.size()));
+
+    EXPECT_NE(buf1, buf2);
+}
