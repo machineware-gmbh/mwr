@@ -574,24 +574,25 @@ u64 timestamp_ns() {
 bool fill_random(void* buffer, size_t bufsz) {
 #if defined(MWR_WINDOWS)
 
-    HCRYPTPROV ctx;
-    if (!CryptAcquireContext(&ctx, NULL, NULL, PROV_RSA_FULL,
-                             CRYPT_VERIFYCONTEXT)) {
+    HCRYPTPROV provider;
+    if (!CryptAcquireContext(&provider, NULL, NULL, PROV_RSA_FULL,
+                             CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
         return false;
     }
 
     BYTE* ptr = (BYTE*)buffer;
     size_t len = 0;
+
     while (len < bufsz) {
-        DWORD n = min(bufsz - len, ~0u);
-        if (!CryptGenRandom(ctx, n, ptr + n))
+        DWORD n = (DWORD)min(bufsz - len, ~0u);
+        if (!CryptGenRandom(provider, n, ptr))
             break;
 
         len += n;
         ptr += n;
     }
 
-    CryptReleaseContext(ctx, 0);
+    CryptReleaseContext(provider, 0);
     return len == bufsz;
 
 #else
