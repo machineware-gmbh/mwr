@@ -43,6 +43,7 @@
 #include "mwr/utils/socket.h"
 #include "mwr/utils/srec.h"
 #include "mwr/utils/terminal.h"
+#include "mwr/utils/uimage.h"
 
 #include "mwr/core/version.h"
 

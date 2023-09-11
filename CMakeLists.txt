@@ -45,7 +45,8 @@ add_library(mwr STATIC
             ${src}/mwr/utils/modules.cpp
             ${src}/mwr/utils/options.cpp
             ${src}/mwr/utils/srec.cpp
-            ${src}/mwr/utils/terminal.cpp)
+            ${src}/mwr/utils/terminal.cpp
+            ${src}/mwr/utils/uimage.cpp)
 
 target_include_directories(mwr PUBLIC ${inc})
 target_include_directories(mwr PUBLIC ${gen})
