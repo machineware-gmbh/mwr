@@ -66,7 +66,7 @@ ostream& operator<<(ostream& os, const report& rep);
         fprintf(stderr, __VA_ARGS__);                  \
         fprintf(stderr, "\n");                         \
         fflush(stderr);                                \
-        abort();                                       \
+        ::exit(1);                                     \
     } while (0)
 
 #define MWR_ERROR_ON(cond, ...)     \
