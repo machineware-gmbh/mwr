@@ -23,6 +23,8 @@
 
 #if defined(__linux__)
 #define MWR_LINUX
+#elif defined(__APPLE__)
+#define MWR_MACOS
 #elif defined(_WIN64)
 #define MWR_WINDOWS
 #else

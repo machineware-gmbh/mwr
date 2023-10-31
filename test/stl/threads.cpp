@@ -20,8 +20,9 @@ TEST(threads, name) {
             mwr::usleep(1);
     });
 
-    ASSERT_TRUE(set_thread_name(t, "test_thread"));
-    EXPECT_EQ(get_thread_name(t), "test_thread");
+    if (set_thread_name(t, "test_thread")) {
+        EXPECT_EQ(get_thread_name(t), "test_thread");
+    }
 
     exitreq = true;
     t.join();

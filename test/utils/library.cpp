@@ -10,20 +10,31 @@
 
 #include "testing.h"
 
+#include "mwr/core/compiler.h"
 #include "mwr/utils/library.h"
 
 using namespace mwr;
 
-static string get_test_library() {
-#if defined(_MSC_VER)
-    return get_resource_path("shared-x86.dll");
-#elif defined(__x86_64__)
-    return get_resource_path("shared-x86.so");
+#if defined(__x86_64__) || defined(_M_X64)
+#define SHARED_ARCH "x86"
 #elif defined(__aarch64__)
-    return get_resource_path("shared-arm64.so");
+#define SHARED_ARCH "arm64"
 #else
-#error "no test library available for your host architecture"
+#error Unknown architecture
 #endif
+
+#if defined(MWR_LINUX)
+#define SHARED_SUFFIX ".so"
+#elif defined(MWR_MACOS)
+#define SHARED_SUFFIX ".dylib"
+#elif defined(MWR_WINDOWS)
+#define SHARED_SUFFIX ".dll"
+#else
+#error Unknown architecture
+#endif
+
+static string get_test_library() {
+    return get_resource_path("shared-" SHARED_ARCH SHARED_SUFFIX);
 }
 
 TEST(library, basic) {

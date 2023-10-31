@@ -35,6 +35,13 @@ namespace fs = std::filesystem;
 #include <io.h>
 #endif
 
+#ifdef MWR_MACOS
+#include <unistd.h>
+#include <execinfo.h>
+#include <cxxabi.h>
+#include <mach-o/dyld.h>
+#endif
+
 namespace mwr {
 
 static fs::path resolve(const string& file) {
@@ -89,6 +96,8 @@ string curr_dir() {
 string temp_dir() {
 #if defined(MWR_LINUX)
     return "/tmp";
+#elif defined(MWR_MACOS)
+    return "/private/tmp";
 #elif defined(MWR_WINDOWS)
     TCHAR path[MAX_PATH] = {};
     if (GetTempPath(MAX_PATH, path) == 0)
@@ -112,11 +121,23 @@ string progname() {
     if (GetModuleFileName(NULL, path, MAX_PATH) == 0)
         MWR_ERROR("failed to get the program name");
     return string(path);
+#elif defined(MWR_MACOS)
+    char path[PATH_MAX];
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size))
+        return "unknown";
+
+    return path;
 #endif
 }
 
 string username() {
-#if defined(MWR_LINUX)
+#if defined(MWR_WINDOWS)
+    TCHAR name[MAX_PATH] = {};
+    DWORD namelen = sizeof(name);
+    if (GetUserName(name, &namelen))
+        return string(name);
+#else
     char uname[256] = {};
     if (getlogin_r(uname, sizeof(uname) - 1) == 0)
         return uname;
@@ -124,11 +145,6 @@ string username() {
     auto envuser = getenv("USER");
     if (envuser)
         return envuser.value();
-#elif defined(MWR_WINDOWS)
-    TCHAR name[MAX_PATH] = {};
-    DWORD namelen = sizeof(name);
-    if (GetUserName(name, &namelen))
-        return string(name);
 #endif
     return "unknown";
 }
@@ -182,7 +198,7 @@ size_t get_page_size() {
 vector<string> backtrace(size_t frames, size_t skip) {
     vector<string> sv;
 
-#if defined(MWR_LINUX)
+#if defined(MWR_LINUX) || defined(MWR_MACOS)
 
     void* symbols[frames + skip];
     size_t size = (size_t)::backtrace(symbols, frames + skip);

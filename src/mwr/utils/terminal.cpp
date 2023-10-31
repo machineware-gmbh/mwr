@@ -16,7 +16,7 @@
 #include <errno.h>
 #include <string.h>
 
-#if defined(MWR_LINUX)
+#if defined(MWR_LINUX) || defined(MWR_MACOS)
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>

@@ -18,7 +18,7 @@
 namespace mwr {
 
 string get_thread_name(const thread& t) {
-#ifdef __linux__
+#if defined(MWR_LINUX) || defined(MWR_MACOS)
     thread::native_handle_type handle = const_cast<thread&>(t).native_handle();
     if (!t.joinable())
         handle = (thread::native_handle_type)pthread_self();
@@ -28,7 +28,7 @@ string get_thread_name(const thread& t) {
         return "unknown";
 
     return buffer;
-#elif defined(_MSC_VER)
+#elif defined(MWR_WINDOWS)
     thread::native_handle_type handle = const_cast<thread&>(t).native_handle();
     PWSTR name = nullptr;
     auto hr = GetThreadDescription(handle, &name);
@@ -48,10 +48,14 @@ string get_thread_name(const thread& t) {
 }
 
 bool set_thread_name(thread& t, const string& nm) {
-#ifdef __linux__
+#if defined(MWR_LINUX)
     MWR_ERROR_ON(nm.length() > 15, "thread name too long: %s", nm.c_str());
     return pthread_setname_np(t.native_handle(), nm.c_str()) == 0;
-#elif defined(_MSC_VER)
+#elif defined(MWR_MACOS)
+    if (t.get_id() != std::this_thread::get_id())
+        return false;
+    return pthread_setname_np(nm.c_str()) == 0;
+#elif defined(MWR_WINDOWS)
     int len = MultiByteToWideChar(CP_UTF8, 0, nm.c_str(), -1, NULL, 0);
     if (len <= 0)
         return false;

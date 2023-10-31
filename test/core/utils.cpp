@@ -185,7 +185,7 @@ TEST(utils, getpid) {
 }
 
 TEST(utils, page_size) {
-    EXPECT_EQ(mwr::get_page_size(), 4 * mwr::KiB);
+    EXPECT_GE(mwr::get_page_size(), 4 * mwr::KiB);
 }
 
 TEST(utils, fill_random) {

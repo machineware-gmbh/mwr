@@ -11,4 +11,5 @@ API int function(int arg) {
 }
 
 // gcc -fPIC -shared -Wl,-soname,shared.so -o shared.so shared.c
+// clang -arch arm64 -dynamiclib -o shared-arm64.dylib shared.c
 // cl.exe /LD shared.c /link /OUT:shared-x86.dll

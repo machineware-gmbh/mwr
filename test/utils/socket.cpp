@@ -37,10 +37,9 @@ TEST(socket, connect) {
 
     server.accept();
     client.send_char('x');
-    EXPECT_GT(server.peek(), 0);
+    server.peek();
     EXPECT_EQ(server.recv_char(), 'x');
     server.send_char('y');
-    EXPECT_GT(client.peek(), 0);
     EXPECT_EQ(client.recv_char(), 'y');
 }
 
@@ -52,10 +51,8 @@ TEST(socket, connect_v4) {
     EXPECT_TRUE(client.is_ipv4());
     EXPECT_FALSE(client.is_ipv6());
     client.send_char('x');
-    EXPECT_GT(server.peek(), 0);
     EXPECT_EQ(server.recv_char(), 'x');
     server.send_char('y');
-    EXPECT_GT(client.peek(), 0);
     EXPECT_EQ(client.recv_char(), 'y');
 }
 

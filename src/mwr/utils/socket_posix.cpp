@@ -174,6 +174,11 @@ void socket::listen(u16 port) {
         MWR_REPORT("failed to create socket: %s", strerror(errno));
 
     SET_SOCKOPT(m_socket, SOL_SOCKET, SO_REUSEADDR, 1);
+
+#ifdef MWR_MACOS
+    SET_SOCKOPT(m_socket, SOL_SOCKET, SO_REUSEPORT, 1);
+#endif
+
     if (family == AF_INET6)
         SET_SOCKOPT(m_socket, IPPROTO_IPV6, IPV6_V6ONLY, 0);
 

@@ -72,7 +72,7 @@ else()
     target_sources(mwr PRIVATE ${src}/mwr/utils/aio_posix.cpp)
     target_sources(mwr PRIVATE ${src}/mwr/utils/library_posix.cpp)
     target_sources(mwr PRIVATE ${src}/mwr/utils/socket_posix.cpp)
-    target_link_libraries(mwr PUBLIC -rdynamic rt stdc++fs)
+    target_link_libraries(mwr PUBLIC -rdynamic)
 endif()
 
 if(LIBELF_FOUND)
