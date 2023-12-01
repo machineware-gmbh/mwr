@@ -18,6 +18,7 @@
 
 #include "mwr/stl/strings.h"
 #include "mwr/stl/streams.h"
+#include "mwr/stl/threads.h"
 
 namespace mwr {
 
@@ -34,8 +35,9 @@ private:
     string m_peer;
     bool m_ipv6;
     u16 m_port;
-    socket_t m_socket;
-    socket_t m_conn;
+
+    atomic<socket_t> m_socket;
+    atomic<socket_t> m_conn;
 
 public:
     u16 port() const { return m_port; }
