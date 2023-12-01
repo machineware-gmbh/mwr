@@ -8,6 +8,8 @@
  *                                                                            *
  ******************************************************************************/
 
+#include <thread>
+
 #include "testing.h"
 #include "mwr/utils/socket.h"
 
@@ -71,29 +73,6 @@ TEST(socket, send) {
     EXPECT_EQ(strcmp(str, buf), 0);
 }
 
-TEST(socket, async) {
-    mwr::socket server;
-    mwr::socket client;
-
-    for (int i = 1; i < 4; i++) {
-        const char* str = "Hello World";
-        char buf[12] = {};
-        memset(buf, 0, strlen(str) + 1);
-
-        server.listen(0);
-        server.accept_async();
-        client.connect(server.host(), server.port());
-
-        server.send(str);
-        client.recv(buf, sizeof(buf) - 1);
-        EXPECT_EQ(strcmp(str, buf), 0);
-
-        server.disconnect();
-        client.disconnect();
-        server.unlisten();
-    }
-}
-
 TEST(socket, unlisten) {
     mwr::socket sock(0);
     sock.unlisten();
@@ -102,8 +81,11 @@ TEST(socket, unlisten) {
     sock.listen(0);
     EXPECT_TRUE(sock.is_listening());
 
-    sock.accept_async();
+    std::thread t([&]() { EXPECT_FALSE(sock.accept()); });
+
     sock.unlisten();
 
     EXPECT_THROW(sock.send("test"), mwr::report);
+
+    t.join();
 }

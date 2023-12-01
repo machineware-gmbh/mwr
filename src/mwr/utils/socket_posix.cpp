@@ -137,13 +137,7 @@ bool socket::is_connected() const {
 }
 
 socket::socket():
-    m_host(),
-    m_peer(),
-    m_ipv6(),
-    m_port(0),
-    m_socket(-1),
-    m_conn(-1),
-    m_async() {
+    m_host(), m_peer(), m_ipv6(), m_port(0), m_socket(-1), m_conn(-1) {
 }
 
 socket::socket(u16 port): socket() {
@@ -155,10 +149,10 @@ socket::socket(const string& host, u16 port): socket() {
 }
 
 socket::~socket() {
-    if (is_connected())
-        disconnect();
     if (is_listening())
         unlisten();
+    if (is_connected())
+        disconnect();
 }
 
 void socket::listen(u16 port) {
@@ -213,9 +207,6 @@ void socket::unlisten() {
     m_socket = -1;
     ::shutdown(fd, SHUT_RDWR);
 
-    if (m_async.joinable())
-        m_async.join();
-
     m_host.clear();
     m_port = 0;
 }
@@ -239,19 +230,6 @@ bool socket::accept() {
     m_ipv6 = addr.is_ipv6();
     m_peer = mkstr("%s:%hu", addr.host().c_str(), addr.port());
     return true;
-}
-
-void socket::accept_async() {
-    if (!is_listening())
-        MWR_ERROR("socket not listening");
-    if (m_async.joinable())
-        MWR_ERROR("socket already accepting connections");
-
-    if (is_connected())
-        disconnect();
-
-    m_async = thread(&socket::accept, this);
-    set_thread_name(m_async, mkstr("socket:%hu", port()));
 }
 
 void socket::connect(const string& host, u16 port) {
@@ -305,9 +283,6 @@ size_t socket::peek(time_t timeoutms) {
     if (!is_connected())
         return 0;
 
-    if (m_async.joinable())
-        m_async.join();
-
     if (!mwr::fd_peek(m_conn, timeoutms))
         return 0;
 
@@ -323,9 +298,6 @@ size_t socket::peek(time_t timeoutms) {
 }
 
 void socket::send(const void* data, size_t size) {
-    if (m_async.joinable())
-        m_async.join();
-
     MWR_REPORT_ON(!is_connected(), "error sending data: not connected");
 
     const u8* ptr = (const u8*)data;
@@ -344,9 +316,6 @@ void socket::send(const void* data, size_t size) {
 }
 
 void socket::recv(void* data, size_t size) {
-    if (m_async.joinable())
-        m_async.join();
-
     MWR_REPORT_ON(!is_connected(), "error receiving data: not connected");
 
     u8* ptr = (u8*)data;

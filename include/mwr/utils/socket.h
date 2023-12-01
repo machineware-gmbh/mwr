@@ -18,7 +18,6 @@
 
 #include "mwr/stl/strings.h"
 #include "mwr/stl/streams.h"
-#include "mwr/stl/threads.h"
 
 namespace mwr {
 
@@ -34,10 +33,9 @@ private:
     string m_host;
     string m_peer;
     bool m_ipv6;
-    atomic<u16> m_port;
-    atomic<socket_t> m_socket;
-    atomic<socket_t> m_conn;
-    thread m_async;
+    u16 m_port;
+    socket_t m_socket;
+    socket_t m_conn;
 
 public:
     u16 port() const { return m_port; }
@@ -63,7 +61,6 @@ public:
     void unlisten();
 
     bool accept();
-    void accept_async();
 
     void connect(const string& host, u16 port);
     void disconnect();
