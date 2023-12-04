@@ -17,15 +17,16 @@
 
 namespace mwr {
 
-static thread::native_handle_type current_thread() {
+static auto current_thread() {
 #if defined(MWR_LINUX) || defined(MWR_MACOS)
     return pthread_self();
 #elif defined(MWR_WINDOWS)
-    return GetCurrentThreadId();
+    return GetCurrentThread();
 #endif
 }
 
-static string native_get_thread_name(thread::native_handle_type handle) {
+template <typename THREAD>
+static string native_get_thread_name(THREAD handle) {
 #if defined(MWR_LINUX) || defined(MWR_MACOS)
     char buffer[256] = {};
     if (pthread_getname_np(handle, buffer, sizeof(buffer)) == 0)
@@ -47,13 +48,13 @@ static string native_get_thread_name(thread::native_handle_type handle) {
 #endif
 }
 
-static bool native_set_thread_name(thread::native_handle_type handle,
-                                   const string& nm) {
+template <typename THREAD>
+static bool native_set_thread_name(THREAD handle, const string& nm) {
 #if defined(MWR_LINUX)
     MWR_ERROR_ON(nm.length() > 15, "thread name too long: %s", nm.c_str());
     return pthread_setname_np(handle, nm.c_str()) == 0;
 #elif defined(MWR_MACOS)
-    if (t.get_id() != std::this_thread::get_id())
+    if (handle != pthread_self())
         return false;
     return pthread_setname_np(nm.c_str()) == 0;
 #elif defined(MWR_WINDOWS)
