@@ -32,7 +32,7 @@ private:
     static const int TIMEOUT_MS = 10;
 
     void aio_thread() {
-        set_thread_name(m_thread, "aio_thread");
+        set_thread_name("aio_thread");
         vector<struct pollfd> polls;
         u64 curgen = 0;
         int ret = 0;
