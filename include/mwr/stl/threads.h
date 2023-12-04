@@ -27,7 +27,10 @@ using std::condition_variable;
 using std::condition_variable_any;
 using std::lock_guard;
 
-string get_thread_name(const thread& t = std::thread());
+string get_thread_name();
+string get_thread_name(const thread& t);
+
+bool set_thread_name(const string& name);
 bool set_thread_name(thread& t, const string& name);
 
 void sleep(unsigned long long seconds);

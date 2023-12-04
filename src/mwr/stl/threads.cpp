@@ -17,19 +17,21 @@
 
 namespace mwr {
 
-string get_thread_name(const thread& t) {
+static thread::native_handle_type current_thread() {
 #if defined(MWR_LINUX) || defined(MWR_MACOS)
-    thread::native_handle_type handle = const_cast<thread&>(t).native_handle();
-    if (!t.joinable())
-        handle = (thread::native_handle_type)pthread_self();
-
-    char buffer[256] = {};
-    if (pthread_getname_np(handle, buffer, sizeof(buffer)) != 0)
-        return "unknown";
-
-    return buffer;
+    return pthread_self();
 #elif defined(MWR_WINDOWS)
-    thread::native_handle_type handle = const_cast<thread&>(t).native_handle();
+    return GetCurrentThreadId();
+#endif
+}
+
+static string native_get_thread_name(thread::native_handle_type handle) {
+#if defined(MWR_LINUX) || defined(MWR_MACOS)
+    char buffer[256] = {};
+    if (pthread_getname_np(handle, buffer, sizeof(buffer)) == 0)
+        return buffer;
+    return "unknown";
+#elif defined(MWR_WINDOWS)
     PWSTR name = nullptr;
     auto hr = GetThreadDescription(handle, &name);
     if (FAILED(hr))
@@ -42,15 +44,14 @@ string get_thread_name(const thread& t) {
     string result(len - 1, '\0');
     WideCharToMultiByte(CP_UTF8, 0, name, -1, &result[0], len, NULL, NULL);
     return result;
-#else
-    return "unknown";
 #endif
 }
 
-bool set_thread_name(thread& t, const string& nm) {
+static bool native_set_thread_name(thread::native_handle_type handle,
+                                   const string& nm) {
 #if defined(MWR_LINUX)
     MWR_ERROR_ON(nm.length() > 15, "thread name too long: %s", nm.c_str());
-    return pthread_setname_np(t.native_handle(), nm.c_str()) == 0;
+    return pthread_setname_np(handle, nm.c_str()) == 0;
 #elif defined(MWR_MACOS)
     if (t.get_id() != std::this_thread::get_id())
         return false;
@@ -62,11 +63,33 @@ bool set_thread_name(thread& t, const string& nm) {
 
     PWSTR wnm = new WCHAR[len];
     MultiByteToWideChar(CP_UTF8, 0, nm.c_str(), -1, wnm, len);
-    auto hr = SetThreadDescription(t.native_handle(), wnm);
+    auto hr = SetThreadDescription(handle, wnm);
     delete[] wnm;
     return SUCCEEDED(hr);
 #endif
-    return false;
+}
+
+string get_thread_name() {
+    return native_get_thread_name(current_thread());
+}
+
+string get_thread_name(const thread& t) {
+    if (!t.joinable())
+        return "unknown";
+    auto handle = const_cast<thread&>(t).native_handle();
+    return native_get_thread_name(handle);
+}
+
+bool set_thread_name(const string& name) {
+    return native_set_thread_name(current_thread(), name);
+}
+
+bool set_thread_name(thread& t, const string& name) {
+    if (!t.joinable())
+        return false;
+
+    auto handle = const_cast<thread&>(t).native_handle();
+    return native_set_thread_name(handle, name);
 }
 
 void sleep(unsigned long long seconds) {
