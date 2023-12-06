@@ -53,6 +53,21 @@ TEST(container, remove) {
     EXPECT_TRUE(stl_contains(v1, 2));
     EXPECT_TRUE(stl_contains(v1, 3));
     EXPECT_FALSE(stl_contains(v1, 4));
+
+    multimap<std::string, int> m1{
+        { "a", 1 },
+        { "a", 2 },
+        { "b", 2 },
+        { "c", 3 },
+    };
+
+    EXPECT_EQ(m1.count("a"), 2);
+    EXPECT_EQ(m1.count("b"), 1);
+    EXPECT_EQ(m1.count("c"), 1);
+    stl_remove(m1, 2);
+    EXPECT_EQ(m1.count("a"), 1);
+    EXPECT_EQ(m1.count("b"), 0);
+    EXPECT_EQ(m1.count("c"), 1);
 }
 
 TEST(container, remove_if) {

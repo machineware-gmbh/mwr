@@ -31,6 +31,7 @@ using std::array;
 using std::vector;
 using std::set;
 using std::map;
+using std::multimap;
 using std::unordered_set;
 using std::unordered_map;
 using std::pair;
@@ -38,6 +39,12 @@ using std::pair;
 template <typename T>
 inline void stl_remove(vector<T>& v, const T& t) {
     v.erase(std::remove(v.begin(), v.end(), t), v.end());
+}
+
+template <typename M, typename T = typename M::mapped_type>
+inline void stl_remove(M& m, const T& t) {
+    for (auto it = std::begin(m); it != std::end(m);)
+        it = it->second == t ? m.erase(it) : ++it;
 }
 
 template <typename T, class PRED>
