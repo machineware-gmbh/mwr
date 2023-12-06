@@ -89,3 +89,24 @@ TEST(socket, unlisten) {
 
     t.join();
 }
+
+TEST(socket, threads) {
+    mwr::socket sock(0);
+    sock.unlisten();
+    EXPECT_FALSE(sock.is_listening());
+
+    sock.listen(0);
+    EXPECT_TRUE(sock.is_listening());
+
+    std::thread t([&]() {
+        (void)sock.port(); // trigger a data race on port
+        (void)sock.peer(); // trigger a data race on peer
+        EXPECT_FALSE(sock.accept());
+    });
+
+    sock.unlisten();
+
+    EXPECT_THROW(sock.send("test"), mwr::report);
+
+    t.join();
+}

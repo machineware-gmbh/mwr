@@ -31,21 +31,25 @@ private:
     using socket_t = int;
 #endif
 
+    mutable mutex m_mtx;
+
     string m_host;
     string m_peer;
     bool m_ipv6;
     u16 m_port;
 
-    atomic<socket_t> m_socket;
-    atomic<socket_t> m_conn;
+    socket_t m_socket;
+    socket_t m_conn;
+
+    void disconnect_locked();
 
 public:
-    u16 port() const { return m_port; }
-    const char* host() const { return m_host.c_str(); }
-    const char* peer() const { return m_peer.c_str(); }
+    u16 port() const;
+    const char* host() const;
+    const char* peer() const;
 
-    bool is_ipv4() const { return !m_ipv6; }
-    bool is_ipv6() const { return m_ipv6; }
+    bool is_ipv4() const;
+    bool is_ipv6() const;
 
     bool is_listening() const;
     bool is_connected() const;
@@ -83,6 +87,31 @@ public:
     template <typename T>
     void recv(T& data);
 };
+
+inline u16 socket::port() const {
+    lock_guard<mutex> guard(m_mtx);
+    return m_port;
+}
+
+inline const char* socket::host() const {
+    lock_guard<mutex> guard(m_mtx);
+    return m_host.c_str();
+}
+
+inline const char* socket::peer() const {
+    lock_guard<mutex> guard(m_mtx);
+    return m_peer.c_str();
+}
+
+inline bool socket::is_ipv4() const {
+    lock_guard<mutex> guard(m_mtx);
+    return !m_ipv6;
+}
+
+inline bool socket::is_ipv6() const {
+    lock_guard<mutex> guard(m_mtx);
+    return m_ipv6;
+}
 
 inline void socket::send_char(int c) {
     char x = (char)c;

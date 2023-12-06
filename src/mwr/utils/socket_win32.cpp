@@ -158,16 +158,33 @@ string socket_addr::peer() const {
     return mkstr("%s:%hu", host().c_str(), port());
 }
 
+void socket::disconnect_locked() {
+    if (m_conn != INVALID_SOCKET)
+        return;
+
+    ::shutdown(m_conn, SD_BOTH);
+    m_conn = INVALID_SOCKET;
+    m_peer.clear();
+}
+
 bool socket::is_listening() const {
+    lock_guard<mutex> guard(m_mtx);
     return m_socket != INVALID_SOCKET;
 }
 
 bool socket::is_connected() const {
+    lock_guard<mutex> guard(m_mtx);
     return m_conn != INVALID_SOCKET;
 }
 
 socket::socket():
-    m_host(), m_peer(), m_ipv6(), m_port(0), m_socket(-1), m_conn(-1) {
+    m_mtx(),
+    m_host(),
+    m_peer(),
+    m_ipv6(),
+    m_port(0),
+    m_socket(-1),
+    m_conn(-1) {
     socket_init();
 }
 
@@ -180,17 +197,23 @@ socket::socket(const string& host, u16 port): socket() {
 }
 
 socket::~socket() {
-    if (is_listening())
-        unlisten();
-    if (is_connected())
-        disconnect();
+    lock_guard<mutex> guard(m_mtx);
+    if (m_socket != INVALID_SOCKET)
+        closesocket(m_socket);
+    if (m_conn != INVALID_SOCKET)
+        ::shutdown(m_conn, SD_BOTH);
 }
 
 void socket::listen(u16 port) {
-    if (is_listening() && (port == 0 || port == m_port))
+    lock_guard<mutex> guard(m_mtx);
+    if (m_socket != INVALID_SOCKET && (port == 0 || port == m_port))
         return;
 
-    unlisten();
+    if (m_socket != INVALID_SOCKET)
+        closesocket(m_socket);
+
+    m_host.clear();
+    m_port = 0;
 
     int family = socket_default_address_family();
 
@@ -222,41 +245,46 @@ void socket::listen(u16 port) {
 }
 
 void socket::unlisten() {
-    if (!is_listening())
+    lock_guard<mutex> guard(m_mtx);
+    if (m_socket == INVALID_SOCKET)
         return;
 
-    socket_t sock = m_socket;
-    m_socket = INVALID_SOCKET;
-    closesocket(sock);
+    closesocket(m_socket);
 
+    m_socket = INVALID_SOCKET;
     m_host.clear();
     m_port = 0;
 }
 
 bool socket::accept() {
-    if (is_connected())
-        disconnect();
+    lock_guard<mutex> guard(m_mtx);
+    if (m_conn == INVALID_SOCKET)
+        disconnect_locked();
 
     socket_addr addr;
     socklen_t len = sizeof(addr);
+    socket_t sock = m_socket;
+    socket_t conn = INVALID_SOCKET;
 
-    m_conn = ::accept(m_socket, &addr.base, &len);
-    if (m_conn == INVALID_SOCKET && m_socket == INVALID_SOCKET)
+    m_mtx.unlock();
+    conn = ::accept(sock, &addr.base, &len);
+    m_mtx.lock();
+
+    m_conn = conn;
+    if (m_conn == INVALID_SOCKET)
         return false; // shutdown while waiting for connections
-
-    if (m_conn < 0)
-        MWR_ERROR("failed to accept connection: %s", socket_strerror());
 
     SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
 
     m_ipv6 = addr.is_ipv6();
-    m_peer = mkstr("%s:%hu", addr.host().c_str(), addr.port());
+    m_peer = addr.peer();
     return true;
 }
 
 void socket::connect(const string& host, u16 port) {
-    if (is_connected())
-        disconnect();
+    lock_guard<mutex> guard(m_mtx);
+    if (m_conn == INVALID_SOCKET)
+        disconnect_locked();
 
     string pstr = to_string(port);
 
@@ -281,8 +309,9 @@ void socket::connect(const string& host, u16 port) {
             continue;
         }
 
-        m_ipv6 = ai->ai_family == AF_INET6;
-        m_peer = socket_addr(ai->ai_addr).peer();
+        socket_addr addr(ai->ai_addr);
+        m_ipv6 = addr.is_ipv6();
+        m_peer = addr.peer();
         break;
     }
 
@@ -291,18 +320,13 @@ void socket::connect(const string& host, u16 port) {
 }
 
 void socket::disconnect() {
-    if (!is_connected())
-        return;
-
-    socket_t fd = m_conn;
-    m_conn = INVALID_SOCKET;
-    ::shutdown(fd, SD_BOTH);
-
-    m_peer.clear();
+    lock_guard<mutex> guard(m_mtx);
+    disconnect_locked();
 }
 
 size_t socket::peek(time_t timeoutms) {
-    if (!is_connected())
+    lock_guard<mutex> guard(m_mtx);
+    if (m_conn == INVALID_SOCKET)
         return 0;
 
     u_long avail = 0;
@@ -313,7 +337,9 @@ size_t socket::peek(time_t timeoutms) {
 }
 
 void socket::send(const void* data, size_t size) {
-    MWR_REPORT_ON(!is_connected(), "error sending data: not connected");
+    lock_guard<mutex> guard(m_mtx);
+    if (m_conn == INVALID_SOCKET)
+        MWR_REPORT("error sending data: not connected");
 
     const char* ptr = (const char*)data;
     size_t n = 0;
@@ -321,7 +347,7 @@ void socket::send(const void* data, size_t size) {
     while (n < size) {
         int r = ::send(m_conn, ptr + n, (int)(size - n), 0);
         if (r <= 0)
-            disconnect();
+            disconnect_locked();
 
         MWR_REPORT_ON(r == 0, "error sending data: disconnected");
         MWR_REPORT_ON(r < 0, "error sending data: %s", socket_strerror());
@@ -331,7 +357,8 @@ void socket::send(const void* data, size_t size) {
 }
 
 void socket::recv(void* data, size_t size) {
-    MWR_REPORT_ON(!is_connected(), "error receiving data: not connected");
+    if (m_conn == INVALID_SOCKET)
+        MWR_REPORT("error receiving data: not connected");
 
     char* ptr = (char*)data;
     size_t n = 0;
@@ -339,7 +366,7 @@ void socket::recv(void* data, size_t size) {
     while (n < size) {
         int r = ::recv(m_conn, ptr + n, (int)(size - n), 0);
         if (r <= 0)
-            disconnect();
+            disconnect_locked();
 
         MWR_REPORT_ON(r == 0, "error receiving data: disconnected");
         MWR_REPORT_ON(r < 0, "error receiving data: %s", socket_strerror());

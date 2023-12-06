@@ -23,6 +23,7 @@ using std::string;
 using std::atomic;
 using std::thread;
 using std::mutex;
+using std::recursive_mutex;
 using std::condition_variable;
 using std::condition_variable_any;
 using std::lock_guard;
