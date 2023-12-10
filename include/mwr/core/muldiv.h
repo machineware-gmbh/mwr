@@ -69,6 +69,10 @@ constexpr void imul64(i64& hi, i64& lo, i64 a, i64 b) {
 #endif
 }
 
+constexpr u64 udivup(u64 a, u64 b) {
+    return (a + b - 1) / b;
+}
+
 } // namespace mwr
 
 #endif

@@ -13,6 +13,15 @@
 
 using namespace mwr;
 
+TEST(muldiv, divup) {
+    EXPECT_EQ(udivup(10, 5), 2);
+    EXPECT_EQ(udivup(10, 3), 4);
+    EXPECT_EQ(udivup(10, 1), 10);
+    EXPECT_EQ(udivup(10, 9), 2);
+    EXPECT_EQ(udivup(10, 10), 1);
+    EXPECT_EQ(udivup(0, 10), 0);
+}
+
 TEST(muldiv, umul64) {
     std::mt19937 rng;
     std::uniform_int_distribution<u64> dist;
