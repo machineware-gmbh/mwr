@@ -306,7 +306,12 @@ size_t socket::peek(time_t timeoutms) {
     if (m_conn < 0)
         return 0;
 
-    if (!mwr::fd_peek(m_conn, timeoutms))
+    int conn = m_conn;
+    m_mtx.unlock();
+    size_t count = mwr::fd_peek(conn, timeoutms);
+    m_mtx.lock();
+
+    if (count == 0)
         return 0;
 
     char buf[32];
