@@ -132,7 +132,7 @@ inline bool atomic_cas32(volatile void* ptr, void* cmp, void* val) {
                                      __ATOMIC_SEQ_CST);
 #else
     return _InterlockedCompareExchange(
-        (volatile long*)ptr, read_once<u32>(long), read_once<long>(cmp));
+        (volatile long*)ptr, read_once<long>(val), read_once<long>(cmp));
 #endif
 }
 
