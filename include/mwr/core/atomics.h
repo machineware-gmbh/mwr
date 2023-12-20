@@ -107,6 +107,90 @@ inline bool atomic_cmpxchg(T* ptr, T2 expected, T3 desired) {
 #endif
 }
 
+inline bool atomic_cas8(volatile void* ptr, void* cmp, void* val) {
+#ifndef MWR_MSVC
+    return __atomic_compare_exchange((volatile u8*)ptr, (u8*)cmp, (u8*)val,
+                                     false, __ATOMIC_SEQ_CST,
+                                     __ATOMIC_SEQ_CST);
+#else
+    return _InterlockedCompareExchange8((volatile u8*)ptr, read_once<u8>(val),
+                                        read_once<u8>(cmp));
+#endif
+}
+
+inline bool atomic_cas16(volatile void* ptr, void* cmp, void* val) {
+#ifndef MWR_MSVC
+    return __atomic_compare_exchange((volatile u16*)ptr, (u16*)cmp, (u16*)val,
+                                     false, __ATOMIC_SEQ_CST,
+                                     __ATOMIC_SEQ_CST);
+#else
+    return _InterlockedCompareExchange16(
+        (volatile u16*)ptr, read_once<u16>(val), read_once<u16>(cmp));
+#endif
+}
+
+inline bool atomic_cas32(volatile void* ptr, void* cmp, void* val) {
+#ifndef MWR_MSVC
+    return __atomic_compare_exchange((volatile u32*)ptr, (u32*)cmp, (u32*)val,
+                                     false, __ATOMIC_SEQ_CST,
+                                     __ATOMIC_SEQ_CST);
+#else
+    return _InterlockedCompareExchange((volatile u32*)ptr, read_once<u32>(val),
+                                       read_once<u32>(cmp));
+#endif
+}
+
+inline bool atomic_cas64(volatile void* ptr, void* cmp, void* val) {
+#ifndef MWR_MSVC
+    return __atomic_compare_exchange((volatile u64*)ptr, (u64*)cmp, (u64*)val,
+                                     false, __ATOMIC_SEQ_CST,
+                                     __ATOMIC_SEQ_CST);
+#else
+    return _InterlockedCompareExchange64(
+        (volatile u64*)ptr, read_once<u64>(val), read_once<u64>(cmp));
+#endif
+}
+
+inline bool atomic_cas128(volatile void* ptr, void* cmp, void* val) {
+#ifdef MWR_MSVC
+    return InterlockedCompareExchange128((volatile LONG64*)ptr, (u64*)cmp[1],
+                                         (u64*)cmp[0], (LONG64*)val);
+#else
+    u64 cmpl = ((u64*)cmp)[0];
+    u64 cmph = ((u64*)cmp)[1];
+    u64 vall = ((u64*)val)[0];
+    u64 valh = ((u64*)val)[1];
+#if defined(__x86_64)
+    u8 res = 0;
+    asm volatile(
+        "lock cmpxchg16b %[dst]\n"
+        "sete %[res]\n"
+        : [dst] "+m"(((u64*)ptr)[0]), [res] "=r"(res)
+        : "d"(cmph), "a"(cmpl), "c"(valh), "b"(vall)
+        : "memory");
+    return res;
+#elif defined(aarch64)
+    u64 oldl, oldh;
+    u32 temp;
+    asm volatile(
+        "0: ldaxp %[ol], %[oh], %[mem]\n"
+        "   cmp   %[ol], %[cl]\n"
+        "   ccmp  %[oh], %[ch], #0, eq\n"
+        "   b.ne 1f\n"
+        "   stlxp %w[temp], %[vl], %[vh], %[mem]\n"
+        "   cbnz %w[temp], 0b\n"
+        "1:"
+        : [mem] "+m"(((u64*)ptr)[0]), [temp] "=&r"(temp), [ol] "=&r"(oldl),
+          [oh] "=&r"(oldh)
+        : [cl] "r"(cmpl), [ch] "r"(cmph), [vl] "r"(vall), [vh] "r"(valh)
+        : "memory", "cc");
+    return temp == 0;
+#else
+#error "atomic cas128 not supported"
+#endif
+#endif
+}
+
 template <typename T, typename T2 = T>
 inline T atomic_or(T* mem, T2 val) {
 #ifndef MWR_MSVC
@@ -292,7 +376,8 @@ inline u64 atomic_swap_ptr(void* ptr, const void* val, size_t size) {
     });
 }
 
-inline bool atomic_cmpxchg(void* ptr, u64 cmp, const void* val, size_t size) {
+inline bool atomic_cmpxchg(volatile void* ptr, u64 cmp, const void* val,
+                           size_t size) {
     switch (size) {
     case 1:
         return atomic_cmpxchg((u8*)ptr, (u8)cmp, *(const u8*)val);
