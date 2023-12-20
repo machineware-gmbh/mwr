@@ -103,94 +103,92 @@ inline bool atomic_cmpxchg(T* ptr, T2 expected, T3 desired) {
 #endif
 }
 
-inline bool atomic_cas8(volatile void* ptr, void* cmp, void* val) {
+inline bool atomic_cas8(volatile void* ptr, const void* cmp, const void* val) {
+    auto comp = read_once<u8>(cmp);
+    auto newv = read_once<u8>(val);
 #ifdef MWR_MSVC
-    auto comp = read_once<char>(cmp);
-    return _InterlockedCompareExchange8((volatile char*)ptr,
-                                        read_once<char>(val), comp) == comp;
+    return _InterlockedCompareExchange8((volatile char*)ptr, newv, comp) ==
+           comp;
 #else
-    return __atomic_compare_exchange((volatile u8*)ptr, (u8*)cmp, (u8*)val,
-                                     false, __ATOMIC_SEQ_CST,
-                                     __ATOMIC_SEQ_CST);
+    return __atomic_compare_exchange((volatile u8*)ptr, &comp, &newv, false,
+                                     __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 #endif
 }
 
-inline bool atomic_cas16(volatile void* ptr, void* cmp, void* val) {
+inline bool atomic_cas16(volatile void* ptr, const void* cmp,
+                         const void* val) {
+    auto comp = read_once<u16>(cmp);
+    auto newv = read_once<u16>(val);
 #ifdef MWR_MSVC
-    auto comp = read_once<short>(cmp);
-    return _InterlockedCompareExchange16((volatile short*)ptr,
-                                         read_once<short>(val), comp) == comp;
+    return _InterlockedCompareExchange16((volatile short*)ptr, newv, comp) ==
+           comp;
 #else
-    return __atomic_compare_exchange((volatile u16*)ptr, (u16*)cmp, (u16*)val,
-                                     false, __ATOMIC_SEQ_CST,
-                                     __ATOMIC_SEQ_CST);
+    return __atomic_compare_exchange((volatile u16*)ptr, &comp, &newv, false,
+                                     __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 #endif
 }
 
-inline bool atomic_cas32(volatile void* ptr, void* cmp, void* val) {
+inline bool atomic_cas32(volatile void* ptr, const void* cmp,
+                         const void* val) {
+    auto comp = read_once<u32>(cmp);
+    auto newv = read_once<u32>(val);
 #ifdef MWR_MSVC
-    auto comp = read_once<long>(cmp);
-    return _InterlockedCompareExchange((volatile long*)ptr,
-                                       read_once<long>(val), comp) == comp;
+    return _InterlockedCompareExchange((volatile long*)ptr, newv, comp) ==
+           comp;
 #else
-    return __atomic_compare_exchange((volatile u32*)ptr, (u32*)cmp, (u32*)val,
-                                     false, __ATOMIC_SEQ_CST,
-                                     __ATOMIC_SEQ_CST);
+    return __atomic_compare_exchange((volatile u32*)ptr, &comp, &newv, false,
+                                     __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 #endif
 }
 
-inline bool atomic_cas64(volatile void* ptr, void* cmp, void* val) {
+inline bool atomic_cas64(volatile void* ptr, const void* cmp,
+                         const void* val) {
+    auto comp = read_once<u64>(cmp);
+    auto newv = read_once<u64>(val);
 #ifdef MWR_MSVC
-    auto comp = read_once<long long>(cmp);
-    return _InterlockedCompareExchange64((volatile long long*)ptr,
-                                         read_once<long long>(val),
+    return _InterlockedCompareExchange64((volatile long long*)ptr, newv,
                                          comp) == comp;
 #else
-    return __atomic_compare_exchange((volatile u64*)ptr, (u64*)cmp, (u64*)val,
-                                     false, __ATOMIC_SEQ_CST,
-                                     __ATOMIC_SEQ_CST);
+    return __atomic_compare_exchange((volatile u64*)ptr, &comp, &newv, false,
+                                     __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 #endif
 }
 
-inline bool atomic_cas128(volatile void* ptr, void* cmp, void* val) {
+inline bool atomic_cas128(volatile void* ptr, const void* cmp,
+                          const void* val) {
+    MWR_DECL_ALIGN(16) u64 comp[2];
+    MWR_DECL_ALIGN(16) u64 newv[2];
+    memcpy(comp, cmp, sizeof(comp));
+    memcpy(newv, val, sizeof(newv));
 #ifdef MWR_MSVC
-    __int64 cmpres[2] = { ((__int64*)cmp)[0], ((__int64*)cmp)[1] };
-    return _InterlockedCompareExchange128((volatile __int64*)ptr,
-                                          ((__int64*)val)[1],
-                                          ((__int64*)val)[0], cmpres);
+    return _InterlockedCompareExchange128((volatile __int64*)ptr, newv[1],
+                                          newv[0], comp);
 #else
-    u64 cmpl = ((u64*)cmp)[0];
-    u64 cmph = ((u64*)cmp)[1];
-    u64 vall = ((u64*)val)[0];
-    u64 valh = ((u64*)val)[1];
 #if defined(MWR_X86_64)
     u8 res = 0;
     asm volatile(
         "lock cmpxchg16b %[dst]\n"
         "sete %[res]\n"
-        : [dst] "+m"(((u64*)ptr)[0]), [res] "=r"(res)
-        : "d"(cmph), "a"(cmpl), "c"(valh), "b"(vall)
-        : "memory");
+        : [dst] "+m"(*(u64*)ptr), [res] "=r"(res)
+        : "d"(comp[1]), "a"(comp[0]), "c"(newv[1]), "b"(newv[0])
+        : "memory", "cc");
     return res;
 #elif defined(MWR_ARM64)
     u64 oldl, oldh;
-    u32 temp, res;
+    u32 temp = 1;
     asm volatile(
-        "0: mov   %[res], #0\n"
-        "   ldaxp %[oldl], %[oldh], [%[mem]]\n"
+        "0: ldaxp %[oldl], %[oldh], %[mem]\n"
         "   cmp   %[oldl], %[cmpl]\n"
         "   ccmp  %[oldh], %[cmph], #0, eq\n"
         "   b.ne  1f\n"
-        "   stlxp %w[temp], %[vall], %[valh], [%[mem]]\n"
-        "   mov   %[res], #1\n"
+        "   stlxp %w[temp], %[vall], %[valh], %[mem]\n"
         "   cbnz  %w[temp], 0b\n"
-        "1:"
-        : [temp] "=&r"(temp), [res] "=&r"(res), [oldl] "=&r"(oldl),
-          [oldh] "=&r"(oldh)
-        : [mem] "r"(ptr), [cmpl] "r"(cmpl), [cmph] "r"(cmph), [vall] "r"(vall),
-          [valh] "r"(valh)
+        "1:\n"
+        : [temp] "+r"(temp), [oldl] "=&r"(oldl), [oldh] "=&r"(oldh)
+        : [mem] "Q"(*(u64*)ptr), [cmpl] "r"(comp[0]), [cmph] "r"(comp[1]),
+          [vall] "r"(newv[0]), [valh] "r"(newv[1])
         : "memory", "cc");
-    return res;
+    return temp == 0;
 #else
 #error "atomic cas128 not supported"
 #endif
