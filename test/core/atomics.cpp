@@ -135,9 +135,9 @@ TEST(atomic, cas64) {
 }
 
 TEST(atomic, cas128) {
-    u64 data[2] = { 0x1111222233334444, 0x5555666677778888 };
-    u64 cmpv[2] = { 0x1111222233334444, 0x5555666677778888 };
-    u64 wval[2] = { 0xaaaabbbbccccdddd, 0xeeeeffff00001111 };
+    MWR_DECL_ALIGN(16) u64 data[] = { 0x1111222233334444, 0x5555666677778888 };
+    MWR_DECL_ALIGN(16) u64 cmpv[] = { 0x1111222233334444, 0x5555666677778888 };
+    MWR_DECL_ALIGN(16) u64 wval[] = { 0xaaaabbbbccccdddd, 0xeeeeffff00001111 };
 
     ASSERT_TRUE(atomic_cas128(data, cmpv, wval));
     ASSERT_EQ(data[0], wval[0]);

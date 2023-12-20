@@ -104,47 +104,51 @@ inline bool atomic_cmpxchg(T* ptr, T2 expected, T3 desired) {
 }
 
 inline bool atomic_cas8(volatile void* ptr, void* cmp, void* val) {
-#ifndef MWR_MSVC
+#ifdef MWR_MSVC
+    auto comp = read_once<char>(cmp);
+    return _InterlockedCompareExchange8((volatile char*)ptr,
+                                        read_once<char>(val), comp) == comp;
+#else
     return __atomic_compare_exchange((volatile u8*)ptr, (u8*)cmp, (u8*)val,
                                      false, __ATOMIC_SEQ_CST,
                                      __ATOMIC_SEQ_CST);
-#else
-    return _InterlockedCompareExchange8(
-        (volatile char*)ptr, read_once<char>(val), read_once<char>(cmp));
 #endif
 }
 
 inline bool atomic_cas16(volatile void* ptr, void* cmp, void* val) {
-#ifndef MWR_MSVC
+#ifdef MWR_MSVC
+    auto comp = read_once<short>(cmp);
+    return _InterlockedCompareExchange16((volatile short*)ptr,
+                                         read_once<short>(val), comp) == comp;
+#else
     return __atomic_compare_exchange((volatile u16*)ptr, (u16*)cmp, (u16*)val,
                                      false, __ATOMIC_SEQ_CST,
                                      __ATOMIC_SEQ_CST);
-#else
-    return _InterlockedCompareExchange16(
-        (volatile short*)ptr, read_once<short>(val), read_once<short>(cmp));
 #endif
 }
 
 inline bool atomic_cas32(volatile void* ptr, void* cmp, void* val) {
-#ifndef MWR_MSVC
+#ifdef MWR_MSVC
+    auto comp = read_once<long>(cmp);
+    return _InterlockedCompareExchange((volatile long*)ptr,
+                                       read_once<long>(val), comp) == comp;
+#else
     return __atomic_compare_exchange((volatile u32*)ptr, (u32*)cmp, (u32*)val,
                                      false, __ATOMIC_SEQ_CST,
                                      __ATOMIC_SEQ_CST);
-#else
-    return _InterlockedCompareExchange(
-        (volatile long*)ptr, read_once<long>(val), read_once<long>(cmp));
 #endif
 }
 
 inline bool atomic_cas64(volatile void* ptr, void* cmp, void* val) {
-#ifndef MWR_MSVC
+#ifdef MWR_MSVC
+    auto comp = read_once<long long>(cmp);
+    return _InterlockedCompareExchange64((volatile long long*)ptr,
+                                         read_once<long long>(val),
+                                         comp) == comp;
+#else
     return __atomic_compare_exchange((volatile u64*)ptr, (u64*)cmp, (u64*)val,
                                      false, __ATOMIC_SEQ_CST,
                                      __ATOMIC_SEQ_CST);
-#else
-    return _InterlockedCompareExchange64((volatile long long*)ptr,
-                                         read_once<long long>(val),
-                                         read_once<long long>(cmp));
 #endif
 }
 
