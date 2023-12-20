@@ -162,7 +162,7 @@ inline bool atomic_cas128(volatile void* ptr, const void* cmp,
     memcpy(newv, val, sizeof(newv));
 #ifdef MWR_MSVC
     return _InterlockedCompareExchange128((volatile __int64*)ptr, newv[1],
-                                          newv[0], comp);
+                                          newv[0], (__int64*)comp);
 #else
 #if defined(MWR_X86_64)
     u8 res = 0;
