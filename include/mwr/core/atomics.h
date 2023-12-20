@@ -154,9 +154,10 @@ inline bool atomic_cas64(volatile void* ptr, void* cmp, void* val) {
 
 inline bool atomic_cas128(volatile void* ptr, void* cmp, void* val) {
 #ifdef MWR_MSVC
+    __int64 cmpres[2] = { ((__int64*)cmp)[0], ((__int64*)cmp)[1] };
     return _InterlockedCompareExchange128((volatile __int64*)ptr,
-                                          ((__int64*)cmp)[1],
-                                          ((__int64*)cmp)[0], (__int64*)val);
+                                          ((__int64*)val)[1],
+                                          ((__int64*)val)[0], cmpres);
 #else
     u64 cmpl = ((u64*)cmp)[0];
     u64 cmph = ((u64*)cmp)[1];
