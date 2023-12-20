@@ -160,7 +160,7 @@ inline bool atomic_cas128(volatile void* ptr, void* cmp, void* val) {
     u64 cmph = ((u64*)cmp)[1];
     u64 vall = ((u64*)val)[0];
     u64 valh = ((u64*)val)[1];
-#if defined(__x86_64)
+#if defined(MWR_X86_64)
     u8 res = 0;
     asm volatile(
         "lock cmpxchg16b %[dst]\n"
@@ -169,7 +169,7 @@ inline bool atomic_cas128(volatile void* ptr, void* cmp, void* val) {
         : "d"(cmph), "a"(cmpl), "c"(valh), "b"(vall)
         : "memory");
     return res;
-#elif defined(aarch64)
+#elif defined(MWR_ARM64)
     u64 oldl, oldh;
     u32 temp;
     asm volatile(

@@ -31,6 +31,14 @@
 #error unsupported operating system
 #endif
 
+#if defined(__x86_64) || defined(_M_X64)
+#define MWR_X86_64
+#elif defined(__aarch64__)
+#define MWR_ARM64
+#else
+#error unsupported cpu architecture
+#endif
+
 #define MWR_CPLUSPLUS_97 199711L
 #define MWR_CPLUSPLUS_11 201103L
 #define MWR_CPLUSPLUS_14 201402L
