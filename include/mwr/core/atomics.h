@@ -173,20 +173,23 @@ inline bool atomic_cas128(volatile void* ptr, void* cmp, void* val) {
     return res;
 #elif defined(MWR_ARM64)
     u64 oldl, oldh;
-    u32 temp;
+    u32 temp, res;
     asm volatile(
-        "0: ldaxp %[ol], %[oh], %[mem]\n"
-        "   cmp   %[ol], %[cl]\n"
-        "   ccmp  %[oh], %[ch], #0, eq\n"
-        "   b.ne 1f\n"
-        "   stlxp %w[temp], %[vl], %[vh], %[mem]\n"
-        "   cbnz %w[temp], 0b\n"
+        "0: mov   %[res], #0\n"
+        "   ldaxp %[oldl], %[oldh], [%[mem]]\n"
+        "   cmp   %[oldl], %[cmpl]\n"
+        "   ccmp  %[oldh], %[cmph], #0, eq\n"
+        "   b.ne  1f\n"
+        "   stlxp %w[temp], %[vall], %[valh], [%[mem]]\n"
+        "   mov   %[res], #1\n"
+        "   cbnz  %w[temp], 0b\n"
         "1:"
-        : [mem] "+m"(((u64*)ptr)[0]), [temp] "=&r"(temp), [ol] "=&r"(oldl),
-          [oh] "=&r"(oldh)
-        : [cl] "r"(cmpl), [ch] "r"(cmph), [vl] "r"(vall), [vh] "r"(valh)
+        : [temp] "=&r"(temp), [res] "=&r"(res), [oldl] "=&r"(oldl),
+          [oldh] "=&r"(oldh)
+        : [mem] "r"(ptr), [cmpl] "r"(cmpl), [cmph] "r"(cmph), [vall] "r"(vall),
+          [valh] "r"(valh)
         : "memory", "cc");
-    return temp == 0;
+    return res;
 #else
 #error "atomic cas128 not supported"
 #endif
