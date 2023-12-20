@@ -18,6 +18,10 @@
 #include <limits>
 #include <algorithm>
 
+#ifdef MWR_MSVC
+#include <intrin.h>
+#endif
+
 namespace mwr {
 
 typedef signed char i8;

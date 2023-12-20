@@ -17,10 +17,6 @@
 #include "mwr/core/types.h"
 #include "mwr/core/report.h"
 
-#ifdef GCC_MSVC
-#include <intrin.h>
-#endif
-
 namespace mwr {
 
 inline void barrier() {

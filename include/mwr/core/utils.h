@@ -72,7 +72,9 @@ u64 timestamp_us();
 u64 timestamp_ns();
 
 inline void cpu_yield() {
-#if defined(MWR_X86_64)
+#if defined(MWR_MSVC)
+    _mm_pause();
+#elif defined(MWR_X86_64)
     asm volatile("pause" ::: "memory");
 #elif defined(MWR_ARM64)
     asm volatile("yield" ::: "memory");
