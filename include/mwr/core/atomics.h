@@ -113,8 +113,8 @@ inline bool atomic_cas8(volatile void* ptr, void* cmp, void* val) {
                                      false, __ATOMIC_SEQ_CST,
                                      __ATOMIC_SEQ_CST);
 #else
-    return _InterlockedCompareExchange8((volatile u8*)ptr, read_once<u8>(val),
-                                        read_once<u8>(cmp));
+    return _InterlockedCompareExchange8(
+        (volatile char*)ptr, read_once<char>(val), read_once<char>(cmp));
 #endif
 }
 
@@ -125,7 +125,7 @@ inline bool atomic_cas16(volatile void* ptr, void* cmp, void* val) {
                                      __ATOMIC_SEQ_CST);
 #else
     return _InterlockedCompareExchange16(
-        (volatile u16*)ptr, read_once<u16>(val), read_once<u16>(cmp));
+        (volatile short*)ptr, read_once<short>(val), read_once<short>(cmp));
 #endif
 }
 
@@ -135,8 +135,8 @@ inline bool atomic_cas32(volatile void* ptr, void* cmp, void* val) {
                                      false, __ATOMIC_SEQ_CST,
                                      __ATOMIC_SEQ_CST);
 #else
-    return _InterlockedCompareExchange((volatile u32*)ptr, read_once<u32>(val),
-                                       read_once<u32>(cmp));
+    return _InterlockedCompareExchange(
+        (volatile long*)ptr, read_once<u32>(long), read_once<long>(cmp));
 #endif
 }
 
@@ -146,15 +146,17 @@ inline bool atomic_cas64(volatile void* ptr, void* cmp, void* val) {
                                      false, __ATOMIC_SEQ_CST,
                                      __ATOMIC_SEQ_CST);
 #else
-    return _InterlockedCompareExchange64(
-        (volatile u64*)ptr, read_once<u64>(val), read_once<u64>(cmp));
+    return _InterlockedCompareExchange64((volatile long long*)ptr,
+                                         read_once<long long>(val),
+                                         read_once<long long>(cmp));
 #endif
 }
 
 inline bool atomic_cas128(volatile void* ptr, void* cmp, void* val) {
 #ifdef MWR_MSVC
-    return InterlockedCompareExchange128((volatile LONG64*)ptr, (u64*)cmp[1],
-                                         (u64*)cmp[0], (LONG64*)val);
+    return _InterlockedCompareExchange128((volatile __int64*)ptr,
+                                          ((__int64*)cmp)[1],
+                                          ((__int64*)cmp)[0], (__int64*)val);
 #else
     u64 cmpl = ((u64*)cmp)[0];
     u64 cmph = ((u64*)cmp)[1];
