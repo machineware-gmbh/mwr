@@ -97,7 +97,7 @@ TEST(atomic, cas8) {
 
     ASSERT_TRUE(atomic_cas8(&data, &cmpv, &wval));
     ASSERT_EQ(data, wval);
-    ASSERT_FALSE(atomic_cas8(&data, &cmpv, &wval));
+    ASSERT_FALSE(atomic_cas(&data, &cmpv, &wval, 1));
     ASSERT_EQ(data, wval);
 }
 
@@ -108,7 +108,7 @@ TEST(atomic, cas16) {
 
     ASSERT_TRUE(atomic_cas16(&data, &cmpv, &wval));
     ASSERT_EQ(data, wval);
-    ASSERT_FALSE(atomic_cas16(&data, &cmpv, &wval));
+    ASSERT_FALSE(atomic_cas(&data, &cmpv, &wval, 2));
     ASSERT_EQ(data, wval);
 }
 
@@ -119,7 +119,7 @@ TEST(atomic, cas32) {
 
     ASSERT_TRUE(atomic_cas32(&data, &cmpv, &wval));
     ASSERT_EQ(data, wval);
-    ASSERT_FALSE(atomic_cas32(&data, &cmpv, &wval));
+    ASSERT_FALSE(atomic_cas(&data, &cmpv, &wval, 4));
     ASSERT_EQ(data, wval);
 }
 
@@ -130,7 +130,9 @@ TEST(atomic, cas64) {
 
     ASSERT_TRUE(atomic_cas64(&data, &cmpv, &wval));
     ASSERT_EQ(data, wval);
-    ASSERT_FALSE(atomic_cas64(&data, &cmpv, &wval));
+    ASSERT_FALSE(atomic_cas(&data, &cmpv, &wval, 8));
+    ASSERT_EQ(data, wval);
+    ASSERT_FALSE(atomic_cas(&data, cmpv, wval));
     ASSERT_EQ(data, wval);
 }
 
@@ -142,7 +144,7 @@ TEST(atomic, cas128) {
     ASSERT_TRUE(atomic_cas128(data, cmpv, wval));
     ASSERT_EQ(data[0], wval[0]);
     ASSERT_EQ(data[1], wval[1]);
-    ASSERT_FALSE(atomic_cas128(data, cmpv, wval));
+    ASSERT_FALSE(atomic_cas(data, cmpv, wval, 16));
     ASSERT_EQ(data[0], wval[0]);
     ASSERT_EQ(data[1], wval[1]);
 }

@@ -195,6 +195,29 @@ inline bool atomic_cas128(volatile void* ptr, const void* cmp,
 #endif
 }
 
+inline bool atomic_cas(volatile void* ptr, const void* cmp, const void* val,
+                       size_t size) {
+    switch (size) {
+    case 1:
+        return atomic_cas8(ptr, cmp, val);
+    case 2:
+        return atomic_cas16(ptr, cmp, val);
+    case 4:
+        return atomic_cas32(ptr, cmp, val);
+    case 8:
+        return atomic_cas64(ptr, cmp, val);
+    case 16:
+        return atomic_cas128(ptr, cmp, val);
+    default:
+        MWR_ERROR("atomic_cas: unsupported operand size: %zu bytes", size);
+    }
+}
+
+template <typename T>
+inline bool atomic_cas(volatile void* ptr, T cmp, T data) {
+    return atomic_cas(ptr, &cmp, &data, sizeof(T));
+}
+
 template <typename T, typename T2 = T>
 inline T atomic_or(T* mem, T2 val) {
 #ifndef MWR_MSVC
