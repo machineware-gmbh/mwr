@@ -333,7 +333,11 @@ void socket::send(const void* data, size_t size) {
     size_t n = 0;
 
     while (n < size) {
-        int r = ::send(m_conn, ptr + n, size - n, 0);
+        int conn = m_conn;
+        m_mtx.unlock();
+        int r = ::send(conn, ptr + n, size - n, 0);
+        m_mtx.lock();
+
         if (r <= 0)
             disconnect_locked();
 
@@ -352,7 +356,11 @@ void socket::recv(void* data, size_t size) {
     size_t n = 0;
 
     while (n < size) {
-        int r = ::recv(m_conn, ptr + n, size - n, 0);
+        int conn = m_conn;
+        m_mtx.unlock();
+        int r = ::recv(conn, ptr + n, size - n, 0);
+        m_mtx.lock();
+
         if (r <= 0)
             disconnect_locked();
 
