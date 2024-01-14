@@ -160,7 +160,7 @@ public:
 
     uimage(const string& filename);
     uimage(const uimage&) = delete;
-    uimage(uimage&&) = default;
+    uimage(uimage&&) noexcept = default;
     ~uimage() = default;
 
     size_t read(u8* dest, size_t size, size_t offset = 0);
