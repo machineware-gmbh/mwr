@@ -12,6 +12,7 @@
 
 #include "testing.h"
 #include "mwr/utils/socket.h"
+#include "mwr/core/utils.h"
 
 TEST(socket, server) {
     mwr::socket server(12345);
@@ -34,6 +35,8 @@ TEST(socket, rehost) {
 }
 
 TEST(socket, connect) {
+    if (mwr::getenv("MWR_NO_IPv6"))
+        GTEST_SKIP() << "IPv6 disabled. Skipping IPv6 test.";
     mwr::socket server(0);
     mwr::socket client("::1", server.port());
 
