@@ -27,7 +27,7 @@ std::string get_resource_path(const std::string& name) {
         std::abort();
     }
 
-    return std::filesystem::path(args[1] + "/" + name);
+    return std::filesystem::path(args[1] + "/" + name).string();
 }
 
 int main(int argc, char** argv) {
