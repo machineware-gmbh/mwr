@@ -29,7 +29,7 @@ static const char* library_strerror(DWORD err = GetLastError()) {
 
 static string library_path(void* handle) {
     char path[MAX_PATH];
-    DWORD result = GetModuleFileNameA(handle, path, MAX_PATH);
+    DWORD result = GetModuleFileNameA((HMODULE)handle, path, MAX_PATH);
     MWR_ERROR_ON(!result, "GetModuleFileName: %s", library_strerror());
     return path;
 }
