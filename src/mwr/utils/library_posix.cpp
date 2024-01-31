@@ -17,9 +17,9 @@
 #include <link.h>
 #endif
 
-#ifdef MWR_MACOS
-#include <mach-o/dyld.h>
-#endif
+// #ifdef MWR_MACOS
+// #include <mach-o/dyld.h>
+// #endif
 
 namespace mwr {
 
@@ -31,13 +31,16 @@ static string library_path(void* handle, const string& name) {
     return map->l_name;
 #endif
 #ifdef MWR_MACOS
-    for (u32 i = 0; i < _dyld_image_count(); i++) {
-        const char* path = _dyld_get_image_name(i);
-        if (strstr(path, name.c_str()))
-            return path;
-    }
-
-    MWR_ERROR("cannot find path to library %s", name);
+    Dl_info info;
+    MWR_ERROR_ON(!dladdr(handle, &info), "cannot get library path");
+    return info.dli_fname;
+//    for (u32 i = 0; i < _dyld_image_count(); i++) {
+//        const char* path = _dyld_get_image_name(i);
+//        if (strstr(path, name.c_str()))
+//            return path;
+//    }
+//
+//    MWR_ERROR("cannot find path to library %s", name.c_str());
 #endif
 }
 
