@@ -32,8 +32,8 @@ static string library_path(void* handle, const string& name) {
 #endif
 #ifdef MWR_MACOS
     for (u32 i = 0; i < _dyld_image_count(); i++) {
-        const char* path = _dyld_get_image_name(i);
-        if (strstr(path, name.c_str()))
+        string path = _dyld_get_image_name(i);
+        if (ends_with(path, name))
             return path;
     }
 
