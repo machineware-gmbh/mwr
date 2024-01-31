@@ -72,7 +72,7 @@ void library::open(const string& path, int mode) {
     MWR_REPORT_ON(!m_handle, "failed to open dll at %s: %s", path.c_str(),
                   library_strerror());
 
-    if (is_absolute(path)) {
+    if (is_absolute_path(path)) {
         m_path = path;
         m_name = filename(path);
     } else {
@@ -86,7 +86,7 @@ void library::mopen(const string& path, int mode) {
         close();
 
     string name = path;
-    if (is_absolute(path))
+    if (is_absolute_path(path))
         name = filename(name);
 
     struct openinfo {

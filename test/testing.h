@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 #include <random>
+#include <filesystem>
 
 std::vector<std::string> args;
 
@@ -26,7 +27,7 @@ std::string get_resource_path(const std::string& name) {
         std::abort();
     }
 
-    return args[1] + "/" + name;
+    return std::filesystem::path(args[1] + "/" + name);
 }
 
 int main(int argc, char** argv) {

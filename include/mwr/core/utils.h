@@ -27,8 +27,9 @@ using std::optional;
 bool file_exists(const string& file);
 bool directory_exists(const string& file);
 
-bool is_absolute(const string& path);
-bool is_relative(const string& path);
+bool is_absolute_path(const string& path);
+bool is_relative_path(const string& path);
+bool is_path_equal(const string& p1, const string& p2);
 
 string dirname(const string& path);
 string filename(const string& path);
