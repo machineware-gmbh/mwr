@@ -36,7 +36,7 @@ using namespace mwr;
 #define SHARED_NAME "shared-" SHARED_ARCH SHARED_SUFFIX
 
 static string get_test_library() {
-    return std::filesystem::path(get_resource_path(SHARED_NAME)).string();
+    return get_resource_path(SHARED_NAME);
 }
 
 TEST(library, basic) {
@@ -125,5 +125,5 @@ TEST(libary, relpath) {
     library lib;
     lib.open(SHARED_NAME);
     EXPECT_STREQ(lib.name(), SHARED_NAME);
-    EXPECT_EQ(get_test_library(), lib.path());
+    EXPECT_TRUE(is_path_equal(lib.path(), get_test_library()));
 }
