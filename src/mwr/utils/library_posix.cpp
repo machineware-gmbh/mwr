@@ -17,9 +17,9 @@
 #include <link.h>
 #endif
 
-// #ifdef MWR_MACOS
-// #include <mach-o/dyld.h>
-// #endif
+#ifdef MWR_MACOS
+#include <mach-o/dyld.h>
+#endif
 
 namespace mwr {
 
@@ -31,16 +31,13 @@ static string library_path(void* handle, const string& name) {
     return map->l_name;
 #endif
 #ifdef MWR_MACOS
-    Dl_info info;
-    MWR_ERROR_ON(!dladdr(handle, &info), "cannot get library path");
-    return info.dli_fname;
-//    for (u32 i = 0; i < _dyld_image_count(); i++) {
-//        const char* path = _dyld_get_image_name(i);
-//        if (strstr(path, name.c_str()))
-//            return path;
-//    }
-//
-//    MWR_ERROR("cannot find path to library %s", name.c_str());
+    for (u32 i = 0; i < _dyld_image_count(); i++) {
+        const char* path = _dyld_get_image_name(i);
+        if (strstr(path, name.c_str()))
+            return path;
+    }
+
+    MWR_ERROR("cannot find path to library %s", name.c_str());
 #endif
 }
 
@@ -83,7 +80,7 @@ void library::open(const string& path, int mode) {
     m_handle = dlopen(path.c_str(), mode);
     MWR_REPORT_ON(!m_handle, "failed to open %s: %s", path.c_str(), dlerror());
 
-    if (is_absolute(path)) {
+    if (is_absolute_path(path)) {
         m_path = path;
         m_name = filename(path);
     } else {
@@ -97,7 +94,7 @@ void library::mopen(const string& path, int mode) {
         close();
 
     string name = path;
-    if (is_absolute(path))
+    if (is_absolute_path(path))
         name = filename(name);
 
     struct openinfo {
