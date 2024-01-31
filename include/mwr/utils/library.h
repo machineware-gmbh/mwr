@@ -14,6 +14,7 @@
 #include "mwr/core/types.h"
 #include "mwr/core/report.h"
 #include "mwr/core/compiler.h"
+#include "mwr/core/utils.h"
 
 #include "mwr/stl/strings.h"
 
@@ -22,6 +23,7 @@ namespace mwr {
 class library
 {
 private:
+    string m_name;
     string m_path;
     string m_copy;
     void* m_handle;
@@ -30,6 +32,7 @@ private:
     void* lookup(const string& name) const;
 
 public:
+    const char* name() const { return m_name.c_str(); }
     const char* path() const { return m_path.c_str(); }
     bool is_open() const { return m_handle != nullptr; }
 

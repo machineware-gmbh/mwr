@@ -71,6 +71,14 @@ bool directory_exists(const string& dir) {
     }
 }
 
+bool is_absolute(const string& path) {
+    return fs::path(path).is_absolute();
+}
+
+bool is_relative(const string& path) {
+    return fs::path(path).is_relative();
+}
+
 string dirname(const string& path) {
     fs::path full(path);
     string result = full.parent_path().string();

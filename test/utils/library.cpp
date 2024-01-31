@@ -33,8 +33,10 @@ using namespace mwr;
 #error Unknown architecture
 #endif
 
+#define SHARED_NAME "shared-" SHARED_ARCH SHARED_SUFFIX
+
 static string get_test_library() {
-    return get_resource_path("shared-" SHARED_ARCH SHARED_SUFFIX);
+    return get_resource_path(SHARED_NAME);
 }
 
 TEST(library, basic) {
@@ -44,6 +46,7 @@ TEST(library, basic) {
     ASSERT_NO_THROW(lib.open(path));
     ASSERT_TRUE(lib.is_open());
     EXPECT_EQ(lib.path(), path);
+    EXPECT_STREQ(lib.name(), SHARED_NAME);
     EXPECT_TRUE(lib.has("global"));
     EXPECT_TRUE(lib.has("function"));
     EXPECT_FALSE(lib.has("notfound"));
@@ -93,7 +96,8 @@ TEST(libary, mopen) {
 
     ASSERT_NO_THROW(a.mopen(path));
     ASSERT_NO_THROW(b.mopen(path));
-    EXPECT_STREQ(a.path(), b.path());
+    EXPECT_STREQ(a.name(), b.name());
+    EXPECT_STRNE(a.path(), b.path());
 
     ASSERT_TRUE(a.has("global"));
     ASSERT_TRUE(b.has("global"));
@@ -106,4 +110,13 @@ TEST(libary, mopen) {
     ASSERT_TRUE(a_global);
     ASSERT_TRUE(b_global);
     EXPECT_NE(a_global, b_global);
+
+    string path_a = a.path();
+    string path_b = b.path();
+
+    a.close();
+    b.close();
+
+    EXPECT_TRUE(file_exists(path_a)); // original must not be deleted
+    EXPECT_FALSE(file_exists(path_b));
 }
