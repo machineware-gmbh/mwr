@@ -120,3 +120,10 @@ TEST(libary, mopen) {
     EXPECT_TRUE(file_exists(path_a)); // original must not be deleted
     EXPECT_FALSE(file_exists(path_b));
 }
+
+TEST(libary, relpath) {
+    library lib;
+    lib.open(SHARED_NAME);
+    EXPECT_STREQ(lib.name(), SHARED_NAME);
+    EXPECT_EQ(get_test_library(), lib.path());
+}
