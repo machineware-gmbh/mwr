@@ -12,15 +12,33 @@
 
 #include <filesystem>
 #include <dlfcn.h>
+
+#ifdef MWR_LINUX
 #include <link.h>
+#endif
+
+#ifdef MWR_MACOS
+#include <mach-o/dyld.h>
+#endif
 
 namespace mwr {
 
-static string library_path(void* handle) {
+static string library_path(void* handle, const string& name) {
+#ifdef MWR_LINUX
     struct link_map* map;
     if (dlinfo(handle, RTLD_DI_LINKMAP, &map) < 0)
         MWR_ERROR("error dlinfo: %s", dlerror());
     return map->l_name;
+#endif
+#ifdef MWR_MACOS
+    for (u32 i = 0; i < _dyld_image_count(); i++) {
+        const char* path = _dyld_get_image_name(i);
+        if (strstr(path, name.c_str()))
+            return path;
+    }
+
+    MWR_ERROR("cannot find path to library %s", name);
+#endif
 }
 
 void* library::lookup(const string& name) const {
@@ -67,7 +85,7 @@ void library::open(const string& path, int mode) {
         m_name = filename(path);
     } else {
         m_name = path;
-        m_path = library_path(m_handle);
+        m_path = library_path(m_handle, path);
     }
 }
 
