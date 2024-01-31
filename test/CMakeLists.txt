@@ -27,7 +27,7 @@ endif()
 
 if(APPLE)
     string(APPEND MWR_ENVVAR "DYLD_LIBRARY_PATH=${resources};")
-elif(WIN32)
+elseif(WIN32)
     string(APPEND MWR_ENVVAR "PATH=${resources};")
 else()
     string(APPEND MWR_ENVVAR "LD_LIBRARY_PATH=${resources};")
