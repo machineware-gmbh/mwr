@@ -23,6 +23,33 @@
 
 namespace mwr {
 
+static vector<string> cleanup_libs;
+
+static void exit_cleanup() {
+    for (string& lib : cleanup_libs)
+        std::filesystem::remove(lib);
+}
+
+static string copy_library(const string& path, size_t n) {
+    string name = filename_noext(path);
+    string copy = temp_dir() + "/" + name + "-" + to_string(n) + ".so";
+
+    auto options = std::filesystem::copy_options::update_existing |
+                   std::filesystem::copy_options::create_hard_links;
+    std::filesystem::copy_file(path, copy, options);
+
+    if (cleanup_libs.empty())
+        std::atexit(exit_cleanup);
+    stl_add_unique(cleanup_libs, copy);
+
+    return copy;
+}
+
+static void remove_library(const string& path) {
+    std::filesystem::remove(path);
+    stl_remove(cleanup_libs, path);
+}
+
 static string library_path(void* handle, const string& name) {
 #ifdef MWR_LINUX
     struct link_map* map;
@@ -110,13 +137,8 @@ void library::mopen(const string& path, int mode) {
         info.path = m_path;
         info.copies++;
     } else {
-        string copy = temp_dir() + "/" + name + "-" + to_string(info.copies);
-        if (!std::filesystem::exists(copy)) {
-            std::filesystem::copy(info.path, copy);
-            m_copy = copy;
-        }
-
-        open(copy, mode);
+        m_copy = copy_library(info.path, info.copies++);
+        open(m_copy, mode);
         m_name = name;
     }
 }
@@ -128,7 +150,7 @@ void library::close() {
     }
 
     if (!m_copy.empty() && std::filesystem::exists(m_copy)) {
-        std::filesystem::remove(m_copy);
+        remove_library(m_copy);
         m_copy.clear();
     }
 
