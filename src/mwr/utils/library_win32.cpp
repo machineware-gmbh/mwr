@@ -24,7 +24,7 @@ static void exit_cleanup() {
 
 static string copy_library(const string& path, size_t n) {
     string name = filename_noext(path);
-    string copy = temp_dir() + "/" + name + "-" + to_string(n) + ".so";
+    string copy = temp_dir() + "/" + name + "-" + to_string(n) + ".dll";
 
     auto options = std::filesystem::copy_options::update_existing |
                    std::filesystem::copy_options::create_hard_links;
