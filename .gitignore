@@ -22,3 +22,6 @@ BUILD*
 # Microsoft specific
 .vs
 CMakeSettings.json
+
+# Language server
+.clangd
