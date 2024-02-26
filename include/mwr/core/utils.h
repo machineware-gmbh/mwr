@@ -56,6 +56,14 @@ constexpr int STDIN_FDNO = 0;
 constexpr int STDOUT_FDNO = 1;
 constexpr int STDERR_FDNO = 2;
 
+#if defined(MWR_WINDOWS)
+constexpr size_t OS_MAX_PATH = 260;
+#elif defined(MWR_LINUX)
+constexpr size_t OS_MAX_PATH = 4096;
+#elif defined(MWR_OSX)
+constexpr size_t OS_MAX_PATH = 1024;
+#endif
+
 int fd_open(const string& path, const string& mode, int perms = 0644);
 int fd_open(const string& path, int mode, int perms = 0644);
 void fd_close(int fd);
