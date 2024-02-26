@@ -384,16 +384,6 @@ int fd_open(const string& path, const string& mode, int perms) {
         flags = _O_RDWR | _O_CREAT | _O_APPEND | _O_BINARY;
     else
         MWR_ERROR("invalid openmode '%s'", mode.c_str());
-
-    int fd = -1;
-    errno_t err = _sopen_s(&fd, path.c_str(), flags, _SH_DENYNO, perms);
-    if (err) {
-        MWR_ERROR("failed to open file: %d", errno);
-        errno = err;
-        return -1;
-    }
-
-    return fd;
 #else
     int flags = 0;
     if (mode == "r" || mode == "rb")
@@ -410,7 +400,24 @@ int fd_open(const string& path, const string& mode, int perms) {
         flags = O_RDWR | O_CREAT | O_APPEND;
     else
         MWR_ERROR("invalid openmode '%s'", mode.c_str());
-    return open(path.c_str(), flags, perms);
+#endif
+    return fd_open(path, flags, perms);
+}
+
+int fd_open(const string& path, int mode, int perms) {
+#ifdef MWR_MSVC
+    perms &= ~077;
+    int fd = -1;
+    errno_t err = _sopen_s(&fd, path.c_str(), mode, _SH_DENYNO, perms);
+    if (err) {
+        MWR_ERROR("failed to open file: %d", errno);
+        errno = err;
+        return -1;
+    }
+
+    return fd;
+#else
+    return open(path.c_str(), mode, perms);
 #endif
 }
 
@@ -574,6 +581,14 @@ int fd_pipe(int fds[2]) {
     return _pipe(fds, 2, _O_TEXT);
 #else
     return pipe(fds);
+#endif
+}
+
+bool fd_isatty(int fd) {
+#ifdef MWR_MSVC
+    return _isatty(fd);
+#else
+    return isatty(fd);
 #endif
 }
 

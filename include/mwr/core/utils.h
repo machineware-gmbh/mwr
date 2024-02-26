@@ -57,6 +57,7 @@ constexpr int STDOUT_FDNO = 1;
 constexpr int STDERR_FDNO = 2;
 
 int fd_open(const string& path, const string& mode, int perms = 0644);
+int fd_open(const string& path, int mode, int perms = 0644);
 void fd_close(int fd);
 
 size_t fd_peek(int fd, time_t timeout_ms = 0);
@@ -69,6 +70,8 @@ size_t fd_seek_end(int fd, off_t pos);
 
 int fd_dup(int fd);
 int fd_pipe(int fds[2]);
+
+bool fd_isatty(int fd);
 
 double timestamp();
 u64 timestamp_ms();
