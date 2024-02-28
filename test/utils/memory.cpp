@@ -23,4 +23,8 @@ TEST(memory, allocation) {
     EXPECT_EQ(mem.size(), pgsz + 1);
     EXPECT_EQ(mem.total_size(), 2 * pgsz);
     EXPECT_TRUE(is_aligned(mem.raw(), pgsz));
+
+    mem[10] = 0xab;
+    EXPECT_EQ(mem.raw()[10], 0xab);
+    EXPECT_EQ(mem[10], 0xab);
 }

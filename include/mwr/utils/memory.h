@@ -13,6 +13,7 @@
 
 #include "mwr/core/compiler.h"
 #include "mwr/core/types.h"
+#include "mwr/core/report.h"
 
 namespace mwr {
 
@@ -29,6 +30,9 @@ public:
     constexpr size_t size() const { return m_size; }
     constexpr size_t total_size() const { return m_total_size; }
 
+    const u8& operator[](size_t idx) const;
+    u8& operator[](size_t idx);
+
     memory(size_t size);
     memory(memory&& other) noexcept;
     virtual ~memory();
@@ -37,6 +41,16 @@ public:
 
     static size_t page_size();
 };
+
+inline const u8& memory::operator[](size_t idx) const {
+    MWR_ERROR_ON(idx >= m_size, "memory access out of bounds");
+    return m_data[idx];
+}
+
+inline u8& memory::operator[](size_t idx) {
+    MWR_ERROR_ON(idx >= m_size, "memory access out of bounds");
+    return m_data[idx];
+}
 
 } // namespace mwr
 

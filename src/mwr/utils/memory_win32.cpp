@@ -9,7 +9,6 @@
  ******************************************************************************/
 
 #include "mwr/utils/memory.h"
-#include "mwr/core/report.h"
 
 #include <Windows.h>
 
