@@ -68,13 +68,6 @@
 #endif
 
 #if defined(MWR_GCC) || defined(MWR_CLANG)
-#define MWR_BARRIER \
-    { asm volatile("" : : : "memory"); }
-#elif defined(MWR_MSVC)
-#define MWR_BARRIER _ReadWriteBarrier()
-#endif
-
-#if defined(MWR_GCC) || defined(MWR_CLANG)
 #define MWR_UNREACHABLE __builtin_unreachable()
 #elif defined(MWR_MSVC)
 #define MWR_UNREACHABLE __assume(0)
