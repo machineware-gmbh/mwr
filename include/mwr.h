@@ -38,6 +38,7 @@
 #include "mwr/utils/license.h"
 #include "mwr/utils/library.h"
 #include "mwr/utils/locale.h"
+#include "mwr/utils/memory.h"
 #include "mwr/utils/modules.h"
 #include "mwr/utils/options.h"
 #include "mwr/utils/socket.h"

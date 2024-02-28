@@ -39,6 +39,10 @@
 #error unsupported cpu architecture
 #endif
 
+#ifdef MWR_MSVC
+#include <intrin.h>
+#endif
+
 #define MWR_CPLUSPLUS_97 199711L
 #define MWR_CPLUSPLUS_11 201103L
 #define MWR_CPLUSPLUS_14 201402L
@@ -61,6 +65,13 @@
 #define MWR_DECL_NOINLINE     __declspec(noinline)
 #define MWR_DECL_NORETURN     __declspec(noreturn)
 #define MWR_DECL_DEPRECATED   __declspec(deprecated)
+#endif
+
+#if defined(MWR_GCC) || defined(MWR_CLANG)
+#define MWR_BARRIER \
+    { asm volatile("" : : : "memory"); }
+#elif defined(MWR_MSVC)
+#define MWR_BARRIER _ReadWriteBarrier()
 #endif
 
 #if defined(MWR_GCC) || defined(MWR_CLANG)
