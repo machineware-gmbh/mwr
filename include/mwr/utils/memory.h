@@ -32,7 +32,7 @@ public:
 
     const u8& operator[](size_t idx) const;
     u8& operator[](size_t idx);
-    u8* operator+(uintptr_t off) const;
+    operator u8*() const { return m_data; }
 
     memory();
     memory(size_t size);
@@ -55,11 +55,6 @@ inline const u8& memory::operator[](size_t idx) const {
 inline u8& memory::operator[](size_t idx) {
     MWR_ERROR_ON(idx >= m_size, "memory access out of bounds");
     return m_data[idx];
-}
-
-inline u8* memory::operator+(uintptr_t off) const {
-    MWR_ERROR_ON(off >= m_size, "memory access out of bounds");
-    return m_data + off;
 }
 
 } // namespace mwr
