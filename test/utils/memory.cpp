@@ -27,4 +27,27 @@ TEST(memory, allocation) {
     mem[10] = 0xab;
     EXPECT_EQ(mem.raw()[10], 0xab);
     EXPECT_EQ(mem[10], 0xab);
+    EXPECT_EQ(&mem[10], mem + 10);
+}
+
+TEST(memory, free) {
+    size_t pgsz = memory::page_size();
+    memory mem(pgsz);
+    EXPECT_TRUE(mem.raw() != nullptr);
+    mem.free();
+    EXPECT_TRUE(mem.raw() == nullptr);
+    EXPECT_EQ(mem.total_size(), 0);
+    EXPECT_EQ(mem.size(), 0);
+}
+
+TEST(memory, alloc) {
+    memory mem;
+    EXPECT_TRUE(mem.raw() == nullptr);
+    EXPECT_EQ(mem.total_size(), 0);
+    EXPECT_EQ(mem.size(), 0);
+
+    mem.alloc(1);
+    EXPECT_TRUE(mem.raw() != nullptr);
+    EXPECT_EQ(mem.size(), 1);
+    EXPECT_GE(mem.total_size(), mem.size());
 }
