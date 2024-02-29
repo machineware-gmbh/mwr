@@ -40,6 +40,8 @@ public:
     virtual ~memory();
 
     void alloc(size_t size);
+    void alloc(size_t size, int fill);
+    void alloc0(size_t size);
     void free();
 
     memory(const memory&) = delete;
@@ -55,6 +57,15 @@ inline const u8& memory::operator[](size_t idx) const {
 inline u8& memory::operator[](size_t idx) {
     MWR_ERROR_ON(idx >= m_size, "memory access out of bounds");
     return m_data[idx];
+}
+
+inline void memory::alloc(size_t size, int fill) {
+    alloc(size);
+    memset(m_data, (int)fill, m_size);
+}
+
+inline void memory::alloc0(size_t size) {
+    alloc(size, 0);
 }
 
 } // namespace mwr
