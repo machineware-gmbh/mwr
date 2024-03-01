@@ -37,8 +37,10 @@ void memory::alloc(size_t size) {
     MWR_ERROR_ON(m_data, "memory already allocated");
     MWR_ERROR_ON(size == 0, "attempt to allocate zero bytes");
 
-    DWORD type = MEM_COMMIT | MEM_RESERVE;
+    m_size = size;
     m_total_size = (size + page_size() - 1) & ~(page_size() - 1);
+
+    DWORD type = MEM_COMMIT | MEM_RESERVE;
     m_data = (u8*)VirtualAlloc(NULL, size, type, PAGE_READWRITE);
     MWR_ERROR_ON(m_data == NULL, "memory allocation failed");
 }
