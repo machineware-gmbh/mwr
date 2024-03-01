@@ -361,6 +361,7 @@ void socket::send(const void* data, size_t size) {
 }
 
 void socket::recv(void* data, size_t size) {
+    lock_guard<mutex> guard(m_mtx);
     if (m_conn == INVALID_SOCKET)
         MWR_REPORT("error receiving data: not connected");
 
