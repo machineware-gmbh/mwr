@@ -131,9 +131,12 @@ public:
     void set(bool echo, bool isig) {
 #ifdef MWR_MSVC
         DWORD attr = get();
-        attr &= ~(ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT);
+        attr &= ~ENABLE_ECHO_INPUT;
+        attr &= ~ENABLE_LINE_INPUT;
+        attr &= ~ENABLE_MOUSE_INPUT;
+        attr &= ~ENABLE_PROCESSED_INPUT;
         if (echo)
-            attr |= ENABLE_ECHO_INPUT;
+            attr |= ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT;
         if (isig)
             attr |= ENABLE_PROCESSED_INPUT;
 #else
