@@ -8,6 +8,8 @@
  *                                                                            *
  ******************************************************************************/
 
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "mwr/core/utils.h"
 #include "mwr/core/report.h"
 #include "mwr/stl/strings.h"
@@ -443,16 +445,24 @@ size_t fd_peek(int fd, time_t timeoutms) {
 
     switch (GetFileType(handle)) {
     case FILE_TYPE_CHAR: {
+        if (WaitForSingleObject(handle, (DWORD)timeoutms) == WAIT_TIMEOUT)
+            return 0;
+
         DWORD nevents = 0;
         if (GetNumberOfConsoleInputEvents(handle, &nevents))
             return nevents;
+
         return 0;
     }
 
     case FILE_TYPE_PIPE: {
+        if (WaitForSingleObject(handle, (DWORD)timeoutms) == WAIT_TIMEOUT)
+            return 0;
+
         DWORD avail = 0;
         if (PeekNamedPipe(handle, NULL, 0, NULL, &avail, NULL))
             return avail;
+
         return 0;
     }
 
@@ -488,6 +498,32 @@ size_t fd_peek(int fd, time_t timeoutms) {
 #endif
 }
 
+#ifdef MWR_MSVC
+// workaround for https://github.com/microsoft/terminal/issues/16299
+static size_t msvc_read_console(u8* buf, size_t len) {
+    static HANDLE console = GetStdHandle(STD_INPUT_HANDLE);
+    static char data;
+
+    if (data == 1) { // ctrl-a
+        data = getchar();
+        *buf = data;
+        return 1;
+    }
+
+    DWORD nevents = 0;
+    INPUT_RECORD input;
+    ReadConsoleInput(console, &input, 1, &nevents);
+    if (nevents == 0 || input.EventType != KEY_EVENT ||
+        !input.Event.KeyEvent.bKeyDown) {
+        return 0;
+    }
+
+    data = input.Event.KeyEvent.uChar.AsciiChar;
+    *buf = data;
+    return 1;
+}
+#endif
+
 size_t fd_read(int fd, void* buffer, size_t buflen) {
     if (fd < 0 || buffer == nullptr || buflen == 0)
         return 0;
@@ -496,6 +532,11 @@ size_t fd_read(int fd, void* buffer, size_t buflen) {
 
     long long len;
     size_t numread = 0;
+
+#ifdef MWR_MSVC
+    if (fd == STDIN_FDNO)
+        return msvc_read_console(ptr, buflen);
+#endif
 
     while (numread < buflen) {
         do {
