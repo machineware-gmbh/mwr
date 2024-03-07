@@ -8,8 +8,6 @@
  *                                                                            *
  ******************************************************************************/
 
-#define _CRT_SECURE_NO_WARNINGS
-
 #include "mwr/core/utils.h"
 #include "mwr/core/report.h"
 #include "mwr/stl/strings.h"
