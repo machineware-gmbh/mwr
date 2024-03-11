@@ -14,8 +14,30 @@
 namespace mwr {
 namespace publishers {
 
+static bool supports_colors(bool use_cerr) {
+    int fd = use_cerr ? mwr::STDERR_FDNO : mwr::STDOUT_FDNO;
+    if (!mwr::fd_isatty(fd))
+        return false;
+
+    auto env = mwr::getenv("TERM");
+    if (!env)
+        return false;
+
+    string term = env.value();
+
+    static const string colors[]{
+        "color", "linux", "xterm", "screen", "ansi",
+    };
+
+    for (const string& console : colors)
+        if (term.find(console) != string::npos)
+            return true;
+
+    return false;
+}
+
 terminal::terminal(bool use_cerr):
-    terminal(use_cerr, is_tty(use_cerr ? 2 : 1)) {
+    terminal(use_cerr, supports_colors(use_cerr)) {
     // nothing to do
 }
 
