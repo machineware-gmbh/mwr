@@ -15,11 +15,11 @@ namespace mwr {
 namespace publishers {
 
 static bool supports_colors(bool use_cerr) {
-    int fd = use_cerr ? mwr::STDERR_FDNO : mwr::STDOUT_FDNO;
-    if (!mwr::fd_isatty(fd))
+    int fd = use_cerr ? STDERR_FDNO : STDOUT_FDNO;
+    if (!is_tty(fd))
         return false;
 
-    auto env = mwr::getenv("TERM");
+    auto env = getenv("TERM");
     if (!env)
         return false;
 

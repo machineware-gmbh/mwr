@@ -167,8 +167,6 @@ TEST(utils, fd_io) {
     ASSERT_EQ(fd_read(fd, buffer, n), n);
     EXPECT_STREQ(text, buffer);
 
-    EXPECT_FALSE(fd_isatty(fd));
-
     fd_close(fd);
     std::filesystem::remove_all("testfile");
 }

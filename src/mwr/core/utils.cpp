@@ -532,7 +532,7 @@ size_t fd_read(int fd, void* buffer, size_t buflen) {
     size_t numread = 0;
 
 #ifdef MWR_MSVC
-    if (fd == STDIN_FDNO && fd_isatty(fd))
+    if (fd == STDIN_FDNO && _isatty(fd))
         return msvc_read_console(ptr, buflen);
 #endif
 
@@ -620,14 +620,6 @@ int fd_pipe(int fds[2]) {
     return _pipe(fds, 2, _O_TEXT);
 #else
     return pipe(fds);
-#endif
-}
-
-bool fd_isatty(int fd) {
-#ifdef MWR_MSVC
-    return _isatty(fd);
-#else
-    return isatty(fd);
 #endif
 }
 
