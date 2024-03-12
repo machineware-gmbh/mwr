@@ -631,25 +631,26 @@ bool fd_isatty(int fd) {
 #endif
 }
 
-static auto g_start = chrono::steady_clock::now();
+using timestamp_clock = chrono::steady_clock;
+static auto g_start = timestamp_clock::now();
 
 double timestamp() {
-    chrono::duration<double> delta = chrono::steady_clock::now() - g_start;
+    chrono::duration<double> delta = timestamp_clock::now() - g_start;
     return delta.count();
 }
 
 u64 timestamp_ms() {
-    auto delta = chrono::steady_clock::now() - g_start;
+    auto delta = timestamp_clock::now() - g_start;
     return chrono::duration_cast<chrono::milliseconds>(delta).count();
 }
 
 u64 timestamp_us() {
-    auto delta = chrono::steady_clock::now() - g_start;
+    auto delta = timestamp_clock::now() - g_start;
     return chrono::duration_cast<chrono::microseconds>(delta).count();
 }
 
 u64 timestamp_ns() {
-    auto delta = chrono::steady_clock::now() - g_start;
+    auto delta = timestamp_clock::now() - g_start;
     return chrono::duration_cast<chrono::nanoseconds>(delta).count();
 }
 
