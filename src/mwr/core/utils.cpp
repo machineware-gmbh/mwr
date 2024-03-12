@@ -454,13 +454,11 @@ size_t fd_peek(int fd, time_t timeoutms) {
     }
 
     case FILE_TYPE_PIPE: {
-        if (WaitForSingleObject(handle, (DWORD)timeoutms) == WAIT_TIMEOUT)
-            return 0;
-
         DWORD avail = 0;
-        if (PeekNamedPipe(handle, NULL, 0, NULL, &avail, NULL))
+        if (PeekNamedPipe(handle, NULL, 0, NULL, &avail, NULL) && avail > 0)
             return avail;
 
+        Sleep((DWORD)timeoutms);
         return 0;
     }
 
