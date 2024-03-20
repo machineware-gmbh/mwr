@@ -29,6 +29,24 @@ inline void barrier() {
 
 inline void read_once(void* dest, const volatile void* src, size_t n) {
     switch (n) {
+#if defined(MWR_GCC) || defined(MWR_CLANG)
+    case 1:
+        *(u8*)dest = __atomic_load_n((const volatile u8*)src,
+                                     __ATOMIC_SEQ_CST);
+        break;
+    case 2:
+        *(u16*)dest = __atomic_load_n((const volatile u16*)src,
+                                      __ATOMIC_SEQ_CST);
+        break;
+    case 4:
+        *(u32*)dest = __atomic_load_n((const volatile u32*)src,
+                                      __ATOMIC_SEQ_CST);
+        break;
+    case 8:
+        *(u64*)dest = __atomic_load_n((const volatile u64*)src,
+                                      __ATOMIC_SEQ_CST);
+        break;
+#else
     case 1:
         *(u8*)dest = *(const volatile u8*)src;
         break;
@@ -41,6 +59,7 @@ inline void read_once(void* dest, const volatile void* src, size_t n) {
     case 8:
         *(u64*)dest = *(const volatile u64*)src;
         break;
+#endif
     default:
         barrier();
         memcpy(dest, (const void*)src, n);
@@ -50,6 +69,24 @@ inline void read_once(void* dest, const volatile void* src, size_t n) {
 
 inline void write_once(volatile void* dest, const void* src, size_t n) {
     switch (n) {
+#if defined(MWR_GCC) || defined(MWR_CLANG)
+    case 1:
+        __atomic_store_n((volatile u8*)dest, *(const u8*)src,
+                         __ATOMIC_SEQ_CST);
+        break;
+    case 2:
+        __atomic_store_n((volatile u16*)dest, *(const u16*)src,
+                         __ATOMIC_SEQ_CST);
+        break;
+    case 4:
+        __atomic_store_n((volatile u32*)dest, *(const u32*)src,
+                         __ATOMIC_SEQ_CST);
+        break;
+    case 8:
+        __atomic_store_n((volatile u64*)dest, *(const u64*)src,
+                         __ATOMIC_SEQ_CST);
+        break;
+#else
     case 1:
         *(volatile u8*)dest = *(const u8*)src;
         break;
@@ -62,6 +99,7 @@ inline void write_once(volatile void* dest, const void* src, size_t n) {
     case 8:
         *(volatile u64*)dest = *(const u64*)src;
         break;
+#endif
     default:
         barrier();
         memcpy((void*)dest, src, n);
