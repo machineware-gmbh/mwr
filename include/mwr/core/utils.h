@@ -48,6 +48,15 @@ int getpid();
 
 size_t get_page_size();
 
+inline bool is_page_aligned(uintptr_t addr) {
+    return (addr & (get_page_size() - 1)) == 0;
+}
+
+template <typename T>
+inline bool is_page_aligned(T* addr) {
+    return is_page_aligned((uintptr_t)addr);
+}
+
 vector<string> backtrace(size_t frames = 63, size_t skip = 1);
 void report_segfaults();
 extern size_t max_backtrace_length;

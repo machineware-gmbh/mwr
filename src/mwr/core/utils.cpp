@@ -197,7 +197,7 @@ int getpid() {
 #endif
 }
 
-size_t get_page_size() {
+static size_t os_get_page_size() {
 #if defined(MWR_WINDOWS)
     SYSTEM_INFO info;
     GetSystemInfo(&info);
@@ -205,6 +205,11 @@ size_t get_page_size() {
 #else
     return sysconf(_SC_PAGE_SIZE);
 #endif
+}
+
+size_t get_page_size() {
+    static size_t cached_size = os_get_page_size();
+    return cached_size;
 }
 
 vector<string> backtrace(size_t frames, size_t skip) {
