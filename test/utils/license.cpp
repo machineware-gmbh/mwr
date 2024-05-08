@@ -11,7 +11,7 @@
 #include "testing.h"
 #include "mwr/utils/license.h"
 
-#ifdef MWR_GCC
+#if __GNUC__ >= 14
 #pragma GCC diagnostic ignored "-Wdangling-reference"
 #endif
 
