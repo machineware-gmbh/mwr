@@ -61,7 +61,7 @@ inline u8& memory::operator[](size_t idx) {
 
 inline void memory::alloc(size_t size, int fill) {
     alloc(size);
-    memset(m_data, (int)fill, m_size);
+    memset(m_data, fill, m_size);
 }
 
 inline void memory::alloc0(size_t size) {
