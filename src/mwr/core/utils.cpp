@@ -217,8 +217,8 @@ vector<string> backtrace(size_t frames, size_t skip) {
 
 #if defined(MWR_LINUX) || defined(MWR_MACOS)
 
-    void* symbols[frames + skip];
-    size_t size = (size_t)::backtrace(symbols, frames + skip);
+    vector<void*> symbols(frames + skip);
+    size_t size = (size_t)::backtrace(symbols.data(), symbols.size());
     if (size <= skip)
         return sv;
 
@@ -226,7 +226,7 @@ vector<string> backtrace(size_t frames, size_t skip) {
 
     size_t dmbufsz = 256;
     char* dmbuf = (char*)malloc(dmbufsz);
-    char** names = ::backtrace_symbols(symbols, size);
+    char** names = ::backtrace_symbols(symbols.data(), symbols.size());
     for (size_t i = skip; i < size; i++) {
         char *func = nullptr, *offset = nullptr, *end = nullptr;
         for (char* ptr = names[i]; *ptr != '\0'; ptr++) {
