@@ -11,6 +11,10 @@
 #include "testing.h"
 #include "mwr/utils/license.h"
 
+#ifdef MWR_GCC
+#pragma GCC diagnostic ignored "-Wdangling-reference"
+#endif
+
 TEST(license, apache) {
     auto& license = mwr::license::find("Apache-2.0");
     EXPECT_EQ(license.name, "Apache License 2.0");
