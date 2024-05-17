@@ -25,27 +25,23 @@ TEST(utils, tty) {
 
     mwr::tty_push(fd, false);
 
-    EXPECT_TRUE(mwr::tty_is_echo(fd));
-    EXPECT_TRUE(mwr::tty_is_isig(fd));
+    EXPECT_FALSE(mwr::tty_is_vt100(fd));
 
-    mwr::tty_set(fd, false, false);
+    mwr::tty_setup_vt100(fd);
 
-    EXPECT_FALSE(mwr::tty_is_echo(fd));
-    EXPECT_FALSE(mwr::tty_is_isig(fd));
+    EXPECT_TRUE(mwr::tty_is_vt100(fd));
 
     mwr::tty_pop(fd);
 
-    EXPECT_TRUE(mwr::tty_is_echo(fd));
-    EXPECT_TRUE(mwr::tty_is_isig(fd));
+    EXPECT_FALSE(mwr::tty_is_vt100(fd));
 
     {
-        mwr::tty_guard guard(fd, false, false);
-        EXPECT_FALSE(mwr::tty_is_echo(fd));
-        EXPECT_FALSE(mwr::tty_is_isig(fd));
+        mwr::tty_guard guard(fd);
+        mwr::tty_setup_vt100(fd);
+        EXPECT_TRUE(mwr::tty_is_vt100(fd));
     }
 
-    EXPECT_TRUE(mwr::tty_is_echo(fd));
-    EXPECT_TRUE(mwr::tty_is_isig(fd));
+    EXPECT_FALSE(mwr::tty_is_vt100(fd));
 
     if (fd != 0)
         mwr::fd_close(fd);
@@ -59,9 +55,8 @@ TEST(utils, tty_restore) {
         return;
 
     mwr::tty_push(fd, true);
-    mwr::tty_set(fd, false, false);
-    EXPECT_FALSE(mwr::tty_is_echo(fd));
-    EXPECT_FALSE(mwr::tty_is_isig(fd));
+    mwr::tty_setup_vt100(fd);
+    EXPECT_TRUE(mwr::tty_is_vt100(fd));
     // fd will be closed on exit
 }
 

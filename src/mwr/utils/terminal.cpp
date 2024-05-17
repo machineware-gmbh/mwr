@@ -121,33 +121,33 @@ public:
     }
 
 #ifdef MWR_MSVC
-    bool is_echo() const { return load() & ENABLE_ECHO_INPUT; }
-    bool is_isig() const { return load() & ENABLE_PROCESSED_INPUT; }
+    bool is_vt100() const {
+        return load() & (ENABLE_VIRTUAL_TERMINAL_INPUT |
+                         ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+    }
 #else
     bool is_echo() const { return load().c_lflag & ECHO; }
     bool is_isig() const { return load().c_lflag & ISIG; }
+    bool is_vt100() const { return !is_echo() && is_isig(); }
 #endif
 
-    void set(bool echo, bool isig) {
+    void setup_vt100() {
         auto attr = load();
 #ifdef MWR_MSVC
-        attr &= ~ENABLE_ECHO_INPUT;
-        attr &= ~ENABLE_LINE_INPUT;
-        attr &= ~ENABLE_MOUSE_INPUT;
-        attr &= ~ENABLE_PROCESSED_INPUT;
-        if (echo)
-            attr |= ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT;
-        if (isig)
-            attr |= ENABLE_PROCESSED_INPUT;
-        if (m_fd == STDIN_FDNO)
+        if (m_fd == STDIN_FDNO) {
+            attr &= ~ENABLE_ECHO_INPUT;
+            attr &= ~ENABLE_LINE_INPUT;
+            attr &= ~ENABLE_MOUSE_INPUT;
+            attr &= ~ENABLE_PROCESSED_INPUT;
             attr |= ENABLE_VIRTUAL_TERMINAL_INPUT;
-        if (m_fd == STDOUT_FDNO)
+        } else {
             attr |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+        }
 #else
-        set_bit<ICANON>(attr.c_lflag, echo);
-        set_bit<ECHONL>(attr.c_lflag, echo);
-        set_bit<ECHO>(attr.c_lflag, echo);
-        set_bit<ISIG>(attr.c_lflag, isig);
+        attr.c_lflag &= ~ICANON;
+        attr.c_lflag &= ~ECHONL;
+        attr.c_lflag &= ~ECHO;
+        attr.c_lflag |= ISIG;
         attr.c_cc[VMIN] = 1;
         attr.c_cc[VTIME] = 0;
 #endif
@@ -176,12 +176,8 @@ public:
     }
 };
 
-bool tty_is_echo(int fd) {
-    return tty::lookup(fd).is_echo();
-}
-
-bool tty_is_isig(int fd) {
-    return tty::lookup(fd).is_isig();
+bool tty_is_vt100(int fd) {
+    return tty::lookup(fd).is_vt100();
 }
 
 void tty_push(int fd, bool restore) {
@@ -192,8 +188,8 @@ void tty_pop(int fd) {
     tty::lookup(fd).pop();
 }
 
-void tty_set(int fd, bool echo, bool signal) {
-    tty::lookup(fd).set(echo, signal);
+void tty_setup_vt100(int fd) {
+    tty::lookup(fd).setup_vt100();
 }
 
 const char* const termcolors::CLEAR = "\x1b[0m";

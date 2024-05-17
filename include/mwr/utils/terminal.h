@@ -22,9 +22,9 @@ namespace mwr {
 int new_tty();
 bool is_tty(int fd);
 
-bool tty_is_echo(int fd);
-bool tty_is_isig(int fd);
-void tty_set(int fd, bool echo, bool isig);
+bool tty_is_vt100(int fd);
+void tty_setup_vt100(int fd);
+
 void tty_push(int fd, bool restore);
 void tty_pop(int fd);
 
@@ -34,11 +34,7 @@ private:
     int m_fd;
 
 public:
-    tty_guard(int fd, bool echo, bool isig): m_fd(fd) {
-        tty_push(m_fd, true);
-        tty_set(m_fd, echo, isig);
-    }
-
+    tty_guard(int fd): m_fd(fd) { tty_push(m_fd, true); }
     virtual ~tty_guard() { tty_pop(m_fd); }
 };
 
