@@ -152,6 +152,13 @@ public:
         attr.c_cc[VTIME] = 0;
 #endif
         save(attr);
+
+#ifdef MWR_MSVC
+        if (m_fd == STDIN_FDNO)
+            SetConsoleCP(CP_UTF8);
+        else
+            SetConsoleOutputCP(CP_UTF8);
+#endif
     }
 
     void push(bool restore) {
