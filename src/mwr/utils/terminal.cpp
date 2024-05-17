@@ -72,7 +72,7 @@ private:
     std::stack<ttystate> m_stack;
 
 #ifdef MWR_MSVC
-    DWORD get() const {
+    DWORD load() const {
         DWORD mode;
         HANDLE console = (HANDLE)_get_osfhandle(m_fd);
         if (!GetConsoleMode(console, &mode))
@@ -80,20 +80,20 @@ private:
         return mode;
     }
 
-    void set(DWORD mode) const {
+    void save(DWORD mode) const {
         HANDLE console = (HANDLE)_get_osfhandle(m_fd);
         if (!SetConsoleMode(console, mode))
             MWR_ERROR("failed to set console attributes");
     }
 #else
-    termios get() const {
+    termios load() const {
         termios attr;
         if (tcgetattr(m_fd, &attr))
             MWR_ERROR("failed to get termios attributes: %s", strerror(errno));
         return attr;
     }
 
-    void set(const termios& attr) {
+    void save(const termios& attr) {
         if (tcsetattr(m_fd, TCSAFLUSH, &attr))
             MWR_ERROR("failed to get termios attributes: %s", strerror(errno));
     }
@@ -121,16 +121,16 @@ public:
     }
 
 #ifdef MWR_MSVC
-    bool is_echo() const { return get() & ENABLE_ECHO_INPUT; }
-    bool is_isig() const { return get() & ENABLE_PROCESSED_INPUT; }
+    bool is_echo() const { return load() & ENABLE_ECHO_INPUT; }
+    bool is_isig() const { return load() & ENABLE_PROCESSED_INPUT; }
 #else
-    bool is_echo() const { return get().c_lflag & ECHO; }
-    bool is_isig() const { return get().c_lflag & ISIG; }
+    bool is_echo() const { return load().c_lflag & ECHO; }
+    bool is_isig() const { return load().c_lflag & ISIG; }
 #endif
 
     void set(bool echo, bool isig) {
+        auto attr = load();
 #ifdef MWR_MSVC
-        DWORD attr = get();
         attr &= ~ENABLE_ECHO_INPUT;
         attr &= ~ENABLE_LINE_INPUT;
         attr &= ~ENABLE_MOUSE_INPUT;
@@ -139,8 +139,11 @@ public:
             attr |= ENABLE_ECHO_INPUT | ENABLE_LINE_INPUT;
         if (isig)
             attr |= ENABLE_PROCESSED_INPUT;
+        if (m_fd == STDIN_FDNO)
+            attr |= ENABLE_VIRTUAL_TERMINAL_INPUT;
+        if (m_fd == STDOUT_FDNO)
+            attr |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 #else
-        termios attr = get();
         set_bit<ICANON>(attr.c_lflag, echo);
         set_bit<ECHONL>(attr.c_lflag, echo);
         set_bit<ECHO>(attr.c_lflag, echo);
@@ -148,23 +151,23 @@ public:
         attr.c_cc[VMIN] = 1;
         attr.c_cc[VTIME] = 0;
 #endif
-        set(attr);
+        save(attr);
     }
 
     void push(bool restore) {
         ttystate state;
-        state.attr = get();
+        state.attr = load();
         state.restore = restore;
         m_stack.push(state);
     }
 
     void pop() {
         MWR_ERROR_ON(m_stack.empty(), "no tty state on stack");
-        set(m_stack.top().attr);
+        save(m_stack.top().attr);
         m_stack.pop();
     }
 
-    static tty& get(int fd) {
+    static tty& lookup(int fd) {
         static unordered_map<int, std::shared_ptr<tty>> ttys;
         auto& res = ttys[fd];
         if (!res)
@@ -174,23 +177,23 @@ public:
 };
 
 bool tty_is_echo(int fd) {
-    return tty::get(fd).is_echo();
+    return tty::lookup(fd).is_echo();
 }
 
 bool tty_is_isig(int fd) {
-    return tty::get(fd).is_isig();
+    return tty::lookup(fd).is_isig();
 }
 
 void tty_push(int fd, bool restore) {
-    tty::get(fd).push(restore);
+    tty::lookup(fd).push(restore);
 }
 
 void tty_pop(int fd) {
-    tty::get(fd).pop();
+    tty::lookup(fd).pop();
 }
 
 void tty_set(int fd, bool echo, bool signal) {
-    tty::get(fd).set(echo, signal);
+    tty::lookup(fd).set(echo, signal);
 }
 
 const char* const termcolors::CLEAR = "\x1b[0m";
