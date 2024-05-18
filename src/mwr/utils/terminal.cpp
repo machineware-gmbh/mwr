@@ -128,7 +128,7 @@ public:
 #else
     bool is_echo() const { return load().c_lflag & ECHO; }
     bool is_isig() const { return load().c_lflag & ISIG; }
-    bool is_vt100() const { return !is_echo() && is_isig(); }
+    bool is_vt100() const { return !is_echo() && !is_isig(); }
 #endif
 
     void setup_vt100() {
@@ -147,7 +147,7 @@ public:
         attr.c_lflag &= ~ICANON;
         attr.c_lflag &= ~ECHONL;
         attr.c_lflag &= ~ECHO;
-        attr.c_lflag |= ISIG;
+        attr.c_lflag &= ~ISIG;
         attr.c_cc[VMIN] = 1;
         attr.c_cc[VTIME] = 0;
 #endif
