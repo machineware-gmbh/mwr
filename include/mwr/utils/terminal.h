@@ -40,6 +40,7 @@ public:
 
 struct termcolors {
     static const char* const CLEAR;
+    static const char* const BOLD;
     static const char* const BLACK;
     static const char* const RED;
     static const char* const GREEN;

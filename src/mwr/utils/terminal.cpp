@@ -200,6 +200,7 @@ void tty_setup_vt100(int fd) {
 }
 
 const char* const termcolors::CLEAR = "\x1b[0m";
+const char* const termcolors::BOLD = "\x1b[1m";
 const char* const termcolors::BLACK = "\x1b[30m";
 const char* const termcolors::RED = "\x1b[31m";
 const char* const termcolors::GREEN = "\x1b[32m";
