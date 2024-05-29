@@ -85,7 +85,9 @@
     static void fn();                       \
     namespace {                             \
     struct MWR_CAT(fn, _t) {                \
-        MWR_CAT(fn, _t)() { fn(); }         \
+        MWR_CAT(fn, _t)() {                 \
+            fn();                           \
+        }                                   \
     };                                      \
     static MWR_CAT(fn, _t) MWR_CAT(g_, fn); \
     }                                       \
@@ -95,7 +97,9 @@
     static void fn();                       \
     namespace {                             \
     struct MWR_CAT(fn, _t) {                \
-        ~MWR_CAT(fn, _t)() { fn(); }        \
+        ~MWR_CAT(fn, _t)() {                \
+            fn();                           \
+        }                                   \
     };                                      \
     static MWR_CAT(fn, _t) MWR_CAT(g_, fn); \
     }                                       \
