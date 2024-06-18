@@ -415,7 +415,6 @@ int fd_open(const string& path, int mode, int perms) {
     int fd = -1;
     errno_t err = _sopen_s(&fd, path.c_str(), mode, _SH_DENYNO, perms);
     if (err) {
-        MWR_ERROR("failed to open file: %d", errno);
         errno = err;
         return -1;
     }
