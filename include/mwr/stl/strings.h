@@ -41,7 +41,7 @@ string pad(const string& s, size_t limit);
 string to_lower(const string& s);
 string to_upper(const string& s);
 string escape(const string& s, const string& chars = "");
-string unescape(const string& s);
+string unescape(const string& s, const string& chars = "");
 
 vector<string> split(const string& str, const function<int(int)>& f = isspace);
 vector<string> split(const string& str, char predicate);

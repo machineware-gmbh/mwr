@@ -93,7 +93,7 @@ string to_upper(const string& s) {
 string escape(const string& s, const string& chars) {
     stringstream ss;
     for (auto c : s) {
-        for (auto esc : chars + "\\") {
+        for (auto esc : chars + "\\\"'") {
             if (c == esc)
                 ss << '\\';
         }
@@ -103,11 +103,14 @@ string escape(const string& s, const string& chars) {
     return ss.str();
 }
 
-string unescape(const string& s) {
+string unescape(const string& s, const string& chars) {
     stringstream ss;
-    for (auto c : s) {
-        if (c != '\\')
-            ss << c;
+    for (size_t i = 0; i < s.length(); i++) {
+        if (s[i] == '\\' && i < s.length() - 1 &&
+            (chars + "\\\"'").find(s[i + 1]) != string::npos) {
+            ss << s[++i];
+        } else
+            ss << s[i];
     }
 
     return ss.str();

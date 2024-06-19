@@ -129,7 +129,7 @@ publisher::~publisher() {
 void publisher::publish(log_level level, const string& sender,
                         const string& str, const char* file, int line) {
     logmsg msg(level, sender);
-    msg.lines = split(str, '\n');
+    msg.lines = split(escape(str), '\n');
 
     if (file != nullptr) {
         msg.source.file = file;

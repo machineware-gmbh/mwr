@@ -118,5 +118,5 @@ TEST(strings, strcat) {
 TEST(strings, escape) {
     string s = escape("hello world!", " !");
     ASSERT_EQ(s, "hello\\ world\\!");
-    EXPECT_EQ(unescape(s), "hello world!");
+    EXPECT_EQ(unescape(s, " !"), "hello world!");
 }
