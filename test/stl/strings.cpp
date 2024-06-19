@@ -119,4 +119,8 @@ TEST(strings, escape) {
     string s = escape("hello world!", " !");
     ASSERT_EQ(s, "hello\\ world\\!");
     EXPECT_EQ(unescape(s, " !"), "hello world!");
+
+    string s2 = escape("C:\\a\\b\\c");
+    ASSERT_EQ(s2, "C:\\\\a\\\\b\\\\c");
+    EXPECT_EQ(unescape(s2), "C:\\a\\b\\c");
 }
