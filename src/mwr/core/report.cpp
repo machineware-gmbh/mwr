@@ -30,4 +30,12 @@ const char* report::what() const throw() {
     return m_message.c_str();
 }
 
+void print_error_backtrace(std::ostream& os) {
+    auto bt = backtrace(max_backtrace_length, 2);
+    if (bt.empty())
+        os << "<backtrace unavailable>" << std::endl;
+    for (auto it = bt.rbegin(); it != bt.rend(); it++)
+        os << *it << std::endl;
+}
+
 } // namespace mwr

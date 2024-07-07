@@ -241,7 +241,7 @@ vector<string> backtrace(size_t frames, size_t skip) {
         }
 
         if (!func || !offset || !end) {
-            sv[i - skip] = mkstr("<unknown> [%p]", symbols[i]);
+            sv[i - skip] = mkstr("[0x%016llx] <unknown>", (u64)symbols[i]);
             continue;
         }
 
@@ -249,12 +249,15 @@ vector<string> backtrace(size_t frames, size_t skip) {
         *offset++ = '\0';
         *end = '\0';
 
-        sv[i - skip] = string(func) + "+" + string(offset);
-
         int status = 0;
         char* res = abi::__cxa_demangle(func, dmbuf, &dmbufsz, &status);
-        if (status == 0)
-            sv[i - skip] = string(dmbuf = res) + "+" + string(offset);
+        if (status == 0) {
+            sv[i - skip] = mkstr("[0x%016llx] %s +%s", (u64)symbols[i],
+                                 dmbuf = res, offset);
+        } else {
+            sv[i - skip] = mkstr("[0x%016llx] %s +%s", (u64)symbols[i], func,
+                                 offset);
+        }
     }
 
     free(names);
@@ -278,10 +281,12 @@ vector<string> backtrace(size_t frames, size_t skip) {
         symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
         symbol->MaxNameLen = MAX_PATH;
 
-        if (SymFromAddr(GetCurrentProcess(), address, &offset, symbol))
-            sv.push_back(mkstr("%s+0x%x", symbol->Name, offset));
-        else
-            sv.push_back(mkstr("<unknown> [%p]", symbols[i]));
+        if (SymFromAddr(GetCurrentProcess(), address, &offset, symbol)) {
+            sv.push_back(
+                mkstr("[0x%016llx] %s +0x%x", address, symbol->Name, offset));
+        } else {
+            sv.push_back(mkstr("[0x%016llx] <unknown>", address));
+        }
     }
 
 #endif

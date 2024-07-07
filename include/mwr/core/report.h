@@ -41,6 +41,8 @@ public:
 
 ostream& operator<<(ostream& os, const report& rep);
 
+void print_error_backtrace(ostream& os);
+
 #define MWR_REPORT(...) \
     throw ::mwr::report(::mwr::mkstr(__VA_ARGS__), __FILE__, __LINE__)
 
@@ -62,6 +64,7 @@ ostream& operator<<(ostream& os, const report& rep);
 
 #define MWR_ERROR(...)                                 \
     do {                                               \
+        mwr::print_error_backtrace(std::cerr);         \
         fprintf(stderr, "%s:%d ", __FILE__, __LINE__); \
         fprintf(stderr, __VA_ARGS__);                  \
         fprintf(stderr, "\n");                         \

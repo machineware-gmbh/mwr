@@ -29,5 +29,9 @@ TEST(report, report) {
 }
 
 TEST(report, error) {
+    EXPECT_DEATH({ MWR_ERROR("this is an error"); }, "this is an error");
+}
+
+TEST(report, error_on) {
     MWR_ERROR_ON(false, "should not happen");
 }
