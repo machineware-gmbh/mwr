@@ -144,12 +144,9 @@ void publisher::publish(log_level level, const string& sender,
 void publisher::publish(log_level level, const string& sender,
                         const report& rep) {
     stringstream ss;
-    if (print_backtrace) {
-        const vector<string>& bt = rep.backtrace();
-        ss << "Backtrace(" << bt.size() << ")" << std::endl;
-        for (size_t i = bt.size(); i > 0; i--)
-            ss << "#" << i - 1 << ": " << bt[i - 1] << std::endl;
-    }
+
+    if (print_backtrace)
+        mwr::print_backtrace(rep.backtrace(), ss);
 
     ss << rep.message();
 

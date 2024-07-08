@@ -81,57 +81,6 @@ TEST(utils, info) {
     EXPECT_NE(username(), "");
 }
 
-namespace N {
-
-template <typename T>
-struct struct_a {
-    struct struct_b {
-        void func() {
-            vector<string> bt = backtrace(1, 1);
-            EXPECT_EQ(bt.size(), 1);
-            // EXPECT_TRUE(str_begins_with(bt[0], "N::A<int>::B::func()"));
-        }
-
-        void func(T t) {
-            vector<string> bt = backtrace(1, 1);
-            EXPECT_EQ(bt.size(), 1);
-            // EXPECT_TRUE(str_begins_with(bt[0], "N::A<char
-            // const*>::B::func(char const*)"));
-        }
-
-        void func2() {
-            vector<string> bt = backtrace(1, 1);
-            EXPECT_EQ(bt.size(), 1);
-            // EXPECT_TRUE(str_begins_with(bt[0], "N::A<N::A<std::map<int,
-            // double, std::less<int>, std::allocator<std::pair<int const,
-            // double> > > > >::B::func2()"));
-        }
-    };
-};
-
-struct struct_u {
-    template <int N>
-    void unroll(double d) {
-        unroll<N - 1>(d);
-    }
-};
-
-template <>
-void struct_u::unroll<0>(double d) {
-    vector<string> bt = backtrace(5, 1);
-    EXPECT_EQ(bt.size(), 5);
-    for (const std::string& func : bt)
-        std::cout << func << std::endl;
-}
-} // namespace N
-
-TEST(utils, backtrace) {
-    N::struct_a<int>::struct_b().func();
-    N::struct_a<const char*>::struct_b().func("42");
-    N::struct_a<N::struct_a<std::map<int, double> > >::struct_b().func2();
-    N::struct_u().unroll<5>(42.0);
-}
-
 TEST(utils, timestamp) {
     double ts = timestamp();
     u64 ts_us = timestamp_us();

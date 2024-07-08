@@ -57,10 +57,6 @@ inline bool is_page_aligned(T* addr) {
     return is_page_aligned((uintptr_t)addr);
 }
 
-vector<string> backtrace(size_t frames = 63, size_t skip = 1);
-void report_segfaults();
-extern size_t max_backtrace_length;
-
 constexpr int STDIN_FDNO = 0;
 constexpr int STDOUT_FDNO = 1;
 constexpr int STDERR_FDNO = 2;

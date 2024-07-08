@@ -35,3 +35,48 @@ TEST(report, error) {
 TEST(report, error_on) {
     MWR_ERROR_ON(false, "should not happen");
 }
+
+namespace N {
+
+template <typename T>
+struct struct_a {
+    struct struct_b {
+        void func() {
+            auto bt = mwr::backtrace(1, 1);
+            EXPECT_EQ(bt.size(), 1);
+        }
+
+        void func(T t) {
+            auto bt = mwr::backtrace(1, 1);
+            EXPECT_EQ(bt.size(), 1);
+        }
+
+        void func2() {
+            auto bt = mwr::backtrace(1, 1);
+            EXPECT_EQ(bt.size(), 1);
+        }
+    };
+};
+
+struct struct_u {
+    template <int N>
+    void unroll(double d) {
+        unroll<N - 1>(d);
+    }
+};
+
+template <>
+void struct_u::unroll<0>(double d) {
+    auto bt = mwr::backtrace(5, 1);
+    EXPECT_EQ(bt.size(), 5);
+    for (const auto& func : bt)
+        std::cout << func << std::endl;
+}
+} // namespace N
+
+TEST(utils, backtrace) {
+    N::struct_a<int>::struct_b().func();
+    N::struct_a<const char*>::struct_b().func("42");
+    N::struct_a<N::struct_a<std::map<int, double> > >::struct_b().func2();
+    N::struct_u().unroll<5>(42.0);
+}
