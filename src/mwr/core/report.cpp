@@ -37,10 +37,10 @@ namespace mwr {
 
 ostream& operator<<(ostream& os, const stackframe& frame) {
     if (!frame.symbol.empty()) {
-        os << mkstr("[0x%12llx] %s +0x%llx", frame.address,
+        os << mkstr("[0x%012llx] %s +0x%llx", frame.address,
                     frame.symbol.c_str(), frame.offset);
     } else {
-        os << mkstr("[0x%12llx] <unknown>", frame.address);
+        os << mkstr("[0x%012llx] <unknown>", frame.address);
     }
 
     return os;
