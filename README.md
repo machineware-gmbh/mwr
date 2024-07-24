@@ -14,7 +14,7 @@ LibMWR contains types and utilities shared between all MachineWare projects.
 
 Clone repository and update submodules if you want to build unit tests:
 ```
-git clone git@github.com:machineware-gmbh/mwr
+git clone https://github.com/machineware-gmbh/mwr.git --recursive
 cd mwr
 git submodule update --init
 ```
