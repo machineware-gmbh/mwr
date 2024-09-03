@@ -43,6 +43,7 @@
 #include "mwr/utils/options.h"
 #include "mwr/utils/socket.h"
 #include "mwr/utils/srec.h"
+#include "mwr/utils/intel_hex.h"
 #include "mwr/utils/terminal.h"
 #include "mwr/utils/uimage.h"
 

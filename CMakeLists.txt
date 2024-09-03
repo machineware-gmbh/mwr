@@ -45,6 +45,7 @@ add_library(mwr STATIC
             ${src}/mwr/utils/modules.cpp
             ${src}/mwr/utils/options.cpp
             ${src}/mwr/utils/srec.cpp
+            ${src}/mwr/utils/intel_hex.cpp
             ${src}/mwr/utils/terminal.cpp
             ${src}/mwr/utils/uimage.cpp)
 
