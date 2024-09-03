@@ -101,8 +101,7 @@ static inline ihex_record process_line(string_view line) {
         MWR_REPORT("Found unknown record type: %x", r_type);
         valid = false;
     }
-    return { valid, addr, r_type,
-             line.substr(data_start, nr_bytes - data_start - 1) };
+    return { valid, addr, r_type, line.substr(data_start, nr_bytes * 2) };
 }
 
 ihex::ihex(const string& filename): m_start_addr(), m_records() {
