@@ -8,8 +8,8 @@
  *                                                                            *
  ******************************************************************************/
 
-#ifndef MWR_UTILS_INTEL_HEX_H
-#define MWR_UTILS_INTEL_HEX_H
+#ifndef MWR_UTILS_IHEX_H
+#define MWR_UTILS_IHEX_H
 
 #include "mwr/core/types.h"
 #include "mwr/core/report.h"
@@ -19,7 +19,7 @@
 
 namespace mwr {
 
-class intel_hex
+class ihex
 {
 public:
     struct record {
@@ -30,10 +30,10 @@ public:
     u64 start_addr() const { return m_start_addr; }
     const vector<record>& records() const { return m_records; }
 
-    intel_hex(const string& filename);
-    ~intel_hex() = default;
+    ihex(const string& filename);
+    ~ihex() = default;
 
-    intel_hex(const intel_hex&) = delete;
+    ihex(const ihex&) = delete;
 
 private:
     u64 m_start_addr;

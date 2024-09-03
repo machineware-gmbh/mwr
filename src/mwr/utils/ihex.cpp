@@ -8,22 +8,22 @@
  *                                                                            *
  ******************************************************************************/
 
-#include "mwr/utils/intel_hex.h"
+#include "mwr/utils/ihex.h"
 #include <string_view>
 
 namespace mwr {
 using namespace std;
 
 enum record_type : u8 {
-    INTEL_HEX_DATA = 0x00,
-    INTEL_HEX_EOF = 0x01,
-    INTEL_HEX_EX_SEG = 0x02,
-    INTEL_HEX_START_SEG = 0x03,
-    INTEL_HEX_EX_LIN_ADDR = 0x04,
-    INTEL_HEX_START_LIN_ADDR = 0x05,
+    IHEX_DATA = 0x00,
+    IHEX_EOF = 0x01,
+    IHEX_EX_SEG = 0x02,
+    IHEX_START_SEG = 0x03,
+    IHEX_EX_LIN_ADDR = 0x04,
+    IHEX_START_LIN_ADDR = 0x05,
 };
 
-struct intel_hex_record {
+struct ihex_record {
     bool valid;
     u16 addr;
     record_type type;
@@ -47,7 +47,7 @@ static inline T hex_extract(string_view line, size_t off = 0) {
     return result;
 }
 
-static inline intel_hex_record process_line(string_view line) {
+static inline ihex_record process_line(string_view line) {
     const u32 recsize_wo_data = 11;
     const u32 data_start = 9;
     const u32 delim = 1;
@@ -81,19 +81,19 @@ static inline intel_hex_record process_line(string_view line) {
         hex_extract<u8>(line, 7));
 
     switch (r_type) {
-    case INTEL_HEX_DATA:
+    case IHEX_DATA:
         break;
-    case INTEL_HEX_EOF:
+    case IHEX_EOF:
         MWR_REPORT_ON(nr_bytes || addr, "Found invalid record: %*s",
                       (int)line.size(), line.data());
         break;
-    case INTEL_HEX_EX_SEG:
-    case INTEL_HEX_EX_LIN_ADDR:
+    case IHEX_EX_SEG:
+    case IHEX_EX_LIN_ADDR:
         MWR_REPORT_ON(nr_bytes != 2 || addr, "Found invalid record: %*s",
                       (int)line.size(), line.data());
         break;
-    case INTEL_HEX_START_SEG:
-    case INTEL_HEX_START_LIN_ADDR:
+    case IHEX_START_SEG:
+    case IHEX_START_LIN_ADDR:
         MWR_REPORT_ON(nr_bytes != 4 || addr, "Found invalid record: %*s",
                       (int)line.size(), line.data());
         break;
@@ -105,9 +105,9 @@ static inline intel_hex_record process_line(string_view line) {
              line.substr(data_start, nr_bytes - data_start - 1) };
 }
 
-intel_hex::intel_hex(const string& filename): m_start_addr(), m_records() {
+ihex::ihex(const string& filename): m_start_addr(), m_records() {
     ifstream file(filename);
-    MWR_ERROR_ON(!file, "Cannot open intel_hex file '%s'", filename.c_str());
+    MWR_ERROR_ON(!file, "Cannot open ihex file '%s'", filename.c_str());
 
     u32 seg_ext = 0;
     u32 linear_ext = 0;
@@ -119,31 +119,31 @@ intel_hex::intel_hex(const string& filename): m_start_addr(), m_records() {
         if (eof)
             MWR_REPORT("Found line after EOF in hex file: %s", line.c_str());
 
-        intel_hex_record line_data = process_line(line);
+        ihex_record line_data = process_line(line);
         if (!line_data.valid)
             continue;
 
         switch (line_data.type) {
-        case INTEL_HEX_DATA: {
+        case IHEX_DATA: {
             record rec = {};
             rec.addr = line_data.addr + seg_ext + linear_ext;
             for (size_t pos = 0; pos < line_data.data.size(); pos += 2)
                 rec.data.push_back(hex_extract<u8>(line_data.data, pos));
             m_records.push_back(std::move(rec));
         }; break;
-        case INTEL_HEX_EOF:
+        case IHEX_EOF:
             eof += 1;
             break;
-        case INTEL_HEX_EX_SEG:
+        case IHEX_EX_SEG:
             seg_ext = hex_extract<u16>(line_data.data) << 4;
             break;
-        case INTEL_HEX_START_SEG:
+        case IHEX_START_SEG:
             m_start_addr = hex_extract<u32>(line_data.data);
             break;
-        case INTEL_HEX_EX_LIN_ADDR:
+        case IHEX_EX_LIN_ADDR:
             linear_ext = hex_extract<u16>(line_data.data) << 16;
             break;
-        case INTEL_HEX_START_LIN_ADDR:
+        case IHEX_START_LIN_ADDR:
             m_start_addr = hex_extract<u32>(line_data.data);
             break;
         default:
