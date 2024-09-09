@@ -35,7 +35,7 @@ TEST(ihex, load) {
     EXPECT_EQ(reader.records()[0].addr, 0x0100);
     EXPECT_EQ(reader.records()[1].addr, 0x0110);
     EXPECT_EQ(reader.records()[2].addr, 0x0120 | 0x800 << 16);
-    EXPECT_EQ(reader.records()[3].addr, 0x0130 | 0x800 << 16);
+    EXPECT_EQ(reader.records()[3].addr, 0x0130 | 0x800 << 16 | 0x1 << 4);
 
     EXPECT_EQ(reader.records()[0].data, V1);
     EXPECT_EQ(reader.records()[1].data, V2);

@@ -38,7 +38,7 @@ static inline u8 ihex_byte(const string& line, size_t off) {
 }
 
 template <typename T>
-static inline T vec_to(const std::vector<u8>& vec) {
+static inline u64 vec_to(const std::vector<u8>& vec) {
     constexpr size_t num_bytes = sizeof(T);
     MWR_ERROR_ON(num_bytes > vec.size(), "reading beyond given vector");
     T result = 0;
@@ -76,7 +76,7 @@ static inline ihex_record process_line(const string& line) {
     case IHEX_EOF:
         if (nr_bytes != 0x00 || addr != 0x0000)
             return { INVALID_DESCRIPTOR, 0, {} };
-        break;
+        return { IHEX_EOF, 0, {} };
     case IHEX_EX_SEG:
     case IHEX_EX_LIN_ADDR:
         if (nr_bytes != 0x02 || addr != 0x0000)
@@ -102,8 +102,8 @@ ihex::ihex(const string& filename): m_start_addr(), m_records() {
     ifstream file(filename);
     MWR_ERROR_ON(!file, "Cannot open ihex file '%s'", filename.c_str());
 
-    u32 seg_offset = 0;
-    u32 linear_offset = 0;
+    u64 seg_offset = 0;
+    u64 linear_offset = 0;
     string line;
     while (getline(file, line)) {
         line = trim(line);
@@ -134,7 +134,7 @@ ihex::ihex(const string& filename): m_start_addr(), m_records() {
         }
     }
     MWR_REPORT_ON(m_records.size() == 0,
-                  "File '%s' does not seem to be in intel hex format",
+                  "File '%s' does not seem to be in Intel hex format",
                   filename.c_str());
 }
 
