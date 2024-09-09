@@ -9,10 +9,8 @@
  ******************************************************************************/
 
 #include "mwr/utils/ihex.h"
-#include <string_view>
 
 namespace mwr {
-using namespace std;
 
 enum record_type : u8 {
     IHEX_DATA = 0x00,
@@ -21,135 +19,122 @@ enum record_type : u8 {
     IHEX_START_SEG = 0x03,
     IHEX_EX_LIN_ADDR = 0x04,
     IHEX_START_LIN_ADDR = 0x05,
+    INVALID_LINE_FORMAT,
+    INVALID_LINE_LEN,
+    INVALID_TYPE,
+    INVALID_DESCRIPTOR,
+    INVALID_CHECKSUM,
 };
 
 struct ihex_record {
-    bool valid;
-    u16 addr;
     record_type type;
-    string_view data;
+    u64 addr;
+    vector<u8> data;
 };
 
+static inline u8 ihex_byte(const string& line, size_t off) {
+    MWR_ERROR_ON(off + 1 >= line.size(), "reading beyond srec line");
+    return from_hex_ascii(line[off]) << 4 | from_hex_ascii(line[off + 1]);
+}
+
 template <typename T>
-static inline T hex_extract(string_view line, size_t off = 0) {
-    static_assert(std::is_unsigned<T>::value,
-                  "T must be an unsigned integer type");
+static inline T vec_to(const std::vector<u8>& vec) {
     constexpr size_t num_bytes = sizeof(T);
-    constexpr size_t num_digits = num_bytes * 2;
-
-    MWR_ERROR_ON(off + num_digits > line.length(),
-                 "reading beyond given string");
-
+    MWR_ERROR_ON(num_bytes > vec.size(),
+                 "reading beyond given vector: %lu > %lu", num_bytes,
+                 vec.size());
     T result = 0;
-    for (size_t i = 0; i < num_digits; ++i) {
-        result = (result << 4) | from_hex_ascii(line[off + i]);
-    }
+    for (size_t i = 0; i < num_bytes; ++i)
+        result = (result << 8) | vec[i];
     return result;
 }
 
-static inline ihex_record process_line(string_view line) {
-    const u32 recsize_wo_data = 11;
-    const u32 data_start = 9;
-    const u32 delim = 1;
-    bool valid = true;
-    if (line.length() < recsize_wo_data || line[0] != ':') {
-        MWR_REPORT("Found invalid line in hex file: %*s", (int)line.size(),
-                   line.data());
-        valid = false;
-    }
+static inline ihex_record process_line(const string& line) {
+    const size_t delim = 1;
+    const size_t data_start = 9;
+    const size_t check_bytes = 1;
+    const size_t min_line_len = data_start + check_bytes * 2;
 
-    const u8 nr_bytes = hex_extract<u8>(line, delim);
+    if (line.size() < min_line_len || line[0] != ':')
+        return { INVALID_LINE_FORMAT, 0, { 0 } };
 
-    if (line.length() < recsize_wo_data + nr_bytes * 2) {
-        MWR_REPORT("Found invalid record (too short): %*s", (int)line.size(),
-                   line.data());
-        valid = false;
-    }
+    const u32 nr_bytes = ihex_byte(line, 1);
+    const u16 addr = ihex_byte(line, 3) << 8 | ihex_byte(line, 5);
+    const record_type r_type = static_cast<record_type>(ihex_byte(line, 7));
+    const size_t line_len = min_line_len + nr_bytes * 2;
+
+    if (line.size() < line_len)
+        return { INVALID_LINE_LEN, 0, { 0 } };
 
     u8 check_sum = 0;
-    for (u32 pos = delim; pos < recsize_wo_data + nr_bytes * 2 - delim;
-         pos += 2)
-        check_sum += hex_extract<u8>(line, pos);
-    if (check_sum) {
-        MWR_REPORT("Found invalid record (wrong checksum): %*s",
-                   (int)line.size(), line.data());
-        valid = false;
-    }
-
-    const u16 addr = hex_extract<u16>(line, 3);
-    const record_type r_type = static_cast<record_type>(
-        hex_extract<u8>(line, 7));
+    for (size_t pos = delim; pos < line_len; pos += 2)
+        check_sum += ihex_byte(line, pos);
+    if (check_sum != 0x00)
+        return { INVALID_CHECKSUM, 0, {} };
 
     switch (r_type) {
     case IHEX_DATA:
         break;
     case IHEX_EOF:
-        MWR_REPORT_ON(nr_bytes || addr, "Found invalid record: %*s",
-                      (int)line.size(), line.data());
+        if (nr_bytes != 0x00 || addr != 0x0000)
+            return { INVALID_DESCRIPTOR, 0, {} };
         break;
     case IHEX_EX_SEG:
     case IHEX_EX_LIN_ADDR:
-        MWR_REPORT_ON(nr_bytes != 2 || addr, "Found invalid record: %*s",
-                      (int)line.size(), line.data());
+        if (nr_bytes != 0x02 || addr != 0x0000)
+            return { INVALID_DESCRIPTOR, 0, {} };
         break;
     case IHEX_START_SEG:
     case IHEX_START_LIN_ADDR:
-        MWR_REPORT_ON(nr_bytes != 4 || addr, "Found invalid record: %*s",
-                      (int)line.size(), line.data());
+        if (nr_bytes != 0x04 || addr != 0x0000)
+            return { INVALID_DESCRIPTOR, 0, {} };
         break;
     default:
-        MWR_REPORT("Found unknown record type: %x", r_type);
-        valid = false;
+        return { INVALID_TYPE, 0, {} };
     }
-    return { valid, addr, r_type, line.substr(data_start, nr_bytes * 2) };
+
+    vector<u8> data;
+    data.reserve(nr_bytes);
+    for (size_t pos = data_start; pos < data_start + nr_bytes * 2; pos += 2)
+        data.push_back(ihex_byte(line, pos));
+    return { r_type, addr, std::move(data) };
 }
 
 ihex::ihex(const string& filename): m_start_addr(), m_records() {
     ifstream file(filename);
     MWR_ERROR_ON(!file, "Cannot open ihex file '%s'", filename.c_str());
 
-    u32 seg_ext = 0;
-    u32 linear_ext = 0;
-    u32 eof = 0;
+    u32 seg_offset = 0;
+    u32 linear_offset = 0;
     string line;
     while (getline(file, line)) {
         line = trim(line);
+        ihex_record ihex_rec = process_line(line);
 
-        if (eof)
-            MWR_REPORT("Found line after EOF in hex file: %s", line.c_str());
-
-        ihex_record line_data = process_line(line);
-        if (!line_data.valid)
-            continue;
-
-        switch (line_data.type) {
+        switch (ihex_rec.type) {
         case IHEX_DATA: {
             record rec = {};
-            rec.addr = line_data.addr + seg_ext + linear_ext;
-            for (size_t pos = 0; pos < line_data.data.size(); pos += 2)
-                rec.data.push_back(hex_extract<u8>(line_data.data, pos));
+            rec.addr = ihex_rec.addr + seg_offset + linear_offset;
+            rec.data = std::move(ihex_rec.data);
             m_records.push_back(std::move(rec));
-        }; break;
-        case IHEX_EOF:
-            eof += 1;
             break;
+        };
+        case IHEX_EOF:
+            return;
         case IHEX_EX_SEG:
-            seg_ext = hex_extract<u16>(line_data.data) << 4;
+            seg_offset = vec_to<u16>(ihex_rec.data) << 4;
             break;
         case IHEX_START_SEG:
-            m_start_addr = hex_extract<u32>(line_data.data);
+            m_start_addr = vec_to<u32>(ihex_rec.data);
             break;
         case IHEX_EX_LIN_ADDR:
-            linear_ext = hex_extract<u16>(line_data.data) << 16;
-            break;
-        case IHEX_START_LIN_ADDR:
-            m_start_addr = hex_extract<u32>(line_data.data);
+            linear_offset = vec_to<u16>(ihex_rec.data) << 16;
             break;
         default:
             break;
         }
     }
-    MWR_REPORT_ON(eof != 1, "Wrong number of EOF in file, count: %d", eof);
+    MWR_REPORT_ON(m_records.size() == 0, "File '%s' does not seem to be in intel hex format", filename.c_str());
 }
 
 } // namespace mwr
