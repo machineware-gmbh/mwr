@@ -40,9 +40,7 @@ static inline u8 ihex_byte(const string& line, size_t off) {
 template <typename T>
 static inline T vec_to(const std::vector<u8>& vec) {
     constexpr size_t num_bytes = sizeof(T);
-    MWR_ERROR_ON(num_bytes > vec.size(),
-                 "reading beyond given vector: %lu > %lu", num_bytes,
-                 vec.size());
+    MWR_ERROR_ON(num_bytes > vec.size(), "reading beyond given vector");
     T result = 0;
     for (size_t i = 0; i < num_bytes; ++i)
         result = (result << 8) | vec[i];
@@ -125,6 +123,7 @@ ihex::ihex(const string& filename): m_start_addr(), m_records() {
             seg_offset = vec_to<u16>(ihex_rec.data) << 4;
             break;
         case IHEX_START_SEG:
+        case IHEX_START_LIN_ADDR:
             m_start_addr = vec_to<u32>(ihex_rec.data);
             break;
         case IHEX_EX_LIN_ADDR:
@@ -134,7 +133,9 @@ ihex::ihex(const string& filename): m_start_addr(), m_records() {
             break;
         }
     }
-    MWR_REPORT_ON(m_records.size() == 0, "File '%s' does not seem to be in intel hex format", filename.c_str());
+    MWR_REPORT_ON(m_records.size() == 0,
+                  "File '%s' does not seem to be in intel hex format",
+                  filename.c_str());
 }
 
 } // namespace mwr
