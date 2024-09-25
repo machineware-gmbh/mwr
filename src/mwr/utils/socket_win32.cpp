@@ -317,6 +317,7 @@ void socket::connect(const string& host, u16 port) {
 
     freeaddrinfo(ai);
     MWR_REPORT_ON(m_peer.empty(), "connect failed: %s", socket_strerror());
+    SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
 }
 
 void socket::disconnect() {
