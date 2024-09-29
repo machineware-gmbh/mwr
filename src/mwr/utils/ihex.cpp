@@ -58,7 +58,7 @@ static inline ihex_record process_line(const string& line) {
 
     const u32 nr_bytes = ihex_byte(line, 1);
     const u16 addr = ihex_byte(line, 3) << 8 | ihex_byte(line, 5);
-    const record_type r_type = static_cast<record_type>(ihex_byte(line, 7));
+    const int r_type = ihex_byte(line, 7);
     const size_t line_len = min_line_len + nr_bytes * 2;
 
     if (line.size() < line_len)
@@ -95,7 +95,7 @@ static inline ihex_record process_line(const string& line) {
     data.reserve(nr_bytes);
     for (size_t pos = data_start; pos < data_start + nr_bytes * 2; pos += 2)
         data.push_back(ihex_byte(line, pos));
-    return { r_type, addr, std::move(data) };
+    return { (record_type)r_type, addr, std::move(data) };
 }
 
 ihex::ihex(const string& filename): m_start_addr(), m_records() {
