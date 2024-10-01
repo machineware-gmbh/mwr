@@ -17,6 +17,7 @@
 
 #include "mwr/core/compiler.h"
 #include "mwr/core/types.h"
+#include "mwr/stl/strings.h"
 
 namespace mwr {
 
@@ -43,6 +44,12 @@ string username();
 
 optional<string> getenv(const string& name);
 void setenv(const string& name, const string& value);
+
+template <typename T>
+T getenv_or_default(const string& name, const T& def) {
+    const auto env = getenv(name);
+    return env ? from_string<T>(*env) : def;
+}
 
 int getpid();
 

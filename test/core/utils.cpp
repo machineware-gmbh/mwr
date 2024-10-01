@@ -127,6 +127,12 @@ TEST(utils, getenv) {
     auto var = mwr::getenv("TESTVAR");
     ASSERT_TRUE(var);
     EXPECT_EQ(var, "somevalue");
+
+    mwr::setenv("TESTVAR2", "123");
+    int x = mwr::getenv_or_default("TESTVAR2", 456);
+    EXPECT_EQ(x, 123);
+    int y = mwr::getenv_or_default("TESTVAR3", 456);
+    EXPECT_EQ(y, 456);
 }
 
 TEST(utils, getpid) {

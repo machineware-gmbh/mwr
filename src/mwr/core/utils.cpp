@@ -10,7 +10,6 @@
 
 #include "mwr/core/utils.h"
 #include "mwr/core/report.h"
-#include "mwr/stl/strings.h"
 
 #include <stdlib.h>
 #include <string.h>
