@@ -72,7 +72,7 @@ constexpr int STDERR_FDNO = 2;
 constexpr size_t OS_MAX_PATH = 260;
 #elif defined(MWR_LINUX)
 constexpr size_t OS_MAX_PATH = 4096;
-#elif defined(MWR_OSX)
+#elif defined(MWR_MACOS)
 constexpr size_t OS_MAX_PATH = 1024;
 #endif
 
