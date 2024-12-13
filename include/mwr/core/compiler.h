@@ -131,7 +131,7 @@ inline bool gcov_enabled() {
     return &__gcov_init != nullptr;
 }
 #else
-costexpr bool gcov_enabled() {
+constexpr bool gcov_enabled() {
     return false;
 }
 #endif
