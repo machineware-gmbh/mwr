@@ -92,6 +92,7 @@ else()
 endif()
 
 if(MWR_COVERAGE)
+    target_compile_definitions(mwr PUBLIC MWR_COVERAGE)
     target_compile_options(mwr PUBLIC --coverage)
     target_link_libraries(mwr PUBLIC -lgcov)
 endif()

@@ -125,6 +125,17 @@ constexpr int unlikely(const T& x) {
 #endif
 }
 
+#if defined(MWR_LINUX) && defined(MWR_GCC)
+static void __gcov_init() __attribute__((weakref("__gcov_init"))); // NOLINT
+inline bool gcov_enabled() {
+    return &__gcov_init != nullptr;
+}
+#else
+costexpr bool gcov_enabled() {
+    return false;
+}
+#endif
+
 } // namespace mwr
 
 #endif

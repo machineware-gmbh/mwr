@@ -29,3 +29,11 @@ TEST(compiler, str) {
     EXPECT_STREQ(MWR_STR(MACRO), "macro");
     EXPECT_STREQ(MWR_CAT(AB, CD), "abcd");
 }
+
+TEST(utils, gcov_enabled) {
+#ifdef MWR_COVERAGE
+    EXPECT_TRUE(mwr::gcov_enabled());
+#else
+    EXPECT_FALSE(mwr::gcov_enabled());
+#endif
+}

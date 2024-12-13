@@ -11,6 +11,11 @@
 #ifndef MWR_REPORT_H
 #define MWR_REPORT_H
 
+#include <stdlib.h>
+
+#include "mwr/core/compiler.h"
+#include "mwr/core/types.h"
+
 #include "mwr/stl/strings.h"
 #include "mwr/stl/streams.h"
 #include "mwr/stl/containers.h"
@@ -59,8 +64,10 @@ public:
 
 ostream& operator<<(ostream& os, const report& rep);
 
-#define MWR_REPORT(...) \
-    throw ::mwr::report(::mwr::mkstr(__VA_ARGS__), __FILE__, __LINE__)
+#define MWR_REPORT(...)                                                     \
+    do {                                                                    \
+        throw ::mwr::report(::mwr::mkstr(__VA_ARGS__), __FILE__, __LINE__); \
+    } while (0)
 
 #define MWR_REPORT_ON(condition, ...) \
     do {                              \
@@ -85,7 +92,10 @@ ostream& operator<<(ostream& os, const report& rep);
         fprintf(stderr, __VA_ARGS__);                  \
         fprintf(stderr, "\n");                         \
         fflush(stderr);                                \
-        ::exit(1);                                     \
+        if (::mwr::gcov_enabled())                     \
+            ::exit(EXIT_FAILURE);                      \
+        else                                           \
+            ::abort();                                 \
     } while (0)
 
 #define MWR_ERROR_ON(cond, ...)      \
