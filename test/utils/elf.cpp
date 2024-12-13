@@ -37,7 +37,7 @@ TEST(elf32, segments) {
 
     EXPECT_TRUE(reader.is_little_endian());
 
-    auto segments = reader.segments();
+    const auto& segments = reader.segments();
     ASSERT_EQ(segments.size(), 4);
 
     EXPECT_EQ(segments[0].size, 0x204);

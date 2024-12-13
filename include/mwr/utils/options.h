@@ -64,12 +64,12 @@ public:
     T value() const { return values(count() - 1); }
     operator T() const { return value(); }
 
-    bool operator==(T other) const { return has_value() && value() == other; }
-    bool operator!=(T other) const { return has_value() && value() != other; }
-    bool operator<=(T other) const { return has_value() && value() <= other; }
-    bool operator>=(T other) const { return has_value() && value() >= other; }
-    bool operator<(T other) const { return has_value() && value() < other; }
-    bool operator>(T other) const { return has_value() && value() > other; }
+    bool operator==(const T& o) const { return has_value() && value() == o; }
+    bool operator!=(const T& o) const { return has_value() && value() != o; }
+    bool operator<=(const T& o) const { return has_value() && value() <= o; }
+    bool operator>=(const T& o) const { return has_value() && value() >= o; }
+    bool operator<(const T& o) const { return has_value() && value() < o; }
+    bool operator>(const T& o) const { return has_value() && value() > o; }
 
     option(const string& name, const string& desc): option(name, "", desc) {}
     option(const string& name, const string& desc, function<bool(T)> parse);
