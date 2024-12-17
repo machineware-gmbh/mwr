@@ -11,7 +11,17 @@
 #include "mwr/core/report.h"
 #include "mwr/stl/threads.h"
 
-#ifdef _MSC_VER
+#ifdef MWR_LINUX
+#include <pthread.h>
+#include <sched.h>
+#endif
+
+#ifdef MWR_MACOS
+#include <pthread.h>
+#include <mach/mach.h>
+#endif
+
+#ifdef MWR_WINDOWS
 #include <Windows.h>
 #endif
 
