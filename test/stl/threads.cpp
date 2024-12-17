@@ -27,3 +27,12 @@ TEST(threads, name) {
     exitreq = true;
     t.join();
 }
+
+TEST(threads, affinity) {
+    thread([&]() -> void {
+        mwr::set_thread_affinity(0);
+        printf("set_thread_affinity(%d)\n", 0);
+        mwr::set_thread_affinity(-1);
+        printf("set_thread_affinity(%d)\n", -1);
+    }).join();
+}
