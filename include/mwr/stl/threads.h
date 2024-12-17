@@ -33,6 +33,7 @@ string get_thread_name(const thread& t);
 
 bool set_thread_name(const string& name);
 bool set_thread_name(thread& t, const string& name);
+void set_thread_affinity(int core);
 
 void sleep(unsigned long long seconds);
 void usleep(unsigned long long microseconds);
