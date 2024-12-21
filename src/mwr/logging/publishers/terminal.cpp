@@ -23,7 +23,7 @@ static bool supports_colors(bool use_cerr) {
     if (!env)
         return false;
 
-    string term = env.value();
+    const string& term = env.value();
 
     static const string colors[]{
         "color", "linux", "xterm", "screen", "ansi",

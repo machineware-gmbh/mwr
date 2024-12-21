@@ -303,22 +303,25 @@ void socket::disconnect() {
 }
 
 size_t socket::peek(time_t timeoutms) {
-    lock_guard<mutex> guard(m_mtx);
-    if (m_conn < 0)
-        return 0;
-
+    m_mtx.lock();
     socket_t conn = m_conn;
     m_mtx.unlock();
-    size_t count = mwr::fd_peek(conn, timeoutms);
-    m_mtx.lock();
 
+    if (conn < 0)
+        return 0;
+
+    size_t count = mwr::fd_peek(conn, timeoutms);
     if (count == 0)
         return 0;
 
+    m_mtx.lock();
+    conn = m_conn;
+    m_mtx.unlock();
+
     char buf[32];
-    int err = ::recv(m_conn, buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT);
+    int err = ::recv(conn, buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT);
     if (err <= 0)
-        disconnect_locked();
+        disconnect();
 
     MWR_REPORT_ON(err == 0, "error receiving data: disconnected");
     MWR_REPORT_ON(err < 0, "error receiving data: %s", strerror(errno));
@@ -327,18 +330,20 @@ size_t socket::peek(time_t timeoutms) {
 }
 
 void socket::send(const void* data, size_t size) {
-    lock_guard<mutex> guard(m_mtx);
-    MWR_REPORT_ON(m_conn < 0, "error sending data: not connected");
+    m_mtx.lock();
+    socket_t conn = m_conn;
+    m_mtx.unlock();
+    MWR_REPORT_ON(conn < 0, "error sending data: not connected");
 
     const u8* ptr = (const u8*)data;
     size_t n = 0;
 
     while (n < size) {
-        socket_t conn = m_conn;
-        m_mtx.unlock();
-        int r = ::send(conn, ptr + n, size - n, 0);
         m_mtx.lock();
+        conn = m_conn;
+        m_mtx.unlock();
 
+        int r = ::send(conn, ptr + n, size - n, 0);
         if (r <= 0)
             disconnect_locked();
 
@@ -350,18 +355,20 @@ void socket::send(const void* data, size_t size) {
 }
 
 void socket::recv(void* data, size_t size) {
-    lock_guard<mutex> guard(m_mtx);
-    MWR_REPORT_ON(m_conn < 0, "error sending data: not connected");
+    m_mtx.lock();
+    socket_t conn = m_conn;
+    m_mtx.unlock();
+    MWR_REPORT_ON(conn < 0, "error sending data: not connected");
 
     u8* ptr = (u8*)data;
     size_t n = 0;
 
     while (n < size) {
-        socket_t conn = m_conn;
-        m_mtx.unlock();
-        int r = ::recv(conn, ptr + n, size - n, 0);
         m_mtx.lock();
+        conn = m_conn;
+        m_mtx.unlock();
 
+        int r = ::recv(conn, ptr + n, size - n, 0);
         if (r <= 0)
             disconnect_locked();
 
