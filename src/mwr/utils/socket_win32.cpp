@@ -306,6 +306,7 @@ void socket::connect(const string& host, u16 port) {
 
         if (::connect(m_conn, ai->ai_addr, (int)ai->ai_addrlen) < 0) {
             closesocket(m_conn);
+            m_conn = -1;
             continue;
         }
 
