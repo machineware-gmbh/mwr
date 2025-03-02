@@ -30,11 +30,11 @@ TEST(process, environment) {
     mwr::usleep(100000);
 
     // test if our environment variable was printed
-    std::string output = proc.read();
+    std::string output = proc.peek();
     EXPECT_NE(output.find("MYVAR=HelloWorld"), std::string::npos);
 }
 
-TEST(process, read_stdout_blocking) {
+TEST(process, read_stdout) {
 #ifdef MWR_WINDOWS
     // On Windows, use cmd.exe /C to run a one-shot echo command.
     const std::string exec = "cmd.exe";
@@ -53,7 +53,7 @@ TEST(process, read_stdout_blocking) {
     EXPECT_STREQ(buf, "Hello World\n");
 }
 
-TEST(process, read_stdout_nonblock) {
+TEST(process, peek_stdout) {
 #ifdef MWR_WINDOWS
     // On Windows, use cmd.exe /C to run a one-shot echo command.
     const std::string exec = "cmd.exe";
@@ -71,7 +71,7 @@ TEST(process, read_stdout_nonblock) {
     mwr::usleep(100000);
 
     // test if the output was printed
-    std::string output = proc.read();
+    std::string output = proc.peek();
     EXPECT_EQ(output, "Hello World\n");
 }
 
@@ -91,6 +91,6 @@ TEST(process, write_stdin) {
     std::string input = "Hello World\n";
     EXPECT_TRUE(proc.write(input));
     mwr::usleep(100000); // 100 ms
-    std::string output = proc.read();
+    std::string output = proc.peek();
     EXPECT_NE(output.find(input), std::string::npos);
 }

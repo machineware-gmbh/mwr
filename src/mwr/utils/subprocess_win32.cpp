@@ -152,7 +152,7 @@ bool subprocess::read(char* buf, size_t buflen, bool use_stderr) {
     return true;
 }
 
-string subprocess::read(bool use_stderr) {
+string subprocess::peek(bool use_stderr) {
     HANDLE fd = use_stderr ? m_stderr : m_stdout;
     if (!fd)
         return "";

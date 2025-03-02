@@ -58,7 +58,8 @@ public:
 
     bool write(const string& str);
     bool read(char* buf, size_t buflen, bool use_stderr = false);
-    string read(bool use_stderr = false); // non-blocking
+
+    string peek(bool use_stderr = false); // non-blocking
 };
 
 } // namespace mwr
