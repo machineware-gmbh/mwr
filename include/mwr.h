@@ -44,6 +44,7 @@
 #include "mwr/utils/socket.h"
 #include "mwr/utils/srec.h"
 #include "mwr/utils/ihex.h"
+#include "mwr/utils/subprocess.h"
 #include "mwr/utils/terminal.h"
 #include "mwr/utils/uimage.h"
 
