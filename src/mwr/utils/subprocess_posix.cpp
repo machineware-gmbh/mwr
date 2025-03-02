@@ -10,6 +10,8 @@
 
 #include "mwr/utils/subprocess.h"
 
+#include <errno.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/types.h>
@@ -116,9 +118,11 @@ bool subprocess::interrupt() {
 bool subprocess::write(const string& s) {
     if (m_stdin < 0)
         return false;
+    if (s.empty())
+        return true;
 
     ssize_t n = ::write(m_stdin, s.data(), s.length());
-    return n == s.length();
+    return n < 0 ? false : (size_t)n == s.length();
 }
 
 string subprocess::read(bool stdout) {
