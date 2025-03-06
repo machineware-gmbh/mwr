@@ -293,16 +293,18 @@ void socket::connect(const string& host, u16 port) {
     hint.ai_socktype = SOCK_STREAM;
     hint.ai_protocol = IPPROTO_TCP;
 
-    addrinfo* ai;
-    int err = getaddrinfo(host.c_str(), pstr.c_str(), &hint, &ai);
+    addrinfo *ai, *info;
+    int err = getaddrinfo(host.c_str(), pstr.c_str(), &hint, &info);
     MWR_REPORT_ON(err, "getaddrinfo failed: %s", gai_strerror(err));
-    if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
-        MWR_ERROR("getaddrinfo: protocol family %d", ai->ai_family);
+    if (info->ai_family != AF_INET && info->ai_family != AF_INET6)
+        MWR_ERROR("getaddrinfo: protocol family %d", info->ai_family);
 
-    for (; ai != nullptr; ai = ai->ai_next) {
+    for (ai = info; ai != nullptr; ai = ai->ai_next) {
         m_conn = ::socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-        if (m_conn < 0)
+        if (m_conn < 0) {
+            freeaddrinfo(info);
             MWR_REPORT("failed to create socket: %s", socket_strerror());
+        }
 
         if (::connect(m_conn, ai->ai_addr, (int)ai->ai_addrlen) < 0) {
             closesocket(m_conn);
@@ -316,7 +318,7 @@ void socket::connect(const string& host, u16 port) {
         break;
     }
 
-    freeaddrinfo(ai);
+    freeaddrinfo(info);
     MWR_REPORT_ON(m_peer.empty(), "connect failed: %s", socket_strerror());
     SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
 }
