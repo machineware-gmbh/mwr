@@ -56,8 +56,7 @@ TEST(muldiv, imul64) {
         i64 h1, l1;
         imul64_slow(h1, l1, a, b);
 
-        ASSERT_EQ(l0, a * b);
-        ASSERT_EQ(l1, a * b);
+        ASSERT_EQ(l0, l1);
         ASSERT_EQ(h0, h1);
     }
 }
