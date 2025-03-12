@@ -22,7 +22,7 @@ if(CMAKE_BUILD_TYPE MATCHES "ASAN")
 elseif(CMAKE_BUILD_TYPE MATCHES "TSAN")
     string(APPEND MWR_ENVVAR "TSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/sanitizer/tsan.suppress;")
 elseif(CMAKE_BUILD_TYPE MATCHES "UBSAN")
-    string(APPEND MWR_ENVVAR "UBSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/sanitizer/ubsan.suppress:print_stacktrace=1;")
+    string(APPEND MWR_ENVVAR "UBSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/sanitizer/ubsan.suppress:print_stacktrace=1:halt_on_error=1;")
 endif()
 
 if(APPLE)
