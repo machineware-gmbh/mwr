@@ -102,14 +102,14 @@ template <typename T>
 constexpr T rol(const T val, size_t n) {
     using U = std::make_unsigned_t<T>;
     n &= width_of(val) - 1; // Restrict rotate amount to [0, width_of(val) - 1]
-    return (T)((U)val << n) | ((U)val >> (width_of(val) - n));
+    return (T)(((U)val << n) | ((U)val >> (width_of(val) - n)));
 }
 
 template <typename T>
 constexpr T ror(const T val, size_t n) {
     using U = std::make_unsigned_t<T>;
     n &= width_of(val) - 1; // Restrict rotate amount to [0, width_of(val) - 1]
-    return (T)((U)val >> n) | ((U)val << (width_of(val) - n));
+    return (T)(((U)val >> n) | ((U)val << (width_of(val) - n)));
 }
 
 template <typename T>
