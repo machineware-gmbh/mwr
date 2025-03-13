@@ -99,15 +99,19 @@ constexpr int fls(T val) {
 }
 
 template <typename T>
-constexpr T rol(T val, size_t n) {
+constexpr T rol(const T val, size_t n) {
+    using U = std::make_unsigned_t<T>;
     n &= width_of(val) - 1; // Restrict rotate amount to [0, width_of(val) - 1]
-    return (val << n) | (val >> (width_of(val) - n));
+    return n ? (T)(((U)val << n) | ((U)val >> (width_of(val) - n))) : val;
 }
 
 template <typename T>
-constexpr T ror(T val, size_t n) {
+constexpr T ror(const T val, size_t n) {
+    using U = std::make_unsigned_t<T>;
     n &= width_of(val) - 1; // Restrict rotate amount to [0, width_of(val) - 1]
-    return (val >> n) | (val << (width_of(val) - n));
+    if (!n)
+        return val;
+    return n ? (T)(((U)val >> n) | ((U)val << (width_of(val) - n))) : val;
 }
 
 template <typename T>

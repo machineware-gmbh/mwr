@@ -13,7 +13,7 @@
 
 using namespace mwr;
 
-TEST(bitops, extract32) {
+TEST(bitfields, extract32) {
     EXPECT_EQ(extract(0b01011001u, 3, 2), 0b11u);
     EXPECT_EQ(extract(0b11000110u, 2, 3), 0b001u);
     EXPECT_EQ(extract(0b10100000u, 5, 3), 0b101u);
@@ -21,7 +21,7 @@ TEST(bitops, extract32) {
     EXPECT_EQ(extract(0b11111111u, 31, 0), 0);
 }
 
-TEST(bitops, extract64) {
+TEST(bitfields, extract64) {
     EXPECT_EQ(extract(0b01011001ull, 3, 2), 0b11ul);
     EXPECT_EQ(extract(0b11000110ull, 2, 3), 0b001ul);
     EXPECT_EQ(extract(0b10100000ull, 5, 3), 0b101ul);
@@ -29,13 +29,13 @@ TEST(bitops, extract64) {
     EXPECT_EQ(extract(0b11111111ull, 63, 0), 0);
 }
 
-TEST(bitops, deposit32) {
+TEST(bitfields, deposit32) {
     EXPECT_EQ(deposit(0u, 3, 2, 0b101), 0b1000u);
     EXPECT_EQ(deposit(0u, 2, 3, 0b101), 0b10100u);
     EXPECT_EQ(deposit(0u, 5, 3, 0b101), 0b10100000u);
 }
 
-TEST(bitops, deposit64) {
+TEST(bitfields, deposit64) {
     EXPECT_EQ(deposit(0ull, 3, 2, 0b101), 0b1000ul);
     EXPECT_EQ(deposit(0ull, 2, 3, 0b101), 0b10100ul);
     EXPECT_EQ(deposit(0ull, 5, 3, 0b101), 0b10100000ul);
@@ -44,7 +44,7 @@ TEST(bitops, deposit64) {
 typedef field<0, 3, u32> TEST_FIELD1;
 typedef field<4, 1, u32> TEST_FIELD2;
 
-TEST(bitops, field) {
+TEST(bitfields, field) {
     EXPECT_EQ(TEST_FIELD1::MASK, 0b111);
     EXPECT_EQ(TEST_FIELD2::MASK, 0b10000);
 
