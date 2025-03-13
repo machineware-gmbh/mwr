@@ -21,6 +21,7 @@ namespace mwr {
 template <typename T, typename RET = std::make_unsigned_t<T>>
 constexpr RET extract(T val, size_t start, size_t width) {
     assert(start + width <= width_of(val) && "bit range exceeded");
+    assert(width && "width cannot be zero");
     return ((RET)val >> start) & bitmask(width);
 }
 
@@ -28,6 +29,7 @@ template <typename T, typename RET = std::make_signed_t<T>>
 constexpr RET sextract(T val, size_t start, size_t w) {
     using U = std::make_unsigned_t<RET>;
     assert(start + w <= width_of(val) && "bit range exceeded");
+    assert(width && "width cannot be zero");
     return (RET)((U)val << (width_of(val) - w - start)) >> (width_of(val) - w);
 }
 
