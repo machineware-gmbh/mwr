@@ -159,7 +159,7 @@ string socket_addr::peer() const {
 }
 
 void socket::disconnect_locked() {
-    if (m_conn != INVALID_SOCKET)
+    if (m_conn == INVALID_SOCKET)
         return;
 
     ::shutdown(m_conn, SD_BOTH);
@@ -258,7 +258,7 @@ void socket::unlisten() {
 
 bool socket::accept() {
     lock_guard<mutex> guard(m_mtx);
-    if (m_conn == INVALID_SOCKET)
+    if (m_conn != INVALID_SOCKET)
         disconnect_locked();
 
     socket_addr addr;
@@ -283,7 +283,7 @@ bool socket::accept() {
 
 void socket::connect(const string& host, u16 port) {
     lock_guard<mutex> guard(m_mtx);
-    if (m_conn == INVALID_SOCKET)
+    if (m_conn != INVALID_SOCKET)
         disconnect_locked();
 
     string pstr = to_string(port);
