@@ -49,7 +49,6 @@ int new_tty() {
 
 bool is_tty(int fd) {
 #ifdef MWR_MSVC
-    std::cout << "Is atty(): " << _isatty(fd) << std::endl;
     return fd >= 0 && _isatty(fd);
 #else
     termios attr;
@@ -123,7 +122,6 @@ public:
 
 #ifdef MWR_MSVC
     bool is_vt100() const {
-        std::cout << "Load: " << load() << std::endl;
         return load() & (ENABLE_VIRTUAL_TERMINAL_INPUT |
                          ENABLE_VIRTUAL_TERMINAL_PROCESSING);
     }
