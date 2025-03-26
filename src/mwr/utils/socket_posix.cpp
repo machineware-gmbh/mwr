@@ -74,13 +74,13 @@ socket_addr::socket_addr(int family, u16 port): socket_addr() {
     switch (family) {
     case AF_INET:
         ipv4.sin_family = AF_INET;
-        ipv4.sin_addr.s_addr = INADDR_ANY;
+        ipv4.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         ipv4.sin_port = htons(port);
         break;
 
     case AF_INET6:
         ipv6.sin6_family = AF_INET6;
-        ipv6.sin6_addr = in6addr_any;
+        ipv6.sin6_addr = in6addr_loopback;
         ipv6.sin6_port = htons(port);
         break;
 
