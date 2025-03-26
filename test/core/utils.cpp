@@ -135,6 +135,13 @@ TEST(utils, getenv) {
     EXPECT_EQ(y, 456);
 }
 
+TEST(utils, clrenv) {
+    mwr::setenv("CLRENV", "abc");
+    EXPECT_EQ(mwr::getenv("CLRENV"), "abc");
+    mwr::clrenv("CLRENV");
+    EXPECT_EQ(mwr::getenv("CLRENV"), std::nullopt);
+}
+
 TEST(utils, getpid) {
     EXPECT_GT(mwr::getpid(), 0);
 }

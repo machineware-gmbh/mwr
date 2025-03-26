@@ -180,11 +180,20 @@ optional<string> getenv(const string& env) {
 void setenv(const string& name, const string& value) {
 #if defined(MWR_MSVC)
     auto err = _putenv_s(name.c_str(), value.c_str());
-    if (err != 0)
-        MWR_ERROR("failed to set %s (%d)", name.c_str(), err);
+    MWR_ERROR_ON(err, "failed to set %s (%d)", name.c_str(), err);
 #else
     if (::setenv(name.c_str(), value.c_str(), 1))
         MWR_ERROR("failed to set %s (%s)", name.c_str(), strerror(errno));
+#endif
+}
+
+void clrenv(const string& name) {
+#if defined(MWR_MSVC)
+    auto err = _putenv_s(name.c_str(), "");
+    MWR_ERROR_ON(err, "failed to set %s (%d)", name.c_str(), err);
+#else
+    if (::unsetenv(name.c_str()))
+        MWR_ERROR("failed to clear %s (%s)", name.c_str(), strerror(errno));
 #endif
 }
 

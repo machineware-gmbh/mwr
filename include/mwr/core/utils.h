@@ -44,6 +44,7 @@ string username();
 
 optional<string> getenv(const string& name);
 void setenv(const string& name, const string& value);
+void clrenv(const string& name);
 
 template <typename T>
 T getenv_or_default(const string& name, const T& def) {
