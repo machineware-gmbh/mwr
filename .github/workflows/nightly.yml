@@ -24,8 +24,10 @@ jobs:
         submodules: 'recursive'
 
     - name: Setup Dependencies
-      run: sudo apt-get install libelf-dev ninja-build
       if: contains(matrix.os, 'self-hosted') == false && contains(matrix.os, 'ubuntu') == true
+      run: |
+        sudo apt-get update -y -qq
+        sudo apt-get install libelf-dev ninja-build
 
     - name: Configure
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON
