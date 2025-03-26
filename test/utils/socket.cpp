@@ -49,6 +49,10 @@ TEST(socket, connect) {
 }
 
 TEST(socket, connect_v4) {
+    auto mwr_no_ipv6 = mwr::getenv("MWR_NO_IPv6");
+    if (!mwr_no_ipv6)
+        mwr::setenv("MWR_NO_IPv6", "1");
+
     mwr::socket server(0);
     mwr::socket client("127.0.0.1", server.port());
 
@@ -59,6 +63,9 @@ TEST(socket, connect_v4) {
     EXPECT_EQ(server.recv_char(), 'x');
     server.send_char('y');
     EXPECT_EQ(client.recv_char(), 'y');
+
+    if (!mwr_no_ipv6)
+        mwr::clrenv("MWR_NO_IPv6");
 }
 
 TEST(socket, send) {

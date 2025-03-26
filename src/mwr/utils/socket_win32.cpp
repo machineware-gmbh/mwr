@@ -307,6 +307,7 @@ void socket::connect(const string& host, u16 port) {
         }
 
         if (::connect(m_conn, ai->ai_addr, (int)ai->ai_addrlen) < 0) {
+            err = WSAGetLastError();
             closesocket(m_conn);
             m_conn = -1;
             continue;
@@ -319,7 +320,7 @@ void socket::connect(const string& host, u16 port) {
     }
 
     freeaddrinfo(info);
-    MWR_REPORT_ON(m_peer.empty(), "connect failed: %s", socket_strerror());
+    MWR_REPORT_ON(m_peer.empty(), "connect failed: %s", socket_strerror(err));
     SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
 }
 
