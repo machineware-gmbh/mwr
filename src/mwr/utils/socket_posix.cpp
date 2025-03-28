@@ -346,7 +346,7 @@ void socket::send(const void* data, size_t size) {
         conn = m_conn;
         m_mtx.unlock();
 
-        int r = ::send(conn, ptr + n, size - n, 0);
+        int r = ::send(conn, ptr + n, size - n, MSG_NOSIGNAL);
         if (r <= 0)
             disconnect_locked();
 
