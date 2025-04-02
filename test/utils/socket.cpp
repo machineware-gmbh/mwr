@@ -93,6 +93,7 @@ TEST(socket, unlisten) {
 
     std::thread t([&]() { EXPECT_FALSE(sock.accept()); });
 
+    mwr::usleep(1000); // wait for thread to accept connections
     sock.unlisten();
 
     EXPECT_THROW(sock.send("test"), mwr::report);
@@ -114,6 +115,7 @@ TEST(socket, threads) {
         EXPECT_FALSE(sock.accept());
     });
 
+    mwr::usleep(1000); // wait for thread to accept connections
     sock.unlisten();
 
     EXPECT_THROW(sock.send("test"), mwr::report);

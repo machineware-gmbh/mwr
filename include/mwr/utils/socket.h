@@ -38,7 +38,8 @@ private:
     bool m_ipv6;
     u16 m_port;
 
-    socket_t m_socket;
+    socket_t m_sock4;
+    socket_t m_sock6;
     socket_t m_conn;
 
     void disconnect_locked();

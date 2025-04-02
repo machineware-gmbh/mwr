@@ -20,9 +20,13 @@
 
 namespace mwr {
 
-static int socket_default_address_family() {
-    return getenv("MWR_NO_IPv6") ? AF_INET : AF_INET6;
-}
+static bool g_use_ipv4 = []() {
+    return getenv("MWR_NO_IPv4") ? false : true;
+}();
+
+static bool g_use_ipv6 = []() {
+    return getenv("MWR_NO_IPv6") ? false : true;
+}();
 
 #define SET_SOCKOPT(s, lvl, opt, set)                                      \
     do {                                                                   \
@@ -52,6 +56,7 @@ struct socket_addr {
         return base.sa_family == AF_INET6;
     }
 
+    size_t size() const;
     string host() const;
     u16 port() const;
     string peer() const;
@@ -73,12 +78,18 @@ socket_addr::socket_addr(const sockaddr* addr): socket_addr() {
 socket_addr::socket_addr(int family, u16 port): socket_addr() {
     switch (family) {
     case AF_INET:
+#ifdef MWR_MACOS
+        ipv4.sin_len = sizeof(ipv4);
+#endif
         ipv4.sin_family = AF_INET;
         ipv4.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         ipv4.sin_port = htons(port);
         break;
 
     case AF_INET6:
+#ifdef MWR_MACOS
+        ipv6.sin6_len = sizeof(ipv6);
+#endif
         ipv6.sin6_family = AF_INET6;
         ipv6.sin6_addr = in6addr_loopback;
         ipv6.sin6_port = htons(port);
@@ -92,6 +103,17 @@ socket_addr::socket_addr(int family, u16 port): socket_addr() {
 void socket_addr::verify() const {
     if (base.sa_family != AF_INET && base.sa_family != AF_INET6)
         MWR_ERROR("accept: unknown protocol family %d", base.sa_family);
+}
+
+size_t socket_addr::size() const {
+    switch (base.sa_family) {
+    case AF_INET:
+        return sizeof(ipv4);
+    case AF_INET6:
+        return sizeof(ipv6);
+    default:
+        MWR_ERROR("accept: unknown protocol family %d", (int)base.sa_family);
+    }
 }
 
 string socket_addr::host() const {
@@ -128,18 +150,63 @@ string socket_addr::peer() const {
     return mkstr("%s:%hu", host().c_str(), port());
 }
 
+static void create_socket(int family, int& socket, u16& port) {
+    socket = ::socket(family, SOCK_STREAM, 0);
+    if (socket < 0)
+        MWR_REPORT("failed to create socket: %s", strerror(errno));
+
+    SET_SOCKOPT(socket, SOL_SOCKET, SO_REUSEADDR, 1);
+
+#ifdef MWR_MACOS
+    SET_SOCKOPT(socket, SOL_SOCKET, SO_REUSEPORT, 1);
+#endif
+
+    if (family == AF_INET6)
+        SET_SOCKOPT(socket, IPPROTO_IPV6, IPV6_V6ONLY, 1);
+
+    if (port > 0) {
+        socket_addr addr(family, port);
+        if (::bind(socket, &addr.base, addr.size())) {
+            MWR_REPORT("binding socket to port %hu failed: %s", port,
+                       strerror(errno));
+        }
+    }
+
+    if (::listen(socket, 1))
+        MWR_REPORT("listen for connections failed: %s", strerror(errno));
+
+    if (port == 0) {
+        socket_addr addr;
+        socklen_t len = sizeof(addr);
+        if (getsockname(socket, &addr.base, &len) < 0)
+            MWR_ERROR("getsockname failed: %s", strerror(errno));
+        port = addr.port();
+    }
+}
+
+static void close_socket(int& socket) {
+    if (socket >= 0) {
+        shutdown(socket, SHUT_RDWR);
+#ifndef MWR_LINUX
+        // rhel8 locks up accepting connections when we close the socket on
+        // Linux, but MacOS needs this to unblock threads stuck accepting
+        close(socket);
+#endif
+        socket = -1;
+    }
+}
+
 void socket::disconnect_locked() {
     if (m_conn < 0)
         return;
 
-    ::shutdown(m_conn, SHUT_RDWR);
-    m_conn = -1;
+    close_socket(m_conn);
     m_peer.clear();
 }
 
 bool socket::is_listening() const {
     lock_guard<mutex> guard(m_mtx);
-    return m_socket >= 0;
+    return m_sock4 >= 0 || m_sock6 >= 0;
 }
 
 bool socket::is_connected() const {
@@ -153,7 +220,8 @@ socket::socket():
     m_peer(),
     m_ipv6(),
     m_port(0),
-    m_socket(-1),
+    m_sock4(-1),
+    m_sock6(-1),
     m_conn(-1) {
 }
 
@@ -167,68 +235,38 @@ socket::socket(const string& host, u16 port): socket() {
 
 socket::~socket() {
     lock_guard<mutex> guard(m_mtx);
-    if (m_socket >= 0)
-        ::shutdown(m_socket, SHUT_RDWR);
-    if (m_conn >= 0)
-        ::shutdown(m_conn, SHUT_RDWR);
+    close_socket(m_sock4);
+    close_socket(m_sock6);
+    close_socket(m_conn);
 }
 
 void socket::listen(u16 port) {
     lock_guard<mutex> guard(m_mtx);
-    if (m_socket >= 0 && (port == 0 || port == m_port))
+    if ((m_sock4 >= 0 || m_sock6 >= 0) && (port == 0 || port == m_port))
         return;
 
-    if (m_socket >= 0)
-        ::shutdown(m_socket, SHUT_RDWR);
+    close_socket(m_sock4);
+    close_socket(m_sock6);
 
     m_host.clear();
     m_port = 0;
 
-    int family = socket_default_address_family();
+    if (!g_use_ipv4 && !g_use_ipv6)
+        MWR_REPORT("IPv4 and IPv6 both disabled via environment");
 
-    m_socket = ::socket(family, SOCK_STREAM, 0);
-    if (m_socket < 0)
-        MWR_REPORT("failed to create socket: %s", strerror(errno));
+    if (g_use_ipv4)
+        create_socket(AF_INET, m_sock4, port);
+    if (g_use_ipv6)
+        create_socket(AF_INET6, m_sock6, port);
 
-    SET_SOCKOPT(m_socket, SOL_SOCKET, SO_REUSEADDR, 1);
-
-#ifdef MWR_MACOS
-    SET_SOCKOPT(m_socket, SOL_SOCKET, SO_REUSEPORT, 1);
-#endif
-
-    if (family == AF_INET6)
-        SET_SOCKOPT(m_socket, IPPROTO_IPV6, IPV6_V6ONLY, 0);
-
-    if (port > 0) {
-        socket_addr addr(family, port);
-        if (::bind(m_socket, &addr.base, sizeof(addr))) {
-            MWR_REPORT("binding socket to port %hu failed: %s", port,
-                       strerror(errno));
-        }
-    }
-
-    if (::listen(m_socket, 1))
-        MWR_REPORT("listen for connections failed: %s", strerror(errno));
-
-    socket_addr addr;
-    socklen_t len = sizeof(addr);
-    if (getsockname(m_socket, &addr.base, &len) < 0)
-        MWR_ERROR("getsockname failed: %s", strerror(errno));
-
-    m_ipv6 = family == AF_INET6;
-    m_host = m_ipv6 ? "::1" : "127.0.0.1";
-    m_port = addr.port();
-    MWR_ERROR_ON(m_port == 0, "port cannot be zero");
+    m_host = "localhost";
+    m_port = port;
 }
 
 void socket::unlisten() {
     lock_guard<mutex> guard(m_mtx);
-    if (m_socket < 0)
-        return;
-
-    ::shutdown(m_socket, SHUT_RDWR);
-
-    m_socket = -1;
+    close_socket(m_sock4);
+    close_socket(m_sock6);
     m_host.clear();
     m_port = 0;
 }
@@ -240,22 +278,47 @@ bool socket::accept() {
 
     socket_addr addr;
     socklen_t len = sizeof(addr);
-    socket_t sock = m_socket;
-    socket_t conn = -1;
+    socket_t s4 = m_sock4;
+    socket_t s6 = m_sock6;
+
+    if (s4 < 0 && s6 < 0)
+        MWR_REPORT("socket is not listening");
+
+    fd_set fds;
+    FD_ZERO(&fds);
+    if (s4 >= 0)
+        FD_SET(s4, &fds);
+    if (s6 >= 0)
+        FD_SET(s6, &fds);
 
     m_mtx.unlock();
-    conn = ::accept(sock, &addr.base, &len);
+    int res = select(max(s4, s6) + 1, &fds, NULL, NULL, NULL);
     m_mtx.lock();
 
-    m_conn = conn;
-    if (conn < 0)
-        return false; // shutdown while waiting for connections
+    if (res > 0 && FD_ISSET(s4, &fds)) {
+        m_conn = ::accept(s4, &addr.base, &len);
+        if (m_conn >= 0) {
+            SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
+            m_peer = addr.peer();
+            m_ipv6 = false;
+            return true;
+        }
+    }
 
-    SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
+    if (res > 0 && FD_ISSET(s6, &fds)) {
+        m_conn = ::accept(s6, &addr.base, &len);
+        if (m_conn >= 0) {
+            SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
+            m_peer = addr.peer();
+            m_ipv6 = true;
+            return true;
+        }
+    }
 
-    m_ipv6 = addr.is_ipv6();
-    m_peer = addr.peer();
-    return true;
+    m_conn = -1;
+    m_ipv6 = false;
+    m_host.clear();
+    return false;
 }
 
 void socket::connect(const string& host, u16 port) {
@@ -284,8 +347,7 @@ void socket::connect(const string& host, u16 port) {
         }
 
         if (::connect(m_conn, ai->ai_addr, ai->ai_addrlen) < 0) {
-            close(m_conn);
-            m_conn = -1;
+            close_socket(m_conn);
             continue;
         }
 

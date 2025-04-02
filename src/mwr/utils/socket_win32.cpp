@@ -6,7 +6,7 @@
  * This is work is licensed under the terms described in the LICENSE file     *
  * found in the root directory of this source tree.                           *
  *                                                                            *
- ******************************************************************************/
+ *****************************************************************************/
 
 #include "mwr/utils/socket.h"
 
@@ -23,11 +23,13 @@
 
 namespace mwr {
 
-static int socket_default_address_family() {
-    if (getenv("MWR_NO_IPv6"))
-        return AF_INET;
-    return AF_INET6;
-}
+static bool g_use_ipv4 = []() {
+    return getenv("MWR_NO_IPv4") ? false : true;
+}();
+
+static bool g_use_ipv6 = []() {
+    return getenv("MWR_NO_IPv6") ? false : true;
+}();
 
 static void socket_exit() {
     WSACleanup();
@@ -169,7 +171,7 @@ void socket::disconnect_locked() {
 
 bool socket::is_listening() const {
     lock_guard<mutex> guard(m_mtx);
-    return m_socket != INVALID_SOCKET;
+    return m_sock4 != INVALID_SOCKET || m_sock6 != INVALID_SOCKET;
 }
 
 bool socket::is_connected() const {
@@ -183,8 +185,9 @@ socket::socket():
     m_peer(),
     m_ipv6(),
     m_port(0),
-    m_socket(-1),
-    m_conn(-1) {
+    m_sock4(INVALID_SOCKET),
+    m_sock6(INVALID_SOCKET),
+    m_conn(INVALID_SOCKET) {
     socket_init();
 }
 
@@ -198,60 +201,76 @@ socket::socket(const string& host, u16 port): socket() {
 
 socket::~socket() {
     lock_guard<mutex> guard(m_mtx);
-    if (m_socket != INVALID_SOCKET)
-        closesocket(m_socket);
+    if (m_sock4 != INVALID_SOCKET)
+        closesocket(m_sock4);
     if (m_conn != INVALID_SOCKET)
         ::shutdown(m_conn, SD_BOTH);
 }
 
-void socket::listen(u16 port) {
-    lock_guard<mutex> guard(m_mtx);
-    if (m_socket != INVALID_SOCKET && (port == 0 || port == m_port))
-        return;
+static void create_socket(int family, SOCKET& socket, u16& port) {
+    socket = ::socket(family, SOCK_STREAM, 0);
+    if (socket == INVALID_SOCKET)
+        MWR_REPORT("failed to create socket: %s", socket_strerror());
 
-    if (m_socket != INVALID_SOCKET)
-        closesocket(m_socket);
+    SET_SOCKOPT(socket, SOL_SOCKET, SO_REUSEADDR, 1);
 
-    m_host.clear();
-    m_port = 0;
-
-    int family = socket_default_address_family();
-
-    m_socket = ::socket(family, SOCK_STREAM, 0);
-    if (m_socket == INVALID_SOCKET)
-        MWR_ERROR("failed to create socket: %s", socket_strerror());
-
-    SET_SOCKOPT(m_socket, SOL_SOCKET, SO_REUSEADDR, 1);
     if (family == AF_INET6)
-        SET_SOCKOPT(m_socket, IPPROTO_IPV6, IPV6_V6ONLY, 0);
+        SET_SOCKOPT(socket, IPPROTO_IPV6, IPV6_V6ONLY, 1);
 
     socket_addr addr(family, port);
-    if (::bind(m_socket, &addr.base, sizeof(addr))) {
+    if (::bind(socket, &addr.base, sizeof(addr))) {
         MWR_REPORT("binding socket to port %hu failed: %s", port,
                    socket_strerror());
     }
 
-    if (::listen(m_socket, 1))
+    if (::listen(socket, 1))
         MWR_REPORT("listen for connections failed: %s", socket_strerror());
 
-    socklen_t len = sizeof(addr);
-    if (getsockname(m_socket, &addr.base, &len) < 0)
-        MWR_ERROR("getsockname failed: %s", socket_strerror());
+    if (port == 0) {
+        socket_addr addr;
+        socklen_t len = sizeof(addr);
+        if (getsockname(socket, &addr.base, &len) < 0)
+            MWR_ERROR("getsockname failed: %s", socket_strerror());
+        port = addr.port();
+    }
+}
 
-    m_ipv6 = family == AF_INET6;
-    m_host = m_ipv6 ? "::1" : "127.0.0.1";
-    m_port = addr.port();
-    MWR_ERROR_ON(m_port == 0, "port cannot be zero");
+void socket::listen(u16 port) {
+    lock_guard<mutex> guard(m_mtx);
+    if ((m_sock4 != INVALID_SOCKET || m_sock6 != INVALID_SOCKET) &&
+        (port == 0 || port == m_port)) {
+        return; // already listening
+    }
+
+    if (m_sock4 != INVALID_SOCKET)
+        closesocket(m_sock4);
+    if (m_sock6 != INVALID_SOCKET)
+        closesocket(m_sock6);
+
+    m_host.clear();
+    m_port = 0;
+
+    if (!g_use_ipv4 && !g_use_ipv6)
+        MWR_REPORT("IPv4 and IPv6 both disabled via environment");
+
+    if (g_use_ipv4)
+        create_socket(AF_INET, m_sock4, port);
+    if (g_use_ipv6)
+        create_socket(AF_INET6, m_sock6, port);
+
+    m_host = "localhost";
+    m_port = port;
 }
 
 void socket::unlisten() {
     lock_guard<mutex> guard(m_mtx);
-    if (m_socket == INVALID_SOCKET)
-        return;
+    if (m_sock4 != INVALID_SOCKET)
+        closesocket(m_sock4);
+    if (m_sock6 != INVALID_SOCKET)
+        closesocket(m_sock6);
 
-    closesocket(m_socket);
-
-    m_socket = INVALID_SOCKET;
+    m_sock4 = INVALID_SOCKET;
+    m_sock6 = INVALID_SOCKET;
     m_host.clear();
     m_port = 0;
 }
@@ -263,22 +282,33 @@ bool socket::accept() {
 
     socket_addr addr;
     socklen_t len = sizeof(addr);
-    socket_t sock = m_socket;
-    socket_t conn = INVALID_SOCKET;
+
+    vector<WSAPOLLFD> fds;
+    if (m_sock4 != INVALID_SOCKET)
+        fds.push_back({ m_sock4, POLLRDNORM, 0 });
+    if (m_sock6 != INVALID_SOCKET)
+        fds.push_back({ m_sock6, POLLRDNORM, 0 });
 
     m_mtx.unlock();
-    conn = ::accept(sock, &addr.base, &len);
+    WSAPoll(fds.data(), (ULONG)fds.size(), INFINITE);
     m_mtx.lock();
 
-    m_conn = conn;
-    if (m_conn == INVALID_SOCKET)
-        return false; // shutdown while waiting for connections
+    for (const WSAPOLLFD& poll : fds) {
+        if (poll.revents & POLLRDNORM) {
+            m_conn = ::accept(poll.fd, &addr.base, &len);
+            if (m_conn != INVALID_SOCKET) {
+                SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
+                m_ipv6 = poll.fd == m_sock6;
+                m_host = addr.peer();
+                return true;
+            }
+        }
+    }
 
-    SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
-
-    m_ipv6 = addr.is_ipv6();
-    m_peer = addr.peer();
-    return true;
+    m_conn = INVALID_SOCKET;
+    m_ipv6 = false;
+    m_host.clear();
+    return false;
 }
 
 void socket::connect(const string& host, u16 port) {
