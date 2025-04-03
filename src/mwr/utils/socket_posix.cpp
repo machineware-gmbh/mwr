@@ -9,6 +9,7 @@
  ******************************************************************************/
 
 #include <unistd.h>
+#include <poll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -280,38 +281,30 @@ bool socket::accept() {
     socklen_t len = sizeof(addr);
     socket_t s4 = m_sock4;
     socket_t s6 = m_sock6;
+    vector<pollfd> pollfds;
 
-    if (s4 < 0 && s6 < 0)
+    if (s4 >= 0)
+        pollfds.push_back({ s4, POLLIN, 0 });
+    if (s6 >= 0)
+        pollfds.push_back({ s6, POLLIN, 0 });
+    if (pollfds.empty())
         MWR_REPORT("socket is not listening");
 
-    fd_set fds;
-    FD_ZERO(&fds);
-    if (s4 >= 0)
-        FD_SET(s4, &fds);
-    if (s6 >= 0)
-        FD_SET(s6, &fds);
-
     m_mtx.unlock();
-    int res = select(max(s4, s6) + 1, &fds, NULL, NULL, NULL);
+    int res = poll(pollfds.data(), pollfds.size(), -1);
     m_mtx.lock();
 
-    if (res > 0 && FD_ISSET(s4, &fds)) {
-        m_conn = ::accept(s4, &addr.base, &len);
-        if (m_conn >= 0) {
-            SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
-            m_peer = addr.peer();
-            m_ipv6 = false;
-            return true;
-        }
-    }
+    MWR_REPORT_ON(res < 0, "failed to accept connection: %s", strerror(errno));
 
-    if (res > 0 && FD_ISSET(s6, &fds)) {
-        m_conn = ::accept(s6, &addr.base, &len);
-        if (m_conn >= 0) {
-            SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
-            m_peer = addr.peer();
-            m_ipv6 = true;
-            return true;
+    for (const pollfd& poll : pollfds) {
+        if (poll.revents & POLLIN) {
+            m_conn = ::accept(poll.fd, &addr.base, &len);
+            if (m_conn >= 0) {
+                SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
+                m_peer = addr.peer();
+                m_ipv6 = poll.fd == s6;
+                return true;
+            }
         }
     }
 
