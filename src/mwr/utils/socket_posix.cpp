@@ -279,38 +279,37 @@ bool socket::accept() {
 
     socket_addr addr;
     socklen_t len = sizeof(addr);
-    socket_t s4 = m_sock4;
-    socket_t s6 = m_sock6;
-    vector<pollfd> pollfds;
 
-    if (s4 >= 0)
-        pollfds.push_back({ s4, POLLIN, 0 });
-    if (s6 >= 0)
-        pollfds.push_back({ s6, POLLIN, 0 });
-    if (pollfds.empty())
-        MWR_REPORT("socket is not listening");
+    while (m_sock4 >= 0 || m_sock6 >= 0) {
+        socket_t s4 = m_sock4;
+        socket_t s6 = m_sock6;
 
-    m_mtx.unlock();
-    int res = poll(pollfds.data(), pollfds.size(), -1);
-    m_mtx.lock();
+        vector<pollfd> pollfds;
+        if (s4 >= 0)
+            pollfds.push_back({ s4, POLLIN | POLLERR | POLLHUP, 0 });
+        if (s6 >= 0)
+            pollfds.push_back({ s6, POLLIN | POLLERR | POLLHUP, 0 });
 
-    MWR_REPORT_ON(res < 0, "failed to accept connection: %s", strerror(errno));
+        m_mtx.unlock();
+        int res = poll(pollfds.data(), pollfds.size(), 100);
+        m_mtx.lock();
 
-    for (const pollfd& poll : pollfds) {
-        if (poll.revents & POLLIN) {
-            m_conn = ::accept(poll.fd, &addr.base, &len);
-            if (m_conn >= 0) {
-                SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
-                m_peer = addr.peer();
-                m_ipv6 = poll.fd == s6;
-                return true;
+        if (res < 0)
+            MWR_REPORT("failed to accept connection: %s", strerror(errno));
+
+        for (const pollfd& poll : pollfds) {
+            if (poll.revents & POLLIN) {
+                m_conn = ::accept(poll.fd, &addr.base, &len);
+                if (m_conn >= 0) {
+                    SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
+                    m_peer = addr.peer();
+                    m_ipv6 = poll.fd == s6;
+                    return true;
+                }
             }
         }
     }
 
-    m_conn = -1;
-    m_ipv6 = false;
-    m_host.clear();
     return false;
 }
 
