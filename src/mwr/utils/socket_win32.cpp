@@ -160,12 +160,44 @@ string socket_addr::peer() const {
     return mkstr("%s:%hu", host().c_str(), port());
 }
 
-void socket::disconnect_locked() {
-    if (m_conn == INVALID_SOCKET)
-        return;
+static void create_socket(int family, SOCKET& socket, u16& port) {
+    socket = ::socket(family, SOCK_STREAM, 0);
+    if (socket == INVALID_SOCKET)
+        MWR_REPORT("failed to create socket: %s", socket_strerror());
 
-    ::shutdown(m_conn, SD_BOTH);
-    m_conn = INVALID_SOCKET;
+    SET_SOCKOPT(socket, SOL_SOCKET, SO_REUSEADDR, 1);
+
+    if (family == AF_INET6)
+        SET_SOCKOPT(socket, IPPROTO_IPV6, IPV6_V6ONLY, 1);
+
+    socket_addr addr(family, port);
+    if (::bind(socket, &addr.base, sizeof(addr))) {
+        MWR_REPORT("binding socket to port %hu failed: %s", port,
+                   socket_strerror());
+    }
+
+    if (::listen(socket, 1))
+        MWR_REPORT("listen for connections failed: %s", socket_strerror());
+
+    if (port == 0) {
+        socket_addr addr;
+        socklen_t len = sizeof(addr);
+        if (getsockname(socket, &addr.base, &len) < 0)
+            MWR_ERROR("getsockname failed: %s", socket_strerror());
+        port = addr.port();
+    }
+}
+
+static void close_socket(SOCKET& socket) {
+    if (socket != INVALID_SOCKET) {
+        shutdown(socket, SD_BOTH);
+        closesocket(socket);
+        socket = INVALID_SOCKET;
+    }
+}
+
+void socket::disconnect_locked() {
+    close_socket(m_conn);
     m_peer.clear();
 }
 
@@ -201,38 +233,9 @@ socket::socket(const string& host, u16 port): socket() {
 
 socket::~socket() {
     lock_guard<mutex> guard(m_mtx);
-    if (m_sock4 != INVALID_SOCKET)
-        closesocket(m_sock4);
-    if (m_conn != INVALID_SOCKET)
-        ::shutdown(m_conn, SD_BOTH);
-}
-
-static void create_socket(int family, SOCKET& socket, u16& port) {
-    socket = ::socket(family, SOCK_STREAM, 0);
-    if (socket == INVALID_SOCKET)
-        MWR_REPORT("failed to create socket: %s", socket_strerror());
-
-    SET_SOCKOPT(socket, SOL_SOCKET, SO_REUSEADDR, 1);
-
-    if (family == AF_INET6)
-        SET_SOCKOPT(socket, IPPROTO_IPV6, IPV6_V6ONLY, 1);
-
-    socket_addr addr(family, port);
-    if (::bind(socket, &addr.base, sizeof(addr))) {
-        MWR_REPORT("binding socket to port %hu failed: %s", port,
-                   socket_strerror());
-    }
-
-    if (::listen(socket, 1))
-        MWR_REPORT("listen for connections failed: %s", socket_strerror());
-
-    if (port == 0) {
-        socket_addr addr;
-        socklen_t len = sizeof(addr);
-        if (getsockname(socket, &addr.base, &len) < 0)
-            MWR_ERROR("getsockname failed: %s", socket_strerror());
-        port = addr.port();
-    }
+    close_socket(m_sock4);
+    close_socket(m_sock6);
+    close_socket(m_conn);
 }
 
 void socket::listen(u16 port) {
@@ -242,10 +245,8 @@ void socket::listen(u16 port) {
         return; // already listening
     }
 
-    if (m_sock4 != INVALID_SOCKET)
-        closesocket(m_sock4);
-    if (m_sock6 != INVALID_SOCKET)
-        closesocket(m_sock6);
+    close_socket(m_sock4);
+    close_socket(m_sock6);
 
     m_host.clear();
     m_port = 0;
@@ -264,21 +265,15 @@ void socket::listen(u16 port) {
 
 void socket::unlisten() {
     lock_guard<mutex> guard(m_mtx);
-    if (m_sock4 != INVALID_SOCKET)
-        closesocket(m_sock4);
-    if (m_sock6 != INVALID_SOCKET)
-        closesocket(m_sock6);
-
-    m_sock4 = INVALID_SOCKET;
-    m_sock6 = INVALID_SOCKET;
+    close_socket(m_sock4);
+    close_socket(m_sock6);
     m_host.clear();
     m_port = 0;
 }
 
 bool socket::accept() {
     lock_guard<mutex> guard(m_mtx);
-    if (m_conn != INVALID_SOCKET)
-        disconnect_locked();
+    close_socket(m_conn);
 
     socket_addr addr;
     socklen_t len = sizeof(addr);
