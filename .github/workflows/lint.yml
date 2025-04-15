@@ -28,8 +28,18 @@ jobs:
         sudo apt-get install libelf-dev ninja-build
 
     - name: Configure
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON -DMWR_LINTER=clang-tidy
+      run: cmake -G Ninja -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON -DMWR_LINTER=clang-tidy
 
     - name: Lint
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j $(nproc)
+      run: cmake --build BUILD --config ${{env.BUILD_TYPE}}
 
+    - name: Upload Logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: mwr-build-logs
+        path: |
+            BUILD/.ninja_log
+            BUILD/CMakeCache.txt
+            BUILD/Testing/Temporary/LastTest.log
+        include-hidden-files: true
+        retention-days: 7

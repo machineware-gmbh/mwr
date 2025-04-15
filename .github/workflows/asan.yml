@@ -34,12 +34,21 @@ jobs:
         sudo apt-get install libelf-dev ninja-build
 
     - name: Configure
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.sanitizer}} -DMWR_BUILD_TESTS=ON
+      run: cmake -G Ninja -B BUILD -DCMAKE_BUILD_TYPE=${{matrix.sanitizer}} -DMWR_BUILD_TESTS=ON
 
     - name: Build
-      run: cmake --build ${{github.workspace}}/build --config ${{matrix.sanitizer}} -j $(nproc)
+      run: cmake --build BUILD
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{matrix.sanitizer}} --verbose
+      run: ctest --test-dir BUILD --verbose
 
+    - name: Upload Logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: mwr-build-logs-${{matrix.sanitizer}}
+        path: |
+            BUILD/.ninja_log
+            BUILD/CMakeCache.txt
+            BUILD/Testing/Temporary/LastTest.log
+        include-hidden-files: true
+        retention-days: 7
