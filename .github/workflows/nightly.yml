@@ -50,6 +50,7 @@ jobs:
 
     - name: Upload Logs
       uses: actions/upload-artifact@v4
+      if: '!cancelled()'
       with:
         name: mwr-build-logs-${{matrix.os}}
         path: |
