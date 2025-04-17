@@ -41,12 +41,22 @@ ostream& operator<<(ostream& os, const log_level& lvl) {
 istream& operator>>(istream& is, log_level& lvl) {
     string s;
     is >> s;
+    s = to_lower(s);
+
     lvl = NUM_LOG_LEVELS;
-    for (int i = LOG_ERROR; i < NUM_LOG_LEVELS; i++)
+
+    for (int i = LOG_ERROR; i < NUM_LOG_LEVELS; i++) {
         if (s == publisher::desc[i])
             lvl = (log_level)i;
-    if (lvl == NUM_LOG_LEVELS)
-        is.setstate(std::ios::failbit);
+    }
+
+    if (lvl == NUM_LOG_LEVELS) {
+        MWR_ERROR("invalid loglevel '%s', please use %s, %s, %s, or %s",
+                  s.c_str(), publisher::desc[LOG_ERROR],
+                  publisher::desc[LOG_WARN], publisher::desc[LOG_INFO],
+                  publisher::desc[LOG_DEBUG]);
+    }
+
     return is;
 }
 
