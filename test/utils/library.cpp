@@ -127,3 +127,19 @@ TEST(libary, relpath) {
     EXPECT_STREQ(lib.name(), SHARED_NAME);
     EXPECT_TRUE(is_path_equal(lib.path(), get_test_library()));
 }
+
+void fallback_func(int) {
+    // nothing to do
+}
+
+TEST(library, getopt) {
+    library lib;
+    lib.open(get_test_library());
+
+    void (*my_func)(int);
+    EXPECT_FALSE(lib.getopt(my_func, "does_not_exist", &fallback_func));
+    EXPECT_EQ(my_func, fallback_func);
+    EXPECT_FALSE(lib.getopt(my_func, "does_not_exist"));
+    EXPECT_EQ(my_func, nullptr);
+    EXPECT_TRUE(lib.getopt(my_func, "function"));
+}

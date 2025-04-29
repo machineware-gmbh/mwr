@@ -55,11 +55,25 @@ public:
 
     template <typename T>
     void get(T*& fn, const string& name) const;
+
+    template <typename T>
+    bool getopt(T*& fn, const string& name, T* def = nullptr) const;
 };
 
 template <typename T>
 void library::get(T*& fn, const string& name) const {
     fn = (T*)lookup(name);
+}
+
+template <typename T>
+bool library::getopt(T*& fn, const string& name, T* def) const {
+    if (has(name)) {
+        fn = (T*)lookup(name);
+        return true;
+    } else {
+        fn = def;
+        return false;
+    }
 }
 
 } // namespace mwr
