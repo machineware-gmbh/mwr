@@ -19,6 +19,8 @@ using namespace mwr;
 #define SHARED_ARCH "x86"
 #elif defined(MWR_ARM64)
 #define SHARED_ARCH "arm64"
+#elif defined(MWR_RISCV64)
+#define SHARED_ARCH "riscv64"
 #else
 #error Unknown architecture
 #endif

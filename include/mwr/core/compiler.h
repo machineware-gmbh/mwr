@@ -35,6 +35,8 @@
 #define MWR_X86_64
 #elif defined(__aarch64__)
 #define MWR_ARM64
+#elif defined(__riscv) && (__riscv_xlen == 64)
+#define MWR_RISCV64
 #else
 #error unsupported cpu architecture
 #endif

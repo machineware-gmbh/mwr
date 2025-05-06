@@ -83,6 +83,10 @@ else()
     endif()
 endif()
 
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "riscv64")
+    target_link_libraries(mwr PUBLIC atomic)
+endif()
+
 if(LIBELF_FOUND)
     message(STATUS "Using libelf for reading ELF files")
     target_sources(mwr PRIVATE ${src}/mwr/utils/elf_libelf.cpp)

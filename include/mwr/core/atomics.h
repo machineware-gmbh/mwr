@@ -436,11 +436,10 @@ inline bool atomic_cas128(volatile void* ptr, const void* cmp,
     MWR_DECL_ALIGN(16) u64 newv[2];
     memcpy(comp, cmp, sizeof(comp));
     memcpy(newv, val, sizeof(newv));
-#ifdef MWR_MSVC
+#if defined(MWR_MSVC)
     return _InterlockedCompareExchange128((volatile __int64*)ptr, newv[1],
                                           newv[0], (__int64*)comp);
-#else
-#if defined(MWR_X86_64)
+#elif defined(MWR_X86_64)
     u8 res = 0;
     asm volatile(
         "lock cmpxchg16b %[dst]\n"
@@ -465,9 +464,12 @@ inline bool atomic_cas128(volatile void* ptr, const void* cmp,
           [vall] "r"(newv[0]), [valh] "r"(newv[1])
         : "memory", "cc");
     return temp == 0;
+#elif defined(MWR_RISCV64)
+    return __atomic_compare_exchange((volatile __int128*)ptr, (__int128*)comp,
+                                     (__int128*)newv, false, __ATOMIC_SEQ_CST,
+                                     __ATOMIC_SEQ_CST);
 #else
 #error "atomic cas128 not supported"
-#endif
 #endif
 }
 
