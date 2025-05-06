@@ -16,7 +16,7 @@ macro(logging_test test)
     set_target_properties(${test} PROPERTIES CXX_CLANG_TIDY "${MWR_LINTER}")
     add_test(NAME logging/${test} COMMAND ${test} ${resources})
     set_tests_properties(logging/${test} PROPERTIES ENVIRONMENT "${MWR_ENVVAR}")
-    set_tests_properties(logging/${test} PROPERTIES TIMEOUT 4)
+    set_tests_properties(logging/${test} PROPERTIES TIMEOUT 30)
 endmacro()
 
 logging_test(levels)

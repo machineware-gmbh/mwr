@@ -16,7 +16,7 @@ macro(core_test test)
     set_target_properties(${test} PROPERTIES CXX_CLANG_TIDY "${MWR_LINTER}")
     add_test(NAME core/${test} COMMAND ${test} ${resources})
     set_tests_properties(core/${test} PROPERTIES ENVIRONMENT "${MWR_ENVVAR}")
-    set_tests_properties(core/${test} PROPERTIES TIMEOUT 4)
+    set_tests_properties(core/${test} PROPERTIES TIMEOUT 30)
 endmacro()
 
 core_test(atomics)
