@@ -26,24 +26,37 @@ jobs:
         sudo apt-get install libelf-dev ninja-build gcovr
 
     - name: Configure
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON -DMWR_COVERAGE=ON
+      run: cmake -G Ninja -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON -DMWR_COVERAGE=ON
 
     - name: Build Project
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j $(nproc)
+      run: cmake --build BUILD
 
     - name: Run Tests
-      working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
+      working-directory: BUILD
+      run: ctest --output-on-failure
 
     - name: Generate Coverage Report
       run: |
-        mkdir -p mwr-coverage-report
-        gcovr --html-details -f 'include/*' -f 'src/*' --output mwr-coverage-report/mwr.html --exclude-lines-by-pattern '\s*MWR_ERROR.*'
+        mkdir -p ${{github.event.repository.name}}-coverage-report
+        gcovr --html-details -f 'include/*' -f 'src/*' \
+              --output ${{github.event.repository.name}}-coverage-report/${{github.event.repository.name}}.html \
+              --exclude-lines-by-pattern '\s*MWR_ERROR.*'
 
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v4
       with:
-        retention-days: 3
-        name: mwr-coverage-report
-        path: mwr-coverage-report/
+        retention-days: 7
+        name: ${{github.event.repository.name}}-coverage-report
+        path: ${{github.event.repository.name}}-coverage-report/
 
+    - name: Upload Logs
+      uses: actions/upload-artifact@v4
+      if: '!cancelled()'
+      with:
+        name: ${{github.event.repository.name}}-logs-coverage
+        path: |
+            BUILD/.ninja_log
+            BUILD/CMakeCache.txt
+            BUILD/Testing/Temporary/LastTest.log
+        include-hidden-files: true
+        retention-days: 7

@@ -40,13 +40,14 @@ jobs:
       run: cmake --build BUILD
 
     - name: Test
-      run: ctest --test-dir BUILD --verbose
+      working-directory: BUILD
+      run: ctest --verbose
 
     - name: Upload Logs
       uses: actions/upload-artifact@v4
       if: '!cancelled()'
       with:
-        name: mwr-build-logs-${{matrix.sanitizer}}
+        name: ${{github.event.repository.name}}-logs-${{matrix.sanitizer}}
         path: |
             BUILD/.ninja_log
             BUILD/CMakeCache.txt

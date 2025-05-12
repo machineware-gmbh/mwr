@@ -48,13 +48,14 @@ jobs:
       run: cmake --build BUILD --config ${{env.BUILD_TYPE}} -- /bl
 
     - name: Test
-      run: ctest --test-dir BUILD -C ${{env.BUILD_TYPE}} --output-on-failure
+      working-directory: BUILD
+      run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
 
     - name: Upload Logs
       uses: actions/upload-artifact@v4
       if: '!cancelled()'
       with:
-        name: mwr-build-logs-${{matrix.os}}
+        name: ${{github.event.repository.name}}-logs-${{matrix.os}}
         path: |
             BUILD/.ninja_log
             BUILD/CMakeCache.txt
