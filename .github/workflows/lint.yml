@@ -31,16 +31,15 @@ jobs:
       run: cmake -G Ninja -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON -DMWR_LINTER=clang-tidy
 
     - name: Lint
-      run: cmake --build BUILD --config ${{env.BUILD_TYPE}}
+      run: cmake --build BUILD
 
     - name: Upload Logs
       uses: actions/upload-artifact@v4
       if: '!cancelled()'
       with:
-        name: mwr-build-logs
+        name: ${{github.event.repository.name}}-logs-lint
         path: |
             BUILD/.ninja_log
             BUILD/CMakeCache.txt
-            BUILD/Testing/Temporary/LastTest.log
         include-hidden-files: true
         retention-days: 7
