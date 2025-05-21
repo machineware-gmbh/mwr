@@ -41,6 +41,7 @@
 #include "mwr/utils/memory.h"
 #include "mwr/utils/modules.h"
 #include "mwr/utils/options.h"
+#include "mwr/utils/per_thread.h"
 #include "mwr/utils/socket.h"
 #include "mwr/utils/srec.h"
 #include "mwr/utils/ihex.h"
