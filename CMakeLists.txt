@@ -8,7 +8,7 @@
  #                                                                            #
  ##############################################################################
 
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.16)
 project(mwr VERSION 2025.05.14 LANGUAGES C CXX)
 
 set(MWR_LINTER "" CACHE STRING "Code linter to use")
