@@ -64,3 +64,17 @@ TEST(watchdog, cancel) {
     std::this_thread::sleep_for(100ms);
     ASSERT_EQ(counter, 0);
 }
+
+TEST(watchdog, extra) {
+    std::atomic<int> counter = 0;
+
+    {
+        mwr::watchdog extra("extra");
+        extra.schedule(0ms, [&counter] { counter++; });
+        extra.schedule(10ms, [&counter] { counter++; });
+        extra.schedule(100ms, [&counter] { counter++; });
+        std::this_thread::sleep_for(10ms);
+    }
+
+    EXPECT_EQ(counter, 2);
+}

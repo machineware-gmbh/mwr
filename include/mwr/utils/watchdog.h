@@ -48,9 +48,21 @@ public:
     }
 
     watchdog(watchdog const&) = delete;
+    watchdog(const string& name):
+        m_tasks(), m_worker(), m_mtx(), m_cv(), m_terminate(false) {
+        m_worker = std::thread(&watchdog::work, this, name);
+    }
+
+    ~watchdog() {
+        m_mtx.lock();
+        m_terminate = true;
+        m_cv.notify_one();
+        m_mtx.unlock();
+        m_worker.join();
+    }
 
     static watchdog& instance() {
-        static watchdog singleton;
+        static watchdog singleton("watchdog");
         return singleton;
     }
 
@@ -67,22 +79,10 @@ private:
     std::condition_variable m_cv;
     std::atomic<bool> m_terminate;
 
-    watchdog(): m_tasks(), m_worker(), m_mtx(), m_cv(), m_terminate(false) {
-        m_worker = std::thread(&watchdog::work, this);
-    }
-
-    ~watchdog() {
-        m_mtx.lock();
-        m_terminate = true;
-        m_cv.notify_one();
-        m_mtx.unlock();
-        m_worker.join();
-    }
-
-    void work() {
-        mwr::set_thread_name("watchdog");
+    void work(const string& name) {
+        mwr::set_thread_name(name);
+        std::unique_lock<std::mutex> lock(m_mtx);
         while (true) {
-            std::unique_lock<std::mutex> lock(m_mtx);
             if (m_terminate)
                 break;
             if (m_tasks.empty()) {
@@ -117,6 +117,14 @@ private:
                     lock.lock();
                 }
             }
+        }
+
+        while (!m_tasks.empty() && (m_tasks.top().timeout <= clock_t::now())) {
+            auto task = m_tasks.top().func;
+            m_tasks.pop();
+            lock.unlock();
+            task();
+            lock.lock();
         }
     }
 };
