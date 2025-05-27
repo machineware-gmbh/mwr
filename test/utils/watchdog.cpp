@@ -36,8 +36,8 @@ TEST(watchdog, execution_order) {
 TEST(watchdog, execution) {
     auto& wd = mwr::watchdog::instance();
     std::atomic<bool> executed = false;
-    wd.schedule(50ms, [&executed] { executed = true; });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    wd.schedule(10ms, [&executed] { executed = true; });
+    std::this_thread::sleep_for(100ms);
     ASSERT_TRUE(executed);
 }
 
