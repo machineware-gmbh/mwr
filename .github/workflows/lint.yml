@@ -28,7 +28,7 @@ jobs:
         sudo apt-get install libelf-dev ninja-build
 
     - name: Configure
-      run: cmake -G Ninja -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_LINTER=clang-tidy
+      run: cmake -G Ninja -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON -DMWR_LINTER=clang-tidy
 
     - name: Lint
       run: cmake --build BUILD
