@@ -15,6 +15,9 @@ namespace mwr {
 namespace publishers {
 
 static bool supports_colors(bool use_cerr) {
+#ifdef MWR_WINDOWS
+    return true;
+#else
     int fd = use_cerr ? STDERR_FDNO : STDOUT_FDNO;
     if (!is_tty(fd))
         return false;
@@ -34,6 +37,7 @@ static bool supports_colors(bool use_cerr) {
             return true;
 
     return false;
+#endif
 }
 
 terminal::terminal(bool use_cerr):
