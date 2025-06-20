@@ -34,6 +34,21 @@ logger::logger(const string& name, log_level lvl): m_name(name), m_lvl(lvl) {
     // nothing to do
 }
 
+void logger::log(log_level lvl, const char* format, ...) const {
+    va_list args;
+    va_start(args, format);
+    vlog(lvl, nullptr, -1, format, args);
+    va_end(args);
+}
+
+void logger::log(log_level lvl, const char* file, int line, const char* format,
+                 ...) const {
+    va_list args;
+    va_start(args, format);
+    vlog(lvl, file, line, format, args);
+    va_end(args);
+}
+
 void logger::error(const char* format, ...) const {
     va_list args;
     va_start(args, format);
