@@ -75,6 +75,13 @@
 #define MWR_UNREACHABLE __assume(0)
 #endif
 
+#if (defined(MWR_GCC) || defined(MWR_CLANG)) && \
+    (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+#define MWR_HOST_BIT_ENDIAN
+#else
+#define MWR_HOST_LITTLE_ENDIAN
+#endif
+
 #define MWR_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 #define MWR_NOP(val)   val

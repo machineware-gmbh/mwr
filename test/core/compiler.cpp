@@ -37,3 +37,9 @@ TEST(utils, gcov_enabled) {
     EXPECT_FALSE(mwr::gcov_enabled());
 #endif
 }
+
+TEST(utils, host_endian) {
+#if !defined(MWR_HOST_LITTLE_ENDIAN) && !defined(MWR_HOST_BIG_ENDIAN)
+    GTEST_FAIL() << "host endian undefined";
+#endif
+}
