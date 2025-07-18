@@ -69,7 +69,7 @@ private:
                     if (pfd.revents & POLLNVAL)
                         MWR_ERROR("invalid file descriptor: %d", pfd.fd);
 
-                    if (pfd.revents & (POLLIN | POLLPRI))
+                    if (pfd.revents & (POLLIN | POLLPRI | POLLHUP))
                         scheduled.emplace_back(pfd.fd, m_handlers[pfd.fd]);
                 }
             }
