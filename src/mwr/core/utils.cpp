@@ -287,11 +287,32 @@ int fd_open(const string& path, int mode, int perms) {
 #endif
 }
 
+#ifdef MWR_MSVC
+static void empty_invalid_parameter_handler(const wchar_t* expression,
+                                            const wchar_t* function,
+                                            const wchar_t* file,
+                                            unsigned int line,
+                                            uintptr_t pReserved) {
+}
+
+struct msvc_invalid_parameter_guard {
+    _invalid_parameter_handler old_handler;
+    msvc_invalid_parameter_guard():
+        old_handler(_set_thread_local_invalid_parameter_handler(
+            empty_invalid_parameter_handler)) {}
+
+    ~msvc_invalid_parameter_guard() {
+        _set_thread_local_invalid_parameter_handler(old_handler);
+    }
+};
+#endif
+
 void fd_close(int fd) {
     if (fd < 0)
         return;
 
 #ifdef MWR_MSVC
+    msvc_invalid_parameter_guard guard;
     _close(fd);
 #else
     close(fd);
@@ -303,6 +324,7 @@ size_t fd_peek(int fd, time_t timeoutms) {
         return 0;
 
 #if defined(MWR_MSVC)
+    msvc_invalid_parameter_guard guard;
     HANDLE handle = (HANDLE)_get_osfhandle(fd);
     if (handle == INVALID_HANDLE_VALUE)
         MWR_ERROR("invalid file descriptor: %d", fd);
@@ -396,6 +418,7 @@ size_t fd_read(int fd, void* buffer, size_t buflen) {
     size_t numread = 0;
 
 #ifdef MWR_MSVC
+    msvc_invalid_parameter_guard guard;
     if (fd == STDIN_FDNO && _isatty(fd))
         return msvc_read_console(ptr, buflen);
 #endif
@@ -423,6 +446,10 @@ size_t fd_write(int fd, const void* buffer, size_t buflen) {
     if (fd < 0 || buffer == nullptr || buflen == 0)
         return 0;
 
+#ifdef MWR_MSVC
+    msvc_invalid_parameter_guard guard;
+#endif
+
     const u8* ptr = reinterpret_cast<const u8*>(buffer);
 
     long long len;
@@ -449,6 +476,7 @@ size_t fd_write(int fd, const void* buffer, size_t buflen) {
 
 size_t fd_seek(int fd, size_t pos) {
 #ifdef MWR_MSVC
+    msvc_invalid_parameter_guard guard;
     return (size_t)_lseeki64(fd, pos, SEEK_SET);
 #else
     return (size_t)lseek(fd, pos, SEEK_SET);
@@ -457,6 +485,7 @@ size_t fd_seek(int fd, size_t pos) {
 
 size_t fd_seek_cur(int fd, off_t pos) {
 #ifdef MWR_MSVC
+    msvc_invalid_parameter_guard guard;
     return (size_t)_lseeki64(fd, pos, SEEK_CUR);
 #else
     return (size_t)lseek(fd, pos, SEEK_CUR);
@@ -465,6 +494,7 @@ size_t fd_seek_cur(int fd, off_t pos) {
 
 size_t fd_seek_end(int fd, off_t pos) {
 #ifdef MWR_MSVC
+    msvc_invalid_parameter_guard guard;
     return (size_t)_lseeki64(fd, pos, SEEK_END);
 #else
     return (size_t)lseek(fd, pos, SEEK_END);
@@ -481,6 +511,7 @@ int fd_dup(int fd) {
 
 int fd_pipe(int fds[2]) {
 #ifdef MWR_MSVC
+    msvc_invalid_parameter_guard guard;
     return _pipe(fds, 2, _O_TEXT);
 #else
     return pipe(fds);
