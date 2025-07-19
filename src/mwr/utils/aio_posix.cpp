@@ -66,11 +66,11 @@ private:
                     if (m_handlers.count(pfd.fd) == 0)
                         continue; // fd has been removed
 
-                    if (pfd.revents & POLLNVAL)
-                        MWR_ERROR("invalid file descriptor: %d", pfd.fd);
-
-                    if (pfd.revents & (POLLIN | POLLPRI | POLLHUP))
+                    if (pfd.revents)
                         scheduled.emplace_back(pfd.fd, m_handlers[pfd.fd]);
+
+                    if (pfd.revents & POLLNVAL)
+                        m_handlers.erase(pfd.fd);
                 }
             }
 

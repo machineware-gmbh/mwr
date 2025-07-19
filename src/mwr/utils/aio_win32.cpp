@@ -20,6 +20,20 @@
 
 namespace mwr {
 
+static bool is_handle_valid(HANDLE handle) {
+    if (handle == NULL || handle == INVALID_HANDLE_VALUE)
+        return false;
+
+    HANDLE other = INVALID_HANDLE_VALUE;
+    if (!DuplicateHandle(GetCurrentProcess(), handle, GetCurrentProcess(),
+                         &other, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
+        return false;
+    }
+
+    CloseHandle(other);
+    return true;
+}
+
 class aio
 {
 private:
@@ -60,10 +74,12 @@ private:
 
             for (size_t i = 0; i < polls.size(); i += MAXIMUM_WAIT_OBJECTS) {
                 DWORD n = (DWORD)min(polls.size() - i, MAXIMUM_WAIT_OBJECTS);
-                int ret = WaitForMultipleObjects(n, polls.data() + i, FALSE,
-                                                 TIMEOUT_MS);
+                DWORD ret = WaitForMultipleObjects(n, polls.data() + i, FALSE,
+                                                   TIMEOUT_MS);
                 if (!m_running)
                     return;
+
+                vector<aio_info> scheduled;
 
                 if (ret >= WAIT_OBJECT_0 && ret < polls.size()) {
                     lock_guard<mutex> guard(m_mtx);
@@ -73,8 +89,22 @@ private:
 
                     auto& triggered = m_handlers[handle];
                     if (fd_peek(triggered.fd))
-                        triggered.handler(triggered.fd);
+                        scheduled.push_back(triggered);
                 }
+
+                if (ret == WAIT_FAILED) {
+                    lock_guard<mutex> guard(m_mtx);
+                    for (HANDLE handle : polls) {
+                        if (!is_handle_valid(handle) &&
+                            m_handlers.count(handle)) {
+                            scheduled.push_back(m_handlers[handle]);
+                            m_handlers.erase(handle);
+                        }
+                    }
+                }
+
+                for (const auto& handler : scheduled)
+                    handler.handler(handler.fd);
             }
         }
     }

@@ -17,7 +17,7 @@ using namespace mwr;
 TEST(aio, callback) {
     const char msg = 'X';
 
-    int fds[2];
+    int fds[2]{ -1, -1 };
     EXPECT_EQ(fd_pipe(fds), 0);
 
     std::mutex mtx;
@@ -49,4 +49,30 @@ TEST(aio, callback) {
     fd_close(fds[0]);
     fd_close(fds[1]);
     mtx.unlock();
+}
+
+TEST(aio, closing) {
+    int fds[2]{ -1, -1 };
+    EXPECT_EQ(fd_pipe(fds), 0);
+
+    std::mutex mtx;
+    std::condition_variable_any cv;
+    bool close_detected = false;
+    aio_notify(fds[0], [&](int fd) -> void {
+        char buf = '?';
+        // reading from a closed file descriptor should return 0 bytes
+        ASSERT_EQ(fd_read(fd, &buf, 1), 0);
+
+        mtx.lock();
+        close_detected = true;
+        mtx.unlock();
+        cv.notify_all();
+    });
+
+    fd_close(fds[0]);
+    fd_close(fds[1]);
+
+    mtx.lock();
+    cv.wait_for(mtx, std::chrono::seconds(10), [&] { return close_detected; });
+    EXPECT_TRUE(close_detected);
 }
