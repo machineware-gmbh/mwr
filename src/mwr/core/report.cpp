@@ -149,10 +149,13 @@ void print_backtrace(ostream& os) {
     print_backtrace(bt, os);
 }
 
+static int parent_pid = getpid();
+
 #if defined(MWR_MSVC)
 static LPTOP_LEVEL_EXCEPTION_FILTER prev_handler;
 static LONG WINAPI handle_exception(EXCEPTION_POINTERS* info) {
-    if (info->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
+    if (parent_pid == getpid() &&
+        info->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
         print_backtrace(std::cerr);
         fprintf(stderr,
                 "EXCEPTION_ACCESS_VIOLATION while accessing memory at %p\n",
@@ -174,11 +177,14 @@ void report_segfaults() {
 #else
 static struct sigaction oldact;
 static void handle_segfault(int sig, siginfo_t* info, void* context) {
-    print_backtrace(std::cerr);
-    fprintf(stderr,
+    if (parent_pid == getpid()) {
+        print_backtrace(std::cerr);
+        fprintf(
+            stderr,
             "Caught signal %d (%s) while accessing memory at location %p\n",
             sig, strsignal(sig), info->si_addr);
-    fflush(stderr);
+        fflush(stderr);
+    }
 
     if ((oldact.sa_flags & SA_SIGINFO) && (oldact.sa_sigaction != NULL)) {
         (*oldact.sa_sigaction)(sig, info, context);
