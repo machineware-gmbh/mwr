@@ -108,7 +108,9 @@ string temp_dir() {
 #if defined(MWR_LINUX)
     return "/tmp";
 #elif defined(MWR_MACOS)
-    return "/private/tmp";
+    if (auto env = getenv("TMPDIR"))
+        return *env;
+    return "/tmp";
 #elif defined(MWR_WINDOWS)
     TCHAR path[MAX_PATH] = {};
     if (GetTempPath(MAX_PATH, path) == 0)
