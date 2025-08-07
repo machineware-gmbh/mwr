@@ -9,7 +9,7 @@
  ##############################################################################
 
 cmake_minimum_required(VERSION 3.16)
-project(mwr VERSION 2025.07.23 LANGUAGES C CXX)
+project(mwr VERSION 2025.08.07 LANGUAGES C CXX)
 
 set(MWR_LINTER "" CACHE STRING "Code linter to use")
 set(MWR_COVERAGE OFF CACHE BOOL "Collect code coverage data")
