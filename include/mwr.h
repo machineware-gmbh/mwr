@@ -35,6 +35,7 @@
 
 #include "mwr/utils/aio.h"
 #include "mwr/utils/elf.h"
+#include "mwr/utils/fdt.h"
 #include "mwr/utils/license.h"
 #include "mwr/utils/library.h"
 #include "mwr/utils/locale.h"

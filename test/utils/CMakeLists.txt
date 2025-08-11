@@ -21,6 +21,7 @@ endmacro()
 
 util_test(aio)
 util_test(elf)
+util_test(fdt)
 util_test(ihex)
 util_test(library)
 util_test(license)

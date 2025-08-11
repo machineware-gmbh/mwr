@@ -41,6 +41,7 @@ add_library(mwr STATIC
             ${src}/mwr/logging/publishers/stream.cpp
             ${src}/mwr/logging/publishers/terminal.cpp
             ${src}/mwr/logging/logger.cpp
+            ${src}/mwr/utils/fdt.cpp
             ${src}/mwr/utils/license.cpp
             ${src}/mwr/utils/modules.cpp
             ${src}/mwr/utils/options.cpp
