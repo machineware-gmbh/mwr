@@ -28,15 +28,15 @@ private:
     vector<string> m_strings;
 
 public:
-    const char* name() const { return m_name.c_str(); }
+    const string& name() const { return m_name; }
     size_t size() const { return m_size; }
 
     const vector<u32>& numbers() const { return m_numbers; }
     const vector<string>& strings() const { return m_strings; }
 
     fdtprop(const string& name): m_name(name), m_numbers(), m_strings() {}
-    fdtprop(const string& name, std::initializer_list<u32> numbers);
-    fdtprop(const string& name, std::initializer_list<string> strings);
+    fdtprop(const string& name, vector<u32> numbers);
+    fdtprop(const string& name, vector<string> strings);
     ~fdtprop() = default;
 
     void dump(ostream& os, size_t indent = 0) const;
@@ -46,7 +46,6 @@ class fdtnode
 {
 private:
     string m_name;
-    u32 m_handle;
     vector<fdtprop*> m_props;
     vector<fdtnode*> m_children;
 
@@ -55,8 +54,7 @@ public:
     const vector<fdtprop*>& properties() const { return m_props; }
     const vector<fdtnode*>& children() const { return m_children; }
 
-    fdtnode(const string& name):
-        m_name(name), m_handle(), m_props(), m_children() {}
+    fdtnode(const string& name): m_name(name), m_props(), m_children() {}
     ~fdtnode();
     fdtnode(const fdtnode&) = delete;
     fdtnode(fdtnode&& other) = default;
@@ -65,9 +63,16 @@ public:
 
     void dump(ostream& os, size_t indent = 0) const;
 
-    void add_property(const string& name) {
-        m_props.push_back(new fdtprop(name));
+    fdtprop* find_property(const string& name) {
+        for (auto* prop : m_props)
+            if (prop->name() == name)
+                return prop;
+        return nullptr;
     }
+
+    void add_property(fdtprop* prop) { m_props.push_back(prop); }
+
+    void add_property(const string& name) { add_property(new fdtprop(name)); }
 
     void add_property(const string& name, u32 value) {
         add_property(name, { value });
@@ -78,16 +83,23 @@ public:
     }
 
     void add_property(const string& name, std::initializer_list<u32> values) {
-        m_props.push_back(new fdtprop(name, values));
+        add_property(new fdtprop(name, values));
     }
 
     void add_property(const string& name, std::initializer_list<string> val) {
-        m_props.push_back(new fdtprop(name, val));
+        add_property(new fdtprop(name, val));
     }
 
     fdtnode& add_child(const string& name) {
         m_children.push_back(new fdtnode(name));
         return *m_children.back();
+    }
+
+    fdtnode* find_child(const string& name) {
+        for (auto* child : m_children)
+            if (child->name() == name)
+                return child;
+        return nullptr;
     }
 };
 
@@ -96,6 +108,9 @@ ostream& operator<<(ostream& os, const fdtnode& node);
 
 void fdtcompile(const fdtnode& root, void* buffer, size_t buflen);
 void fdtcompile(const fdtnode& root, const string& filename);
+
+fdtnode fdtdecompile(const void* buffer, size_t buflen);
+fdtnode fdtdecompile(const string& filename);
 
 } // namespace mwr
 

@@ -1,0 +1,13 @@
+/dts-v1/;
+
+/ {
+    ref: node_a {
+        prop_a = <123>;
+        prop_b = <0 1 2 3>;
+
+        node_b {
+            prob_c = "hello", "world";
+            parent = <&ref>;
+        };
+    };
+};
