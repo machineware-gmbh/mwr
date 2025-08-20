@@ -39,24 +39,24 @@ public:
 };
 
 struct termcolors {
-    static const char* const CLEAR;
-    static const char* const BOLD;
-    static const char* const BLACK;
-    static const char* const RED;
-    static const char* const GREEN;
-    static const char* const YELLOW;
-    static const char* const BLUE;
-    static const char* const MAGENTA;
-    static const char* const CYAN;
-    static const char* const WHITE;
-    static const char* const BRIGHT_BLACK;
-    static const char* const BRIGHT_RED;
-    static const char* const BRIGHT_GREEN;
-    static const char* const BRIGHT_YELLOW;
-    static const char* const BRIGHT_BLUE;
-    static const char* const BRIGHT_MAGENTA;
-    static const char* const BRIGHT_CYAN;
-    static const char* const BRIGHT_WHITE;
+    static constexpr const char* CLEAR = "\x1b[0m";
+    static constexpr const char* BOLD = "\x1b[1m";
+    static constexpr const char* BLACK = "\x1b[30m";
+    static constexpr const char* RED = "\x1b[31m";
+    static constexpr const char* GREEN = "\x1b[32m";
+    static constexpr const char* YELLOW = "\x1b[33m";
+    static constexpr const char* BLUE = "\x1b[34m";
+    static constexpr const char* MAGENTA = "\x1b[35m";
+    static constexpr const char* CYAN = "\x1b[36m";
+    static constexpr const char* WHITE = "\x1b[37m";
+    static constexpr const char* BRIGHT_BLACK = "\x1b[90m";
+    static constexpr const char* BRIGHT_RED = "\x1b[91m";
+    static constexpr const char* BRIGHT_GREEN = "\x1b[92m";
+    static constexpr const char* BRIGHT_YELLOW = "\x1b[93m";
+    static constexpr const char* BRIGHT_BLUE = "\x1b[94m";
+    static constexpr const char* BRIGHT_MAGENTA = "\x1b[95m";
+    static constexpr const char* BRIGHT_CYAN = "\x1b[96m";
+    static constexpr const char* BRIGHT_WHITE = "\x1b[97m";
 };
 
 } // namespace mwr
