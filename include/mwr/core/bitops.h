@@ -258,6 +258,54 @@ constexpr u64 bswap(u64 val) {
            ((val & 0x00000000000000ffull) << 56);
 }
 
+constexpr u16 le16_to_cpu(u16 val) {
+#ifdef MWR_HOST_LITTLE_ENDIAN
+    return val;
+#else
+    return bswap(val);
+#endif
+}
+
+constexpr u16 be16_to_cpu(u16 val) {
+#ifdef MWR_HOST_BIG_ENDIAN
+    return val;
+#else
+    return bswap(val);
+#endif
+}
+
+constexpr u32 le32_to_cpu(u32 val) {
+#ifdef MWR_HOST_LITTLE_ENDIAN
+    return val;
+#else
+    return bswap(val);
+#endif
+}
+
+constexpr u32 be32_to_cpu(u32 val) {
+#ifdef MWR_HOST_BIG_ENDIAN
+    return val;
+#else
+    return bswap(val);
+#endif
+}
+
+constexpr u64 le64_to_cpu(u64 val) {
+#ifdef MWR_HOST_LITTLE_ENDIAN
+    return val;
+#else
+    return bswap(val);
+#endif
+}
+
+constexpr u64 be64_to_cpu(u64 val) {
+#ifdef MWR_HOST_BIG_ENDIAN
+    return val;
+#else
+    return bswap(val);
+#endif
+}
+
 inline void memswap(void* ptr, unsigned int size) {
     u8* v = static_cast<u8*>(ptr);
     for (unsigned int i = 0; i < size / 2; i++) {
