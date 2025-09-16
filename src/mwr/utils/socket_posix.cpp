@@ -45,7 +45,7 @@ struct socket_addr {
 
     socket_addr() { memset(&ipv6, 0, sizeof(ipv6)); }
     socket_addr(const sockaddr* addr);
-    socket_addr(int family, u16 port);
+    socket_addr(int family, u16 port, const string& host);
     void verify() const;
 
     bool is_ipv4() const {
@@ -76,15 +76,19 @@ socket_addr::socket_addr(const sockaddr* addr): socket_addr() {
     }
 }
 
-socket_addr::socket_addr(int family, u16 port): socket_addr() {
+socket_addr::socket_addr(int family, u16 port, const string& host):
+    socket_addr() {
     switch (family) {
     case AF_INET:
 #ifdef MWR_MACOS
         ipv4.sin_len = sizeof(ipv4);
 #endif
         ipv4.sin_family = AF_INET;
-        ipv4.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         ipv4.sin_port = htons(port);
+        if (host.empty())
+            ipv4.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        else
+            inet_pton(family, host.c_str(), &ipv4.sin_addr.s_addr);
         break;
 
     case AF_INET6:
@@ -92,8 +96,11 @@ socket_addr::socket_addr(int family, u16 port): socket_addr() {
         ipv6.sin6_len = sizeof(ipv6);
 #endif
         ipv6.sin6_family = AF_INET6;
-        ipv6.sin6_addr = in6addr_loopback;
         ipv6.sin6_port = htons(port);
+        if (host.empty())
+            ipv6.sin6_addr = in6addr_loopback;
+        else
+            inet_pton(family, host.c_str(), &ipv6.sin6_addr);
         break;
 
     default:
@@ -151,7 +158,8 @@ string socket_addr::peer() const {
     return mkstr("%s:%hu", host().c_str(), port());
 }
 
-static void create_socket(int family, int& socket, u16& port) {
+static void create_socket(int family, int n, int& socket, u16& port,
+                          string& host) {
     socket = ::socket(family, SOCK_STREAM, 0);
     if (socket < 0)
         MWR_REPORT("failed to create socket: %s", strerror(errno));
@@ -165,23 +173,24 @@ static void create_socket(int family, int& socket, u16& port) {
     if (family == AF_INET6)
         SET_SOCKOPT(socket, IPPROTO_IPV6, IPV6_V6ONLY, 1);
 
-    if (port > 0) {
-        socket_addr addr(family, port);
+    if (port > 0 || !host.empty()) {
+        socket_addr addr(family, port, host);
         if (::bind(socket, &addr.base, addr.size())) {
             MWR_REPORT("binding socket to port %hu failed: %s", port,
                        strerror(errno));
         }
     }
 
-    if (::listen(socket, 1))
+    if (::listen(socket, n))
         MWR_REPORT("listen for connections failed: %s", strerror(errno));
 
-    if (port == 0) {
+    if (port == 0 || host.empty()) {
         socket_addr addr;
         socklen_t len = sizeof(addr);
         if (getsockname(socket, &addr.base, &len) < 0)
             MWR_ERROR("getsockname failed: %s", strerror(errno));
         port = addr.port();
+        host = addr.host();
     }
 }
 
@@ -255,12 +264,19 @@ void socket::listen(u16 port) {
     if (!g_use_ipv4 && !g_use_ipv6)
         MWR_REPORT("IPv4 and IPv6 both disabled via environment");
 
-    if (g_use_ipv4)
-        create_socket(AF_INET, m_sock4, port);
-    if (g_use_ipv6)
-        create_socket(AF_INET6, m_sock6, port);
+    string host4;
+    string host6;
 
-    m_host = "localhost";
+    if (g_use_ipv4)
+        create_socket(AF_INET, 1, m_sock4, port, host4);
+    if (g_use_ipv6)
+        create_socket(AF_INET6, 1, m_sock6, port, host6);
+
+    if (!host4.empty())
+        m_host = host4;
+    if (!host6.empty())
+        m_host = host6;
+
     m_port = port;
 }
 
@@ -434,6 +450,172 @@ void socket::recv(void* data, size_t size) {
 
         n += r;
     }
+}
+
+server_socket::server_socket(size_t max_clients):
+    m_mtx(),
+    m_socket(-1),
+    m_host(),
+    m_port(),
+    m_max_clients(max_clients),
+    m_next_client_id(0),
+    m_clients(),
+    m_nodelay(false),
+    m_ipv6_only(!g_use_ipv4 && g_use_ipv6),
+    m_connect(),
+    m_disconnect() {
+}
+
+server_socket::~server_socket() {
+    lock_guard guard(m_mtx);
+    close_socket(m_socket);
+    for (auto [client, socket] : m_clients)
+        close_socket(socket);
+}
+
+void server_socket::listen(u16 port, const string& addr) {
+    lock_guard<mutex> guard(m_mtx);
+    if ((m_socket >= 0) && (port == 0 || port == m_port) &&
+        (addr.empty() || addr == "localhost" || addr == m_host)) {
+        return;
+    }
+
+    close_socket(m_socket);
+    m_host.clear();
+    m_port = 0;
+
+    if (!g_use_ipv4 && !g_use_ipv6)
+        MWR_REPORT("IPv4 and IPv6 both disabled via environment");
+
+    string host = addr;
+    int family = m_ipv6_only ? AF_INET6 : AF_INET;
+    create_socket(family, m_max_clients, m_socket, port, host);
+
+    m_port = port;
+    m_host = host;
+}
+
+void server_socket::unlisten() {
+    lock_guard<mutex> guard(m_mtx);
+    close_socket(m_socket);
+    m_host.clear();
+    m_port = 0;
+}
+
+void server_socket::disconnect(int client) {
+    lock_guard<mutex> guard(m_mtx);
+    auto it = m_clients.find(client);
+    if (it != m_clients.end()) {
+        if (m_disconnect)
+            m_disconnect(it->first);
+        close_socket(it->second);
+        m_clients.erase(it);
+    }
+}
+
+void server_socket::disconnect_all() {
+    lock_guard<mutex> guard(m_mtx);
+    for (auto& [client, socket] : m_clients)
+        close_socket(socket);
+    m_clients.clear();
+}
+
+int server_socket::poll(size_t ms) {
+    while (true) {
+        u64 t = timestamp_ms();
+        vector<pollfd> pollfds;
+        {
+            lock_guard<mutex> guard(m_mtx);
+            if (m_socket >= 0)
+                pollfds.push_back({ m_socket, POLLIN | POLLERR | POLLHUP, 0 });
+
+            for (const auto& [client, socket] : m_clients)
+                pollfds.push_back({ socket, POLLIN | POLLERR | POLLHUP, 0 });
+        }
+
+        if (pollfds.empty())
+            MWR_REPORT("server socket disconnected");
+
+        int res = ::poll(pollfds.data(), pollfds.size(), ms);
+        if (res == 0)
+            return -1;
+        if (res < 0)
+            MWR_REPORT("failed to poll server socket: %s", strerror(errno));
+
+        {
+            lock_guard<mutex> guard(m_mtx);
+            for (const pollfd& poll : pollfds) {
+                if (poll.revents) {
+                    if (poll.fd == m_socket)
+                        accept_new_client_locked();
+                    else
+                        return find_client_locked(poll.fd);
+                }
+            }
+        }
+
+        u64 delta = timestamp_ms() - t;
+        if (delta > ms)
+            return -1;
+
+        ms -= delta;
+    }
+}
+
+void server_socket::send(int client, const void* buffer, size_t buflen) {
+    const u8* ptr = (const u8*)buffer;
+    size_t n = 0;
+
+    while (n < buflen) {
+        socket_t conn = find_socket(client);
+        int r = ::send(conn, ptr + n, buflen - n, MSG_NOSIGNAL);
+        if (r <= 0)
+            disconnect(client);
+
+        MWR_REPORT_ON(r == 0, "error sending data: disconnected");
+        MWR_REPORT_ON(r < 0, "error sending data: %s", strerror(errno));
+
+        n += r;
+    }
+}
+
+void server_socket::recv(int client, void* buffer, size_t buflen) {
+    u8* ptr = (u8*)buffer;
+    size_t n = 0;
+
+    while (n < buflen) {
+        socket_t conn = find_socket(client);
+        int r = ::recv(conn, ptr + n, buflen - n, 0);
+        if (r <= 0)
+            disconnect(client);
+
+        MWR_REPORT_ON(r == 0, "error receiving data: disconnected");
+        MWR_REPORT_ON(r < 0, "error receiving data: %s", strerror(errno));
+
+        n += r;
+    }
+}
+
+void server_socket::accept_new_client_locked() {
+    socket_addr addr;
+    socklen_t len = sizeof(addr);
+    socket_t conn = ::accept(m_socket, &addr.base, &len);
+
+    if (conn < 0)
+        MWR_REPORT("failed to accept connection: %s", strerror(errno));
+
+    if (m_clients.size() >= m_max_clients) {
+        close_socket(conn);
+        return;
+    }
+
+    if (m_connect && !m_connect(m_next_client_id, addr.host(), addr.port())) {
+        close_socket(conn);
+        return;
+    }
+
+    SET_SOCKOPT(conn, IPPROTO_TCP, TCP_NODELAY, m_nodelay);
+    m_clients[m_next_client_id++] = conn;
 }
 
 } // namespace mwr
