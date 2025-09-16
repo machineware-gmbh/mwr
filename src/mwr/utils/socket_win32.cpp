@@ -23,12 +23,12 @@
 
 namespace mwr {
 
-static bool g_use_ipv4 = []() {
-    return getenv("MWR_NO_IPv4") ? false : true;
+static bool g_no_ipv4 = []() {
+    return getenv_or_default("MWR_NO_IPv4", false);
 }();
 
-static bool g_use_ipv6 = []() {
-    return getenv("MWR_NO_IPv6") ? false : true;
+static bool g_no_ipv6 = []() {
+    return getenv_or_default("MWR_NO_IPv6", false);
 }();
 
 static void socket_exit() {
@@ -61,6 +61,48 @@ static const char* socket_strerror(DWORD err = WSAGetLastError()) {
 
     snprintf(buffer, sizeof(buffer), "0x%08x", err);
     return buffer;
+}
+
+static int af_from_addr(const string& host) {
+    sockaddr_in6 addr6;
+    if (inet_pton(AF_INET6, host.c_str(), &addr6) == 1)
+        return AF_INET6;
+
+    sockaddr_in addr4;
+    if (inet_pton(AF_INET, host.c_str(), &addr4) == 1)
+        return AF_INET;
+
+    addrinfo hints{};
+    addrinfo* info;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if (getaddrinfo(host.c_str(), NULL, &hints, &info) == 0) {
+        int family = info->ai_family;
+        freeaddrinfo(info);
+        return family;
+    }
+
+    return AF_UNSPEC;
+}
+
+static void resolve_addr(int family, const string& addr, void* p) {
+    if (inet_pton(family, addr.c_str(), p))
+        return;
+
+    addrinfo hints{}, *ai;
+    hints.ai_family = family;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if (getaddrinfo(addr.c_str(), NULL, &hints, &ai) != 0)
+        MWR_REPORT("failed to resolve '%s'", addr.c_str());
+
+    if (family == AF_INET)
+        memcpy(p, &((sockaddr_in*)ai->ai_addr)->sin_addr, sizeof(in_addr));
+    else
+        memcpy(p, &((sockaddr_in6*)ai->ai_addr)->sin6_addr, sizeof(in6_addr));
+
+    freeaddrinfo(ai);
 }
 
 struct socket_addr {
@@ -111,7 +153,7 @@ socket_addr::socket_addr(int family, u16 port, const string& host):
         if (host.empty())
             ipv4.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         else
-            inet_pton(family, host.c_str(), &ipv4.sin_addr.s_addr);
+            resolve_addr(AF_INET, host, &ipv4.sin_addr.s_addr);
         break;
 
     case AF_INET6:
@@ -120,7 +162,7 @@ socket_addr::socket_addr(int family, u16 port, const string& host):
         if (host.empty())
             ipv6.sin6_addr = in6addr_loopback;
         else
-            inet_pton(family, host.c_str(), &ipv6.sin6_addr);
+            resolve_addr(AF_INET6, host, &ipv6.sin6_addr);
         break;
 
     default:
@@ -176,7 +218,7 @@ static void create_socket(int family, int n, SOCKET& socket, u16& port,
     SET_SOCKOPT(socket, SOL_SOCKET, SO_REUSEADDR, 1);
 
     if (family == AF_INET6)
-        SET_SOCKOPT(socket, IPPROTO_IPV6, IPV6_V6ONLY, 1);
+        SET_SOCKOPT(socket, IPPROTO_IPV6, IPV6_V6ONLY, g_no_ipv4);
 
     socket_addr addr(family, port, host);
     if (::bind(socket, &addr.base, sizeof(addr))) {
@@ -260,15 +302,15 @@ void socket::listen(u16 port) {
     m_host.clear();
     m_port = 0;
 
-    if (!g_use_ipv4 && !g_use_ipv6)
+    if (g_no_ipv4 && g_no_ipv6)
         MWR_REPORT("IPv4 and IPv6 both disabled via environment");
 
     string host4;
     string host6;
 
-    if (g_use_ipv4)
+    if (!g_no_ipv4)
         create_socket(AF_INET, 1, m_sock4, port, host4);
-    if (g_use_ipv6)
+    if (!g_no_ipv6)
         create_socket(AF_INET6, 1, m_sock6, port, host6);
 
     if (!host4.empty())
@@ -439,7 +481,7 @@ server_socket::server_socket(size_t max_clients):
     m_next_client_id(0),
     m_clients(),
     m_nodelay(false),
-    m_ipv6_only(!g_use_ipv4 && g_use_ipv6),
+    m_ipv6_only(g_no_ipv4 && !g_no_ipv6),
     m_connect(),
     m_disconnect() {
     socket_init();
@@ -463,11 +505,20 @@ void server_socket::listen(u16 port, const string& addr) {
     m_host.clear();
     m_port = 0;
 
-    if (!g_use_ipv4 && !g_use_ipv6)
+    if (g_no_ipv4 && g_no_ipv6)
         MWR_REPORT("IPv4 and IPv6 both disabled via environment");
 
+    int family = AF_UNSPEC;
+    if (g_no_ipv6)
+        family = AF_INET;
+    else if (g_no_ipv4 || m_ipv6_only)
+        family = AF_INET6;
+    else if (!addr.empty())
+        family = af_from_addr(addr);
+    else
+        family = AF_INET;
+
     string host = addr;
-    int family = m_ipv6_only ? AF_INET6 : AF_INET;
     create_socket(family, (int)m_max_clients, m_socket, port, host);
 
     m_port = port;
@@ -541,6 +592,16 @@ int server_socket::poll(size_t ms) {
     }
 }
 
+bool server_socket::peek(int client, size_t timeoutms) {
+    socket_t socket = find_socket(client);
+    WSAPOLLFD pfd{};
+    pfd.fd = socket;
+    pfd.events = POLLRDNORM;
+    int r = WSAPoll(&pfd, 1, (INT)timeoutms);
+    MWR_REPORT_ON(r < 0, "failed to poll server socket: %s",
+                  socket_strerror());
+    return r > 0;
+}
 void server_socket::send(int client, const void* buffer, size_t buflen) {
     const char* ptr = (const char*)buffer;
     size_t n = 0;

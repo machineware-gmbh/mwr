@@ -159,8 +159,9 @@ public:
     bool get_ipv6_only() const;
     void set_ipv6_only(bool set = true);
 
-    bool get_reuse_addr() const;
-    void set_reuse_addr(bool set = true);
+    bool is_listening() const;
+    bool is_connected() const;
+    bool is_connected(int client) const;
 
     using connect_fn = std::function<bool(int, string, u16)>;
     void on_connect(connect_fn fn) { m_connect = std::move(fn); }
@@ -186,6 +187,7 @@ public:
 
     int poll(size_t timeoutms);
 
+    bool peek(int client, size_t timeoutms);
     void send(int client, const void* buffer, size_t buflen);
     void recv(int client, void* buffer, size_t buflen);
 
@@ -201,6 +203,7 @@ public:
     int recv_char(int client);
 
 private:
+    using mutex = std::recursive_mutex;
     mutable mutex m_mtx;
 
     socket_t m_socket;
@@ -271,6 +274,20 @@ inline bool server_socket::get_ipv6_only() const {
 inline void server_socket::set_ipv6_only(bool set) {
     lock_guard<mutex> guard(m_mtx);
     m_ipv6_only = set;
+}
+
+inline bool server_socket::is_listening() const {
+    lock_guard<mutex> guard(m_mtx);
+    return (long long)m_socket >= 0;
+}
+
+inline bool server_socket::is_connected() const {
+    return num_clients() > 0;
+}
+
+inline bool server_socket::is_connected(int client) const {
+    lock_guard<mutex> guard(m_mtx);
+    return m_clients.find(client) != m_clients.end();
 }
 
 inline void server_socket::send(int client, const string& str) {

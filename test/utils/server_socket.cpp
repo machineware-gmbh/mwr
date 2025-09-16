@@ -21,6 +21,8 @@ TEST(server_socket, server) {
     EXPECT_STRNE(server.host(), "");
     EXPECT_EQ(server.num_clients(), 0);
     printf("server on %s port %hu\n", server.host(), server.port());
+    EXPECT_TRUE(server.is_listening());
+    EXPECT_FALSE(server.is_connected());
 }
 
 TEST(server_socket, server_ipv6_only) {
@@ -31,6 +33,19 @@ TEST(server_socket, server_ipv6_only) {
     EXPECT_STRNE(server.host(), "");
     EXPECT_EQ(server.num_clients(), 0);
     printf("server on %s port %hu\n", server.host(), server.port());
+    EXPECT_TRUE(server.is_listening());
+    EXPECT_FALSE(server.is_connected());
+}
+
+TEST(server_socket, unlisten) {
+    mwr::server_socket server(1);
+    server.set_ipv6_only(true);
+    server.listen(0);
+    EXPECT_TRUE(server.is_listening());
+    server.unlisten();
+    EXPECT_FALSE(server.is_listening());
+    server.listen(0);
+    EXPECT_TRUE(server.is_listening());
 }
 
 static void worker_thread(mwr::u16 port) {
@@ -64,6 +79,9 @@ TEST(server_socket, one_client) {
 
     int client = server.poll(100);
     ASSERT_EQ(client, 0);
+
+    EXPECT_TRUE(server.is_connected(client));
+    EXPECT_TRUE(server.peek(client, 1000));
 
     char buffer[12]{};
     server.recv(client, buffer, 11);
@@ -141,4 +159,41 @@ TEST(server_socket, max_connections) {
     worker1.join();
     worker2.join();
     worker3.join();
+}
+
+TEST(server_socket, disconnect_client) {
+    mwr::server_socket server(1, 0, "localhost");
+
+    std::thread worker1(worker_thread, server.port());
+
+    while (server.num_clients() == 0) {
+        int client = server.poll(100);
+        ASSERT_EQ(client, -1);
+    }
+
+    ASSERT_EQ(server.num_clients(), 1);
+
+    ASSERT_TRUE(server.is_connected(0));
+    server.disconnect(0);
+    worker1.join();
+    ASSERT_FALSE(server.is_connected(0));
+}
+
+TEST(server_socket, disconnect_all) {
+    mwr::server_socket server(2, 0, "localhost");
+
+    std::thread worker1(worker_thread, server.port());
+    std::thread worker2(worker_thread, server.port());
+
+    while (server.num_clients() < 2) {
+        int client = server.poll(100);
+        ASSERT_EQ(client, -1);
+    }
+
+    ASSERT_EQ(server.num_clients(), 2);
+
+    server.disconnect_all();
+
+    worker1.join();
+    worker2.join();
 }
