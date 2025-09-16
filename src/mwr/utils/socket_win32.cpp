@@ -541,6 +541,16 @@ int server_socket::poll(size_t ms) {
     }
 }
 
+bool server_socket::peek(int client, size_t timeoutms) {
+    socket_t socket = find_socket(client);
+    WSAPOLLFD pfd{};
+    pfd.fd = socket;
+    pfd.events = POLLRDNORM;
+    int r = WSAPoll(&pfd, 1, (INT)timeoutms);
+    MWR_REPORT_ON(r < 0, "failed to poll server socket: %s",
+                  socket_strerror());
+    return r > 0;
+}
 void server_socket::send(int client, const void* buffer, size_t buflen) {
     const char* ptr = (const char*)buffer;
     size_t n = 0;
