@@ -530,13 +530,13 @@ void server_socket::listen(u16 port, const string& addr) {
         MWR_REPORT("IPv4 and IPv6 both disabled via environment");
 
     int family = AF_UNSPEC;
-    if (g_no_ipv4)
-        family = AF_INET6;
     if (g_no_ipv6)
         family = AF_INET;
-    if (family == AF_UNSPEC && !addr.empty())
+    else if (g_no_ipv4 || m_ipv6_only)
+        family = AF_INET6;
+    else if (!addr.empty())
         family = af_from_addr(addr);
-    if (family == AF_UNSPEC)
+    else
         family = AF_INET;
 
     string host = addr;

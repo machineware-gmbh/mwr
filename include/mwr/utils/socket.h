@@ -278,7 +278,7 @@ inline void server_socket::set_ipv6_only(bool set) {
 
 inline bool server_socket::is_listening() const {
     lock_guard<mutex> guard(m_mtx);
-    return m_socket >= 0;
+    return (long long)m_socket >= 0;
 }
 
 inline bool server_socket::is_connected() const {

@@ -37,6 +37,17 @@ TEST(server_socket, server_ipv6_only) {
     EXPECT_FALSE(server.is_connected());
 }
 
+TEST(server_socket, unlisten) {
+    mwr::server_socket server(1);
+    server.set_ipv6_only(true);
+    server.listen(0);
+    EXPECT_TRUE(server.is_listening());
+    server.unlisten();
+    EXPECT_FALSE(server.is_listening());
+    server.listen(0);
+    EXPECT_TRUE(server.is_listening());
+}
+
 static void worker_thread(mwr::u16 port) {
     try {
         mwr::socket client;
