@@ -164,10 +164,10 @@ public:
     bool is_connected(int client) const;
 
     using connect_fn = std::function<bool(int, string, u16)>;
-    void on_connect(connect_fn fn) { m_connect = std::move(fn); }
+    void on_connect(connect_fn fn);
 
     using disconnect_fn = std::function<void(int)>;
-    void on_disconnect(disconnect_fn fn) { m_disconnect = std::move(fn); }
+    void on_disconnect(disconnect_fn fn);
 
     server_socket(size_t max_clients);
     server_socket(size_t max_client, u16 port): server_socket(max_client) {
@@ -223,8 +223,8 @@ private:
     socket_t find_socket_locked(int client) const;
     socket_t find_socket(int client) const;
 
-    int find_client_locked(socket_t conn) const;
-    void accept_new_client_locked();
+    int find_client(socket_t conn) const;
+    void accept_new_client();
 };
 
 inline u16 server_socket::port() const {
@@ -290,6 +290,16 @@ inline bool server_socket::is_connected(int client) const {
     return m_clients.find(client) != m_clients.end();
 }
 
+inline void server_socket::on_connect(connect_fn fn) {
+    lock_guard<mutex> guard(m_mtx);
+    m_connect = std::move(fn);
+}
+
+inline void server_socket::on_disconnect(disconnect_fn fn) {
+    lock_guard<mutex> guard(m_mtx);
+    m_disconnect = std::move(fn);
+}
+
 inline void server_socket::send(int client, const string& str) {
     send(client, str.c_str(), str.length());
 }
@@ -330,7 +340,8 @@ inline socket_t server_socket::find_socket(int client) const {
     return find_socket_locked(client);
 }
 
-inline int server_socket::find_client_locked(socket_t conn) const {
+inline int server_socket::find_client(socket_t conn) const {
+    lock_guard<mutex> guard(m_mtx);
     for (const auto& [client, socket] : m_clients) {
         if (socket == conn)
             return client;

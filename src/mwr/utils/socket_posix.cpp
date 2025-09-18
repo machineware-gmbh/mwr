@@ -554,14 +554,19 @@ void server_socket::unlisten() {
 }
 
 void server_socket::disconnect(int client) {
-    lock_guard<mutex> guard(m_mtx);
-    auto it = m_clients.find(client);
-    if (it != m_clients.end()) {
-        if (m_disconnect)
-            m_disconnect(it->first);
-        close_socket(it->second);
-        m_clients.erase(it);
+    disconnect_fn notify_disconnect;
+    {
+        lock_guard<mutex> guard(m_mtx);
+        auto it = m_clients.find(client);
+        if (it != m_clients.end()) {
+            notify_disconnect = m_disconnect;
+            close_socket(it->second);
+            m_clients.erase(it);
+        }
     }
+
+    if (notify_disconnect)
+        notify_disconnect(client);
 }
 
 void server_socket::disconnect_all() {
@@ -593,14 +598,14 @@ int server_socket::poll(size_t ms) {
         if (res < 0)
             MWR_REPORT("failed to poll server socket: %s", strerror(errno));
 
-        {
-            lock_guard<mutex> guard(m_mtx);
-            for (const pollfd& poll : pollfds) {
-                if (poll.revents) {
-                    if (poll.fd == m_socket)
-                        accept_new_client_locked();
-                    else
-                        return find_client_locked(poll.fd);
+        for (const pollfd& poll : pollfds) {
+            if (poll.revents) {
+                if (poll.fd == m_socket)
+                    accept_new_client();
+                else {
+                    int client = find_client(poll.fd);
+                    if (client >= 0)
+                        return client;
                 }
             }
         }
@@ -657,7 +662,7 @@ void server_socket::recv(int client, void* buffer, size_t buflen) {
     }
 }
 
-void server_socket::accept_new_client_locked() {
+void server_socket::accept_new_client() {
     socket_addr addr;
     socklen_t len = sizeof(addr);
     socket_t conn = ::accept(m_socket, &addr.base, &len);
@@ -665,18 +670,28 @@ void server_socket::accept_new_client_locked() {
     if (conn < 0)
         MWR_REPORT("failed to accept connection: %s", strerror(errno));
 
+    m_mtx.lock();
     if (m_clients.size() >= m_max_clients) {
+        m_mtx.unlock();
         close_socket(conn);
         return;
     }
 
-    if (m_connect && !m_connect(m_next_client_id, addr.host(), addr.port())) {
-        close_socket(conn);
-        return;
+    connect_fn notify_connect = m_connect;
+    int client = m_next_client_id++;
+
+    if (notify_connect) {
+        m_mtx.unlock();
+        if (!notify_connect(client, addr.host(), addr.port())) {
+            close_socket(conn);
+            return;
+        }
+        m_mtx.lock();
     }
 
     SET_SOCKOPT(conn, IPPROTO_TCP, TCP_NODELAY, m_nodelay);
-    m_clients[m_next_client_id++] = conn;
+    m_clients[client] = conn;
+    m_mtx.unlock();
 }
 
 } // namespace mwr
