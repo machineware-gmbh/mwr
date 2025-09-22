@@ -200,6 +200,18 @@ string socket_addr::peer() const {
     return mkstr("%s:%hu", host().c_str(), port());
 }
 
+static void close_socket(int& socket) {
+    if (socket >= 0) {
+        shutdown(socket, SHUT_RDWR);
+#ifndef MWR_LINUX
+        // rhel8 locks up accepting connections when we close the socket on
+        // Linux, but MacOS needs this to unblock threads stuck accepting
+        close(socket);
+#endif
+        socket = -1;
+    }
+}
+
 static void create_socket(int family, int n, int& socket, u16& port,
                           string& host) {
     socket = ::socket(family, SOCK_STREAM, 0);
@@ -218,6 +230,7 @@ static void create_socket(int family, int n, int& socket, u16& port,
     if (port > 0 || !host.empty()) {
         socket_addr addr(family, port, host);
         if (::bind(socket, &addr.base, addr.size())) {
+            close_socket(socket);
             MWR_REPORT("binding socket to port %hu failed: %s", port,
                        strerror(errno));
         }
@@ -233,18 +246,6 @@ static void create_socket(int family, int n, int& socket, u16& port,
             MWR_ERROR("getsockname failed: %s", strerror(errno));
         port = addr.port();
         host = addr.host();
-    }
-}
-
-static void close_socket(int& socket) {
-    if (socket >= 0) {
-        shutdown(socket, SHUT_RDWR);
-#ifndef MWR_LINUX
-        // rhel8 locks up accepting connections when we close the socket on
-        // Linux, but MacOS needs this to unblock threads stuck accepting
-        close(socket);
-#endif
-        socket = -1;
     }
 }
 

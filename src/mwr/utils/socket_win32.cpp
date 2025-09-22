@@ -209,6 +209,14 @@ string socket_addr::peer() const {
     return mkstr("%s:%hu", host().c_str(), port());
 }
 
+static void close_socket(SOCKET& socket) {
+    if (socket != INVALID_SOCKET) {
+        shutdown(socket, SD_BOTH);
+        closesocket(socket);
+        socket = INVALID_SOCKET;
+    }
+}
+
 static void create_socket(int family, int n, SOCKET& socket, u16& port,
                           string& host) {
     socket = ::socket(family, SOCK_STREAM, 0);
@@ -222,6 +230,7 @@ static void create_socket(int family, int n, SOCKET& socket, u16& port,
 
     socket_addr addr(family, port, host);
     if (::bind(socket, &addr.base, sizeof(addr))) {
+        close_socket(socket);
         MWR_REPORT("binding socket to port %hu failed: %s", port,
                    socket_strerror());
     }
@@ -236,14 +245,6 @@ static void create_socket(int family, int n, SOCKET& socket, u16& port,
             MWR_ERROR("getsockname failed: %s", socket_strerror());
         port = addr.port();
         host = addr.host();
-    }
-}
-
-static void close_socket(SOCKET& socket) {
-    if (socket != INVALID_SOCKET) {
-        shutdown(socket, SD_BOTH);
-        closesocket(socket);
-        socket = INVALID_SOCKET;
     }
 }
 
