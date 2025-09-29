@@ -11,7 +11,7 @@ env:
 
 defaults:
   run:
-    shell: C:\msys64\usr\bin\bash.exe {0}
+    shell: msys2 {0}
 
 jobs:
   mingw:
@@ -30,9 +30,14 @@ jobs:
         submodules: 'recursive'
 
     - name: Setup dependencies
-      run: |
-        pacman -Syu
-        pacman -S mingw-w64-x86_64-toolchain
+      uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: >-
+          base-devel
+          mingw-w64-x86_64-toolchain
+          cmake
+        msystem: mingw64
 
     - name: Configure
       run: cmake -G "MinGW Makefiles" -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON
