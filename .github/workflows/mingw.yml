@@ -33,14 +33,11 @@ jobs:
       uses: msys2/setup-msys2@v2
       with:
         update: true
-        install: >-
-          base-devel
-          mingw-w64-x86_64-toolchain
-          cmake
         msystem: mingw64
+        pacboy: cc:p cmake:p ninja:p
 
     - name: Configure
-      run: cmake -G "Unix Makefiles" -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON
+      run: cmake -G Ninja -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON
 
     - name: Build
       run: cmake --build BUILD
