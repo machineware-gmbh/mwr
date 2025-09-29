@@ -3,6 +3,9 @@
 LibMWR contains types and utilities shared between all MachineWare projects.
 
 [![Build Status](https://github.com/machineware-gmbh/mwr/actions/workflows/cmake.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/cmake.yml)
+[![MacOS Status](https://github.com/machineware-gmbh/mwr/actions/workflows/macos.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/macos.yml)
+[![Build Status](https://github.com/machineware-gmbh/mwr/actions/workflows/msvc.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/msvc.yml)
+[![Build Status](https://github.com/machineware-gmbh/mwr/actions/workflows/mingw.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/mingw.yml)
 [![ASAN Status](https://github.com/machineware-gmbh/mwr/actions/workflows/asan.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/asan.yml)
 [![Lint Status](https://github.com/machineware-gmbh/mwr/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/lint.yml)
 [![Style Status](https://github.com/machineware-gmbh/mwr/actions/workflows/style.yml/badge.svg?branch=main)](https://github.com/machineware-gmbh/mwr/actions/workflows/style.yml)

@@ -1,4 +1,4 @@
-name: cmake
+name: macos
 
 on:
   push:
@@ -10,26 +10,20 @@ env:
   BUILD_TYPE: RelWithDebInfo
 
 jobs:
-  cmake:
-    name: cmake
+  macos:
+    name: macos
     runs-on: ${{matrix.os}}
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04, ubuntu-22.04-arm, ubuntu-24.04-arm, self-hosted-rhel-8]
+        os: [macos-13, macos-14]
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
       with:
         submodules: 'recursive'
-
-    - name: Setup Dependencies
-      if: contains(matrix.os, 'ubuntu') == true
-      run: |
-        sudo apt-get update -y -qq
-        sudo apt-get install libelf-dev ninja-build
 
     - name: Configure
       run: cmake -G Ninja -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON
