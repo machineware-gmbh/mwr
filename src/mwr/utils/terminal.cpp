@@ -22,7 +22,7 @@
 #include <termios.h>
 #endif
 
-#if defined(MWR_MSVC)
+#if defined(MWR_MSVC) || defined(MWR_MINGW)
 #include <Windows.h>
 #include <io.h>
 #endif
@@ -48,7 +48,7 @@ int new_tty() {
 }
 
 bool is_tty(int fd) {
-#ifdef MWR_MSVC
+#ifdef MWR_WINDOWS
     return fd >= 0 && _isatty(fd);
 #else
     termios attr;
@@ -60,7 +60,7 @@ class tty
 {
 private:
     struct ttystate {
-#ifdef MWR_MSVC
+#ifdef MWR_WINDOWS
         DWORD attr;
 #else
         termios attr;
@@ -71,7 +71,7 @@ private:
     int m_fd;
     std::stack<ttystate> m_stack;
 
-#ifdef MWR_MSVC
+#ifdef MWR_WINDOWS
     DWORD load() const {
         DWORD mode;
         HANDLE console = (HANDLE)_get_osfhandle(m_fd);
@@ -110,7 +110,7 @@ public:
             // try to restore the tty state. its okay if it fails, maybe the
             // corresponding fd has already been closed.
             if (state.restore) {
-#ifdef MWR_MSVC
+#ifdef MWR_WINDOWS
                 HANDLE console = (HANDLE)_get_osfhandle(m_fd);
                 SetConsoleMode(console, state.attr);
 #else
@@ -120,7 +120,7 @@ public:
         }
     }
 
-#ifdef MWR_MSVC
+#ifdef MWR_WINDOWS
     bool is_vt100() const {
         return load() & (ENABLE_VIRTUAL_TERMINAL_INPUT |
                          ENABLE_VIRTUAL_TERMINAL_PROCESSING);
@@ -133,7 +133,7 @@ public:
 
     void setup_vt100() {
         auto attr = load();
-#ifdef MWR_MSVC
+#ifdef MWR_WINDOWS
         if (m_fd == STDIN_FDNO) {
             attr &= ~ENABLE_ECHO_INPUT;
             attr &= ~ENABLE_LINE_INPUT;
@@ -153,7 +153,7 @@ public:
 #endif
         save(attr);
 
-#ifdef MWR_MSVC
+#ifdef MWR_WINDOWS
         if (m_fd == STDIN_FDNO)
             SetConsoleCP(CP_UTF8);
         else

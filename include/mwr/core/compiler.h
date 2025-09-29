@@ -21,6 +21,10 @@
 #error unsupported compiler
 #endif
 
+#if defined(__GNUC__) && defined(_WIN64)
+#define MWR_MINGW
+#endif
+
 #if defined(__linux__)
 #define MWR_LINUX
 #elif defined(__APPLE__)
@@ -52,8 +56,12 @@
 #define MWR_CPLUSPLUS_20 202002L
 
 #if defined(MWR_GCC) || defined(MWR_CLANG)
-#define MWR_DECL_ALIGN(n)     __attribute__((aligned(n)))
-#define MWR_DECL_WEAK         __attribute__((weak))
+#define MWR_DECL_ALIGN(n) __attribute__((aligned(n)))
+#if defined(MWR_MINGW)
+#define MWR_DECL_WEAK __declspec(selectany)
+#else
+#define MWR_DECL_WEAK __attribute__((weak))
+#endif
 #define MWR_DECL_PRINTF(s, a) __attribute__((format(printf, s, a)))
 #define MWR_DECL_INLINE       __attribute__((always_inline))
 #define MWR_DECL_NOINLINE     __attribute__((noinline))

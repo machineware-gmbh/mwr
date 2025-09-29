@@ -28,21 +28,21 @@
 namespace mwr {
 
 static auto current_thread() {
-#if defined(MWR_LINUX) || defined(MWR_MACOS)
+#if defined(MWR_GCC) || defined(MWR_CLANG)
     return pthread_self();
-#elif defined(MWR_WINDOWS)
+#elif defined(MWR_MSVC)
     return GetCurrentThread();
 #endif
 }
 
 template <typename THREAD>
 static string native_get_thread_name(THREAD handle) {
-#if defined(MWR_LINUX) || defined(MWR_MACOS)
+#if defined(MWR_GCC) || defined(MWR_CLANG)
     char buffer[256] = {};
     if (pthread_getname_np(handle, buffer, sizeof(buffer)) == 0)
         return buffer;
     return "unknown";
-#elif defined(MWR_WINDOWS)
+#elif defined(MWR_MSVC)
     PWSTR name = nullptr;
     auto hr = GetThreadDescription(handle, &name);
     if (FAILED(hr))
@@ -60,7 +60,7 @@ static string native_get_thread_name(THREAD handle) {
 
 template <typename THREAD>
 static bool native_set_thread_name(THREAD handle, const string& nm) {
-#if defined(MWR_LINUX)
+#if defined(MWR_LINUX) || defined(MWR_MINGW)
     MWR_ERROR_ON(nm.length() > 15, "thread name too long: %s", nm.c_str());
     return pthread_setname_np(handle, nm.c_str()) == 0;
 #elif defined(MWR_MACOS)

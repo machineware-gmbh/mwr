@@ -32,6 +32,9 @@ namespace fs = std::filesystem;
 #include <Windows.h>
 #include <DbgHelp.h>
 #include <io.h>
+#ifdef MWR_MINGW
+#include <unistd.h>
+#endif
 #endif
 
 #ifdef MWR_MACOS
@@ -163,7 +166,7 @@ string username() {
 }
 
 optional<string> getenv(const string& env) {
-#if defined(MWR_MSVC)
+#if defined(MWR_WINDOWS)
     DWORD n = GetEnvironmentVariable(env.c_str(), NULL, 0);
     if (n == 0)
         return optional<string>();
@@ -180,7 +183,7 @@ optional<string> getenv(const string& env) {
 }
 
 void setenv(const string& name, const string& value) {
-#if defined(MWR_MSVC)
+#if defined(MWR_WINDOWS)
     auto err = _putenv_s(name.c_str(), value.c_str());
     MWR_ERROR_ON(err, "failed to set %s (%d)", name.c_str(), err);
 #else
@@ -190,7 +193,7 @@ void setenv(const string& name, const string& value) {
 }
 
 void clrenv(const string& name) {
-#if defined(MWR_MSVC)
+#if defined(MWR_WINDOWS)
     auto err = _putenv_s(name.c_str(), "");
     MWR_ERROR_ON(err, "failed to set %s (%d)", name.c_str(), err);
 #else
@@ -223,7 +226,7 @@ size_t get_page_size() {
 }
 
 int fd_open(const string& path, const string& mode, int perms) {
-#ifdef MWR_MSVC
+#ifdef MWR_WINDOWS
     perms &= ~077;
 
     int flags = 0;
@@ -325,8 +328,10 @@ size_t fd_peek(int fd, time_t timeoutms) {
     if (fd < 0)
         return 0;
 
+#if defined(MWR_MSVC) || defined(MWR_MINGW)
 #if defined(MWR_MSVC)
     msvc_invalid_parameter_guard guard;
+#endif
     HANDLE handle = (HANDLE)_get_osfhandle(fd);
     if (handle == INVALID_HANDLE_VALUE)
         MWR_ERROR("invalid file descriptor: %d", fd);
@@ -428,7 +433,7 @@ size_t fd_read(int fd, void* buffer, size_t buflen) {
     while (numread < buflen) {
         do {
 #ifdef MWR_MSVC
-            size_t n = min(buflen - numread, U32_MAX);
+            size_t n = min<size_t>(buflen - numread, U32_MAX);
             len = _read(fd, ptr + numread, (u32)n);
 #else
             len = read(fd, ptr + numread, buflen - numread);
@@ -512,8 +517,10 @@ int fd_dup(int fd) {
 }
 
 int fd_pipe(int fds[2]) {
-#ifdef MWR_MSVC
+#if defined(MWR_MSVC) || defined(MWR_MINGW)
+#if defined(MWR_MSVC)
     msvc_invalid_parameter_guard guard;
+#endif
     return _pipe(fds, 2, _O_TEXT);
 #else
     return pipe(fds);
@@ -556,12 +563,13 @@ bool fill_random(void* buffer, size_t bufsz) {
     size_t len = 0;
 
     while (len < bufsz) {
-        DWORD n = (DWORD)min(bufsz - len, ~0u);
-        if (!CryptGenRandom(provider, n, ptr))
+        DWORD rem = (DWORD)(bufsz - len);
+        DWORD num = min<DWORD>(rem, ~0u);
+        if (!CryptGenRandom(provider, num, ptr))
             break;
 
-        len += n;
-        ptr += n;
+        len += num;
+        ptr += num;
     }
 
     CryptReleaseContext(provider, 0);

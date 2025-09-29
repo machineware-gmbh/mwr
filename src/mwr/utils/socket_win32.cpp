@@ -59,7 +59,7 @@ static const char* socket_strerror(DWORD err = WSAGetLastError()) {
         return buffer;
     }
 
-    snprintf(buffer, sizeof(buffer), "0x%08x", err);
+    snprintf(buffer, sizeof(buffer), "0x%08lx", err);
     return buffer;
 }
 
