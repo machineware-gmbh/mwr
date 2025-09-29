@@ -11,7 +11,7 @@ env:
 
 defaults:
   run:
-    shell: msys2bash.cmd
+    shell: C:\msys64\usr\bin\bash.exe
 
 jobs:
   mingw:
