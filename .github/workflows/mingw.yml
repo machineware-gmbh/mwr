@@ -40,7 +40,7 @@ jobs:
         msystem: mingw64
 
     - name: Configure
-      run: cmake -G "MinGW Makefiles" -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON
+      run: cmake -G "Unix Makefiles" -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON
 
     - name: Build
       run: cmake --build BUILD
