@@ -9,6 +9,10 @@ on:
 env:
   BUILD_TYPE: RelWithDebInfo
 
+defaults:
+  run:
+    shell: msys2bash.cmd
+
 jobs:
   mingw:
     name: mingw
@@ -26,25 +30,17 @@ jobs:
         submodules: 'recursive'
 
     - name: Setup dependencies
-      uses: msys2/setup-msys2@v2
-      with:
-        update: true
-        install: >-
-          base-devel
-          mingw-w64-x86_64-toolchain
-          cmake
-        msystem: mingw64
+      run: |
+        pacman -Syu
+        pacman -S mingw-w64-x86_64-toolchain
 
     - name: Configure
-      shell: msys2 {0}
       run: cmake -G "MinGW Makefiles" -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON
 
     - name: Build
-      shell: msys2 {0}
       run: cmake --build BUILD
 
     - name: Test
-      shell: msys2 {0}
       working-directory: BUILD
       run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
 
