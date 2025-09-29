@@ -11,7 +11,7 @@ env:
 
 defaults:
   run:
-    shell: C:\msys64\usr\bin\bash.exe
+    shell: C:\msys64\usr\bin\bash.exe {0}
 
 jobs:
   mingw:
