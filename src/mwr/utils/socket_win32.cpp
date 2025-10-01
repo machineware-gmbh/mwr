@@ -670,7 +670,13 @@ void server_socket::accept_new_client() {
         m_mtx.lock();
     }
 
-    SET_SOCKOPT(conn, IPPROTO_TCP, TCP_NODELAY, m_nodelay);
+    try {
+        SET_SOCKOPT(conn, IPPROTO_TCP, TCP_NODELAY, m_nodelay);
+    } catch (...) {
+        m_mtx.unlock();
+        throw;
+    }
+
     m_clients[client] = conn;
     m_mtx.unlock();
 }
