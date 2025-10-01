@@ -606,7 +606,7 @@ int server_socket::poll(size_t ms) {
             if (poll.revents) {
                 if (poll.fd == listen_socket) {
                     if (poll.revents & POLLIN)
-                    accept_new_client();
+                        accept_new_client();
                 } else {
                     int client = find_client(poll.fd);
                     if (client >= 0)
