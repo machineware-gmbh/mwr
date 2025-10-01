@@ -50,7 +50,7 @@ static const char* library_strerror(DWORD err = GetLastError()) {
         return buffer;
     }
 
-    snprintf(buffer, sizeof(buffer), "error 0x%08x", err);
+    snprintf(buffer, sizeof(buffer), "error 0x%08lx", err);
     return buffer;
 }
 
@@ -62,10 +62,10 @@ static string library_path(void* handle) {
 }
 
 void* library::lookup(const string& name) const {
-    void* sym = GetProcAddress((HMODULE)m_handle, name.c_str());
+    auto* sym = GetProcAddress((HMODULE)m_handle, name.c_str());
     MWR_REPORT_ON(!sym, "error loading %s: %s", name.c_str(),
                   library_strerror());
-    return sym;
+    return (void*)sym;
 }
 
 library::library():
@@ -148,7 +148,7 @@ void library::close() {
 }
 
 bool library::has(const string& name) const {
-    void* sym = GetProcAddress((HMODULE)m_handle, name.c_str());
+    auto* sym = GetProcAddress((HMODULE)m_handle, name.c_str());
     return sym != nullptr;
 }
 

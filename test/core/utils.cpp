@@ -23,22 +23,28 @@ TEST(utils, paths) {
     std::filesystem::create_directory("temp");
     std::filesystem::create_directory("temp/dir");
     std::ofstream("temp/file");
+
+#ifndef MWR_MINGW
+    // mingw does not support create_symlink
     std::filesystem::create_symlink("../temp", "temp/temp.link");
     std::filesystem::create_symlink("file", "temp/file.link");
     std::filesystem::create_symlink("file.link", "temp/file.link.link");
     std::filesystem::create_symlink("../file", "temp/dir/file.link");
     std::filesystem::create_symlink("../file.link", "temp/dir/file.link.link");
     std::filesystem::create_symlink("temp/file", "temp/dir/wrong.link");
+#endif
 
+    EXPECT_TRUE(directory_exists("temp"));
     EXPECT_TRUE(file_exists("temp/file"));
+
+#ifndef MWR_MINGW
     EXPECT_TRUE(file_exists("temp/file.link"));
     EXPECT_TRUE(file_exists("temp/file.link.link"));
     EXPECT_TRUE(file_exists("temp/dir/file.link"));
     EXPECT_TRUE(file_exists("temp/dir/file.link.link"));
     EXPECT_FALSE(file_exists("temp/dir/wrong.link"));
-
-    EXPECT_TRUE(directory_exists("temp"));
     EXPECT_TRUE(directory_exists("temp/temp.link"));
+#endif
 
     EXPECT_FALSE(directory_exists("temp/file"));
     EXPECT_FALSE(directory_exists("temp/file.link"));

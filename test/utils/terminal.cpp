@@ -23,9 +23,11 @@ TEST(utils, tty) {
     if (!mwr::is_tty(fd))
         return;
 
+    bool is_vt100 = mwr::tty_is_vt100(fd);
+
     mwr::tty_push(fd, false);
 
-    EXPECT_FALSE(mwr::tty_is_vt100(fd));
+    EXPECT_EQ(mwr::tty_is_vt100(fd), is_vt100);
 
     mwr::tty_setup_vt100(fd);
 
@@ -33,7 +35,7 @@ TEST(utils, tty) {
 
     mwr::tty_pop(fd);
 
-    EXPECT_FALSE(mwr::tty_is_vt100(fd));
+    EXPECT_EQ(mwr::tty_is_vt100(fd), is_vt100);
 
     {
         mwr::tty_guard guard(fd);
@@ -41,7 +43,7 @@ TEST(utils, tty) {
         EXPECT_TRUE(mwr::tty_is_vt100(fd));
     }
 
-    EXPECT_FALSE(mwr::tty_is_vt100(fd));
+    EXPECT_EQ(mwr::tty_is_vt100(fd), is_vt100);
 
     if (fd != 0)
         mwr::fd_close(fd);

@@ -60,8 +60,8 @@ private:
                 polls.clear();
 
                 lock_guard<mutex> guard(m_mtx);
-                for (const auto& it : m_handlers)
-                    polls.push_back(it.first);
+                for (const auto& [handle, info] : m_handlers)
+                    polls.push_back(handle);
 
                 curgen = m_gen;
             }
@@ -73,9 +73,10 @@ private:
             }
 
             for (size_t i = 0; i < polls.size(); i += MAXIMUM_WAIT_OBJECTS) {
-                DWORD n = (DWORD)min(polls.size() - i, MAXIMUM_WAIT_OBJECTS);
-                DWORD ret = WaitForMultipleObjects(n, polls.data() + i, FALSE,
-                                                   TIMEOUT_MS);
+                DWORD rem = (DWORD)(polls.size() - i);
+                DWORD num = min<DWORD>(rem, MAXIMUM_WAIT_OBJECTS);
+                DWORD ret = WaitForMultipleObjects(num, polls.data() + i,
+                                                   FALSE, TIMEOUT_MS);
                 if (!m_running)
                     return;
 
@@ -102,6 +103,22 @@ private:
                         }
                     }
                 }
+
+#ifdef MWR_MINGW
+                // we dont get a WAIT_FAILED on mingw for closed file
+                // descriptors, so manually check everything again
+                if (ret == STATUS_TIMEOUT) {
+                    lock_guard<mutex> guard(m_mtx);
+                    for (HANDLE handle : polls) {
+                        if (m_handlers.count(handle) &&
+                            ((HANDLE)_get_osfhandle(m_handlers[handle].fd) ==
+                             INVALID_HANDLE_VALUE)) {
+                            scheduled.push_back(m_handlers[handle]);
+                            m_handlers.erase(handle);
+                        }
+                    }
+                }
+#endif
 
                 for (const auto& handler : scheduled)
                     handler.handler(handler.fd);

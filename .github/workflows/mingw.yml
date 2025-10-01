@@ -1,4 +1,4 @@
-name: cmake
+name: mingw
 
 on:
   push:
@@ -9,15 +9,19 @@ on:
 env:
   BUILD_TYPE: RelWithDebInfo
 
+defaults:
+  run:
+    shell: msys2 {0}
+
 jobs:
-  cmake:
-    name: cmake
+  mingw:
+    name: mingw
     runs-on: ${{matrix.os}}
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04, ubuntu-22.04-arm, ubuntu-24.04-arm, self-hosted-rhel-8]
+        os: [windows-2022, windows-2025]
 
     steps:
     - name: Checkout
@@ -25,11 +29,12 @@ jobs:
       with:
         submodules: 'recursive'
 
-    - name: Setup Dependencies
-      if: contains(matrix.os, 'ubuntu') == true
-      run: |
-        sudo apt-get update -y -qq
-        sudo apt-get install libelf-dev ninja-build
+    - name: Setup dependencies
+      uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        msystem: mingw64
+        pacboy: cc:p cmake:p ninja:p
 
     - name: Configure
       run: cmake -G Ninja -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON
@@ -45,7 +50,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: '!cancelled()'
       with:
-        name: ${{github.event.repository.name}}-logs-${{matrix.os}}
+        name: ${{github.event.repository.name}}-logs-${{matrix.os}}-mingw
         path: |
             BUILD/.ninja_log
             BUILD/CMakeCache.txt

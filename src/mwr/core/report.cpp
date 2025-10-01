@@ -151,7 +151,7 @@ void print_backtrace(ostream& os) {
 
 static int parent_pid = getpid();
 
-#if defined(MWR_MSVC)
+#if defined(MWR_WINDOWS)
 static LPTOP_LEVEL_EXCEPTION_FILTER prev_handler;
 static LONG WINAPI handle_exception(EXCEPTION_POINTERS* info) {
     if (parent_pid == getpid() &&
