@@ -559,11 +559,14 @@ void server_socket::disconnect_all() {
 int server_socket::poll(size_t ms) {
     while (true) {
         u64 t = timestamp_ms();
+        SOCKET listen_socket = INVALID_SOCKET;
         vector<WSAPOLLFD> pollfds;
         {
             lock_guard<mutex> guard(m_mtx);
-            if (m_socket != INVALID_SOCKET)
-                pollfds.push_back({ m_socket, POLLRDNORM, 0 });
+            if (m_socket != INVALID_SOCKET) {
+                listen_socket = m_socket;
+                pollfds.push_back({ listen_socket, POLLRDNORM, 0 });
+            }
 
             for (const auto& [client, socket] : m_clients)
                 pollfds.push_back({ socket, POLLRDNORM, 0 });
@@ -580,9 +583,10 @@ int server_socket::poll(size_t ms) {
 
         for (const WSAPOLLFD& poll : pollfds) {
             if (poll.revents) {
-                if (poll.fd == m_socket)
-                    accept_new_client();
-                else {
+                if (poll.fd == listen_socket) {
+                    if (poll.revents & POLLRDNORM)
+                        accept_new_client();
+                } else {
                     int client = find_client(poll.fd);
                     if (client >= 0)
                         return client;
@@ -644,6 +648,10 @@ void server_socket::recv(int client, void* buffer, size_t buflen) {
 }
 
 void server_socket::accept_new_client() {
+    lock_guard<mutex> guard(m_mtx);
+    if (m_socket == INVALID_SOCKET)
+        return;
+
     socket_addr addr;
     socklen_t len = sizeof(addr);
     socket_t conn = ::accept(m_socket, &addr.base, &len);
@@ -651,9 +659,7 @@ void server_socket::accept_new_client() {
     if (conn < 0)
         MWR_REPORT("failed to accept connection: %s", socket_strerror());
 
-    m_mtx.lock();
     if (m_clients.size() >= m_max_clients) {
-        m_mtx.unlock();
         close_socket(conn);
         return;
     }
@@ -661,24 +667,32 @@ void server_socket::accept_new_client() {
     connect_fn notify_connect = m_connect;
     int client = m_next_client_id++;
 
+    bool ok = true;
     if (notify_connect) {
-        m_mtx.unlock();
-        if (!notify_connect(client, addr.host(), addr.port())) {
+        try {
+            m_mtx.unlock();
+            ok = notify_connect(client, addr.host(), addr.port());
+            m_mtx.lock();
+        } catch (...) {
+            m_mtx.lock();
             close_socket(conn);
-            return;
+            throw;
         }
-        m_mtx.lock();
+    }
+
+    if (!ok) {
+        close_socket(conn);
+        return;
     }
 
     try {
         SET_SOCKOPT(conn, IPPROTO_TCP, TCP_NODELAY, m_nodelay);
     } catch (...) {
-        m_mtx.unlock();
+        close_socket(conn);
         throw;
     }
 
     m_clients[client] = conn;
-    m_mtx.unlock();
 }
 
 } // namespace mwr
