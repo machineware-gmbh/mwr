@@ -36,8 +36,6 @@ else()
     string(APPEND MWR_ENVVAR "LD_LIBRARY_PATH=${resources};")
 endif()
 
-message(${MWR_ENVVAR})
-
 add_subdirectory(core)
 add_subdirectory(stl)
 add_subdirectory(logging)

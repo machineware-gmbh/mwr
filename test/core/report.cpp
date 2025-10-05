@@ -11,6 +11,25 @@
 #include "testing.h"
 #include "mwr/core/report.h"
 
+namespace example {
+struct my_type_name {
+    unsigned int x;
+};
+template <typename T>
+class my_template
+{
+    using my_type = T;
+};
+} // namespace example
+
+TEST(report, demangle) {
+    EXPECT_EQ(mwr::demangle(typeid(unsigned int).name()), "unsigned int");
+    EXPECT_EQ(mwr::demangle(typeid(example::my_type_name).name()),
+              "example::my_type_name");
+    EXPECT_EQ(mwr::demangle(typeid(example::my_template<int>).name()),
+              "example::my_template<int>");
+}
+
 TEST(report, what) {
     const char* what = "test report";
     const char* file = __FILE__;

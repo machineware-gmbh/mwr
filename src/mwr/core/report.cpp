@@ -14,26 +14,77 @@
 #include <stdio.h>
 #include <signal.h>
 
-#ifdef MWR_LINUX
+#if defined(MWR_LINUX)
 #include <unistd.h>
 #include <execinfo.h>
-#include <cxxabi.h>
 #endif
 
-#ifdef MWR_WINDOWS
+#if defined(MWR_MACOS)
+#include <unistd.h>
+#include <execinfo.h>
+#include <mach-o/dyld.h>
+#endif
+
+#if defined(MWR_WINDOWS)
 #include <Windows.h>
 #include <DbgHelp.h>
 #include <io.h>
 #endif
 
-#ifdef MWR_MACOS
-#include <unistd.h>
-#include <execinfo.h>
+#if defined(MWR_GCC) || defined(MWR_CLANG)
 #include <cxxabi.h>
-#include <mach-o/dyld.h>
 #endif
 
 namespace mwr {
+
+#if defined(MWR_GCC) || defined(MWR_CLANG)
+static bool cxa_demangle(const string& symbol, string& result) {
+    int status = 0;
+    char* res = abi::__cxa_demangle(symbol.c_str(), nullptr, nullptr, &status);
+    if (status == 0) {
+        result = string(res);
+        free(res);
+        return true;
+    }
+
+    return false;
+}
+#endif
+
+#if defined(MWR_WINDOWS)
+static bool win32_demangle(const string& symbol, string& result) {
+    char buf[1024];
+    if (UnDecorateSymbolName(symbol.c_str(), buf, sizeof(buf),
+                             UNDNAME_COMPLETE) == 0) {
+        return false;
+    }
+
+    string name(buf);
+    if (starts_with(name, "class "))
+        result = name.substr(6);
+    else if (starts_with(name, "struct "))
+        result = name.substr(7);
+    else
+        result = name;
+    return true;
+}
+#endif
+
+string demangle(const string& symbol) {
+    string result;
+
+#if defined(MWR_GCC) || defined(MWR_CLANG)
+    if (cxa_demangle(symbol, result))
+        return result;
+#endif
+
+#if defined(MWR_WINDOWS)
+    if (win32_demangle(symbol, result))
+        return result;
+#endif
+
+    return symbol;
+}
 
 ostream& operator<<(ostream& os, const stackframe& frame) {
     if (!frame.symbol.empty()) {
@@ -81,13 +132,7 @@ vector<stackframe> backtrace(size_t frames, size_t skip) {
             *end = '\0';
 
             frame.offset = strtol(offset, NULL, 16);
-
-            int status = 0;
-            char* res = abi::__cxa_demangle(func, dmbuf, &dmbufsz, &status);
-            if (status == 0)
-                frame.symbol = to_string(dmbuf = res);
-            else
-                frame.symbol = to_string(func);
+            frame.symbol = demangle(func);
         }
 
         sv.push_back(frame);
@@ -179,10 +224,10 @@ static struct sigaction oldact;
 static void handle_segfault(int sig, siginfo_t* info, void* context) {
     if (parent_pid == getpid()) {
         print_backtrace(std::cerr);
-        fprintf(
-            stderr,
-            "Caught signal %d (%s) while accessing memory at location %p\n",
-            sig, strsignal(sig), info->si_addr);
+        fprintf(stderr,
+                "Caught signal %d (%s) while accessing memory at location "
+                "%p\n",
+                sig, strsignal(sig), info->si_addr);
         fflush(stderr);
     }
 

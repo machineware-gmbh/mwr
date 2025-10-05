@@ -22,6 +22,8 @@
 
 namespace mwr {
 
+string demangle(const string& symbol);
+
 struct stackframe {
     u64 address;
     string symbol;
