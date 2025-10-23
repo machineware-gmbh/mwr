@@ -158,23 +158,56 @@ constexpr elf::elf_sym_kind get_kind(u8 info) {
 
 template <typename EHDR>
 static vector<elf::segment> read_segments(int fd, const EHDR& hdr) {
+    using phdr_t = typename EHDR::phdr_t;
+
+    vector<phdr_t> phdrs;
     vector<elf::segment> segments;
+
     for (size_t i = 0; i < hdr.phnum; i++) {
-        size_t offset = hdr.phoff + i * sizeof(typename EHDR::phdr_t);
+        size_t offset = hdr.phoff + i * sizeof(phdr_t);
         if (fd_seek(fd, offset) != offset)
             MWR_ERROR("cannot find elf program header %zu", i);
 
-        typename EHDR::phdr_t phdr = {};
+        phdr_t phdr = {};
         if (fd_read(fd, &phdr, sizeof(phdr)) != sizeof(phdr))
             MWR_ERROR("eof while reading program header %zu", i);
 
-        if (phdr.type == PT_LOAD) {
-            bool r = phdr.flags & PF_R;
-            bool w = phdr.flags & PF_W;
-            bool x = phdr.flags & PF_X;
-            segments.push_back({ phdr.vaddr, phdr.paddr, phdr.memsz,
-                                 phdr.filesz, phdr.offset, r, w, x });
+        if (phdr.type == PT_LOAD)
+            phdrs.push_back(phdr);
+    }
+
+    for (size_t i = 0; i < phdrs.size(); i++) {
+        const phdr_t& phdr = phdrs[i];
+
+        bool r = phdr.flags & PF_R;
+        bool w = phdr.flags & PF_W;
+        bool x = phdr.flags & PF_X;
+
+        u64 vaddr = phdr.vaddr;
+        u64 paddr = phdr.paddr;
+        u64 offset = phdr.offset;
+        u64 memsz = phdr.memsz;
+        u64 filesz = phdr.filesz;
+
+        // during loading, segments will be zero-padded if memsz > filesz,
+        // unless padding would cause a segment overlap; we filter these cases
+        // out by setting memsz = filesz in this case
+        if (memsz > filesz) {
+            u64 s0 = phdr.paddr + filesz;
+            u64 e0 = phdr.paddr + memsz;
+            for (size_t j = 0; j < phdrs.size(); j++) {
+                if (i != j) {
+                    u64 s1 = phdrs[j].paddr + phdrs[j].filesz;
+                    u64 e1 = phdrs[j].paddr + phdrs[j].memsz;
+                    if (s1 < e0 && s0 < e1) { // overlap?
+                        memsz = filesz;
+                        break;
+                    }
+                }
+            }
         }
+
+        segments.push_back({ vaddr, paddr, memsz, filesz, offset, r, w, x });
     }
 
     return segments;

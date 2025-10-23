@@ -75,15 +75,40 @@ static vector<elf::segment> read_segments(Elf* elf) {
         MWR_ERROR("elf_begin failed: %s", elf_errmsg(err));
 
     vector<elf::segment> segments;
-    typename T::Elf_Phdr* hdr = T::elf_getphdr(elf);
-    for (u64 i = 0; i < count; i++, hdr++) {
-        if (hdr->p_type == PT_LOAD) {
-            bool r = hdr->p_flags & PF_R;
-            bool w = hdr->p_flags & PF_W;
-            bool x = hdr->p_flags & PF_X;
-            segments.push_back({ hdr->p_vaddr, hdr->p_paddr, hdr->p_memsz,
-                                 hdr->p_filesz, hdr->p_offset, r, w, x });
+    typename T::Elf_Phdr* phdrs = T::elf_getphdr(elf);
+    for (u64 i = 0; i < count; i++) {
+        if (phdrs[i].p_type != PT_LOAD)
+            continue;
+
+        bool r = phdrs[i].p_flags & PF_R;
+        bool w = phdrs[i].p_flags & PF_W;
+        bool x = phdrs[i].p_flags & PF_X;
+
+        u64 vaddr = phdrs[i].p_vaddr;
+        u64 paddr = phdrs[i].p_paddr;
+        u64 offset = phdrs[i].p_offset;
+        u64 memsz = phdrs[i].p_memsz;
+        u64 filesz = phdrs[i].p_filesz;
+
+        // during loading, segments will be zero-padded if memsz > filesz,
+        // unless padding would cause a segment overlap; we filter this out by
+        // setting memsz = filesz in this case
+        if (memsz > filesz) {
+            u64 s0 = paddr + filesz;
+            u64 e0 = paddr + memsz;
+            for (u64 j = 0; j < count; j++) {
+                if (i != j && phdrs[j].p_type == PT_LOAD) {
+                    u64 s1 = phdrs[j].p_paddr + phdrs[j].p_filesz;
+                    u64 e1 = phdrs[j].p_paddr + phdrs[j].p_memsz;
+                    if (s1 < e0 && s0 < e1) { // overlap?
+                        memsz = filesz;
+                        break;
+                    }
+                }
+            }
         }
+
+        segments.push_back({ vaddr, paddr, memsz, filesz, offset, r, w, x });
     }
 
     return segments;
