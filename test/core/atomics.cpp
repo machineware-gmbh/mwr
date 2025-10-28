@@ -262,12 +262,30 @@ TEST(atomic, cas8) {
     ASSERT_EQ(data, wval);
     ASSERT_FALSE(atomic_cas(&data, &cmpv, &wval, 1));
     ASSERT_EQ(data, wval);
+
+    data = 0x81;
+    cmpv = 0x81;
+    wval = 0x82;
+
+    ASSERT_TRUE(atomic_cas8(&data, &cmpv, &wval));
+    ASSERT_EQ(data, wval);
+    ASSERT_FALSE(atomic_cas(&data, &cmpv, &wval, 1));
+    ASSERT_EQ(data, wval);
 }
 
 TEST(atomic, cas16) {
     u16 data = 0x1122;
     u16 cmpv = 0x1122;
     u16 wval = 0x2233;
+
+    ASSERT_TRUE(atomic_cas16(&data, &cmpv, &wval));
+    ASSERT_EQ(data, wval);
+    ASSERT_FALSE(atomic_cas(&data, &cmpv, &wval, 2));
+    ASSERT_EQ(data, wval);
+
+    data = 0x8122;
+    cmpv = 0x8122;
+    wval = 0x8233;
 
     ASSERT_TRUE(atomic_cas16(&data, &cmpv, &wval));
     ASSERT_EQ(data, wval);
