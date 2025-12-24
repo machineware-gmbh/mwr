@@ -72,3 +72,38 @@ TEST(bitfields, field) {
     set_field<TEST_FIELD2>(val, 0xf0);
     EXPECT_EQ(val, 0b00000);
 }
+
+using TEST_FIELD_SIGN32 = field<2, 2, i32>;
+using TEST_FIELD_SIGN64 = field<2, 2, i64>;
+
+TEST(bitfields, signed_field) {
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN32>(0b000000), 0);
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN32>(0b000100), 1);
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN32>(0b001000), -2);
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN32>(0b001100), -1);
+
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN32>(0b110011), 0);
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN32>(0b110111), 1);
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN32>(0b111011), -2);
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN32>(0b111111), -1);
+
+    u32 val32 = 0b0011;
+    set_field<TEST_FIELD_SIGN32>(val32, -2);
+    EXPECT_EQ(val32, 0b1011);
+    EXPECT_EQ(set_field<TEST_FIELD_SIGN32>(0b110000, -2), 0b111000);
+
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN64>(0b000000), 0);
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN64>(0b000100), 1);
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN64>(0b001000), -2);
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN64>(0b001100), -1);
+
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN64>(0b110011), 0);
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN64>(0b110111), 1);
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN64>(0b111011), -2);
+    EXPECT_EQ(get_field<TEST_FIELD_SIGN64>(0b111111), -1);
+
+    u64 val64 = 0b0011;
+    set_field<TEST_FIELD_SIGN64>(val64, -2);
+    EXPECT_EQ(val64, 0b1011);
+    EXPECT_EQ(set_field<TEST_FIELD_SIGN64>(0b110000, -2), 0b111000);
+}

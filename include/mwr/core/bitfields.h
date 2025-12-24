@@ -12,6 +12,7 @@
 #define MWR_BITFIELDS_H
 
 #include <assert.h>
+#include <type_traits>
 
 #include "mwr/core/types.h"
 #include "mwr/core/bitops.h"
@@ -47,6 +48,7 @@ constexpr i64 signext(u64 val, size_t width) {
 template <size_t OFF, size_t LEN = 1, typename T = u64>
 struct field {
     using base = T;
+    using ubase = typename std::make_unsigned<T>::type;
     enum : size_t { OFFSET = OFF };
     enum : size_t { LENGTH = LEN };
     enum : T { MASK = bitmask(LEN, OFF) };
@@ -56,17 +58,31 @@ struct field {
 
 template <typename F>
 constexpr typename F::base get_field(typename F::base val) {
-    return extract(val, F::OFFSET, F::LENGTH);
+    if constexpr (std::is_signed<typename F::base>::value)
+        return sextract(val, F::OFFSET, F::LENGTH);
+    else
+        return extract(val, F::OFFSET, F::LENGTH);
 }
 
 template <typename F>
-constexpr void set_field(typename F::base& val) {
+constexpr void set_field(typename F::ubase& val) {
     val = deposit(val, F::OFFSET, F::LENGTH, ~0ull);
 }
 
 template <typename F>
-constexpr void set_field(typename F::base& val, typename F::base x) {
+constexpr typename F::ubase set_field(const typename F::ubase& val) {
+    return deposit(val, F::OFFSET, F::LENGTH, ~0ull);
+}
+
+template <typename F>
+constexpr void set_field(typename F::ubase& val, typename F::base x) {
     val = deposit(val, F::OFFSET, F::LENGTH, x);
+}
+
+template <typename F>
+constexpr typename F::ubase set_field(const typename F::ubase& val,
+                                      typename F::base x) {
+    return deposit(val, F::OFFSET, F::LENGTH, x);
 }
 
 template <typename T>
