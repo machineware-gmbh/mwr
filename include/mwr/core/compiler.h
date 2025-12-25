@@ -85,7 +85,7 @@
 
 #if (defined(MWR_GCC) || defined(MWR_CLANG)) && \
     (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-#define MWR_HOST_BIT_ENDIAN
+#define MWR_HOST_BIG_ENDIAN
 #else
 #define MWR_HOST_LITTLE_ENDIAN
 #endif
