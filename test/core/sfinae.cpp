@@ -26,6 +26,10 @@ constexpr enable_if_unsigned_t<T> test_is_signed(T x) {
 TEST(sfinae, is_signed) {
     EXPECT_EQ(test_is_signed(14), -14);
     EXPECT_EQ(test_is_signed(100u), 101u);
+
+    int i = 12;
+    int& iref = i;
+    EXPECT_EQ(test_is_signed(iref), -i);
 }
 
 struct my_struct {

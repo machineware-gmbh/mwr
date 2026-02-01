@@ -42,7 +42,7 @@ public:
 TEST(publisher, levels) {
     mock_publisher publisher;
     EXPECT_CALL(publisher, publish(match_level(mwr::LOG_INFO))).Times(1);
-    mwr::log_info("this is an informational message");
+    MWR_LOG_INFO("this is an informational message");
 
     publisher.set_level(mwr::LOG_ERROR, mwr::LOG_WARN);
     g_terminal.set_level(mwr::LOG_ERROR, mwr::LOG_WARN);
@@ -51,12 +51,12 @@ TEST(publisher, levels) {
     EXPECT_FALSE(mwr::publisher::can_publish(mwr::LOG_INFO));
     EXPECT_FALSE(mwr::publisher::can_publish(mwr::LOG_DEBUG));
     EXPECT_CALL(publisher, publish(_)).Times(0);
-    mwr::log_info("this is an informational message");
+    MWR_LOG_INFO("this is an informational message");
 
     EXPECT_CALL(publisher, publish(match_level(mwr::LOG_ERROR))).Times(1);
     EXPECT_CALL(publisher, publish(match_level(mwr::LOG_WARN))).Times(1);
-    mwr::log_error("this is an error message");
-    mwr::log_warn("this is a warning message");
+    MWR_LOG_ERROR("this is an error message");
+    MWR_LOG_WARN("this is a warning message");
 
     publisher.set_level(mwr::LOG_DEBUG, mwr::LOG_DEBUG);
     g_terminal.set_level(mwr::LOG_DEBUG, mwr::LOG_DEBUG);
@@ -65,16 +65,16 @@ TEST(publisher, levels) {
     EXPECT_FALSE(mwr::publisher::can_publish(mwr::LOG_INFO));
     EXPECT_TRUE(mwr::publisher::can_publish(mwr::LOG_DEBUG));
     EXPECT_CALL(publisher, publish(match_level(mwr::LOG_DEBUG))).Times(1);
-    mwr::log_debug("this is a debug message");
-    mwr::log_info("this is an informational message");
-    mwr::log_error("this is an error message");
-    mwr::log_warn("this is a warning message");
+    MWR_LOG_DEBUG("this is a debug message");
+    MWR_LOG_INFO("this is an informational message");
+    MWR_LOG_ERROR("this is an error message");
+    MWR_LOG_WARN("this is a warning message");
 
     EXPECT_CALL(publisher, publish(match_lines(3))).Times(1);
-    mwr::log_debug("multi\nline\nmessage");
+    MWR_LOG_DEBUG("multi\nline\nmessage");
 
     EXPECT_CALL(publisher, publish(match_source())).Times(1);
-    mwr::log_debug("does this message hold source info?");
+    MWR_LOG_DEBUG("does this message hold source info?");
 }
 
 TEST(publisher, reporting) {

@@ -11,6 +11,7 @@
 #ifndef MWR_LOGGING_LOGGER_H
 #define MWR_LOGGING_LOGGER_H
 
+#include "mwr/core/sfinae.h"
 #include "mwr/logging/publisher.h"
 
 namespace mwr {
@@ -77,50 +78,53 @@ inline bool logger::can_log(log_level lvl) const {
 
 extern logger log;
 
-#define log_error(...) log.error(__FILE__, __LINE__, __VA_ARGS__) // NOLINT
-#define log_warn(...)  log.warn(__FILE__, __LINE__, __VA_ARGS__)  // NOLINT
-#define log_info(...)  log.info(__FILE__, __LINE__, __VA_ARGS__)  // NOLINT
-#define log_debug(...) log.debug(__FILE__, __LINE__, __VA_ARGS__) // NOLINT
+template <typename T>
+inline const enable_if_base_of_t<logger, T>& select_logger(T&& l) {
+    return l;
+}
 
-// NOLINTNEXTLINE(readability-identifier-naming)
-#define log_error_once(...)                             \
-    do {                                                \
-        static int once = 1;                            \
-        if (once) {                                     \
-            log.error(__FILE__, __LINE__, __VA_ARGS__); \
-            once = 0;                                   \
-        }                                               \
+inline const logger& select_logger(...) {
+    return ::mwr::log;
+}
+
+#define MWR_LOG(lvl, ...)                                   \
+    do {                                                    \
+        const auto& _log = ::mwr::select_logger(log);       \
+        if (_log.can_log(lvl))                              \
+            _log.log(lvl, __FILE__, __LINE__, __VA_ARGS__); \
     } while (0)
 
-// NOLINTNEXTLINE(readability-identifier-naming)
-#define log_warn_once(...)                             \
-    do {                                               \
-        static int once = 1;                           \
-        if (once) {                                    \
-            log.warn(__FILE__, __LINE__, __VA_ARGS__); \
-            once = 0;                                  \
-        }                                              \
+#define MWR_LOG_ERROR(...) MWR_LOG(::mwr::LOG_ERROR, __VA_ARGS__)
+#define MWR_LOG_WARN(...)  MWR_LOG(::mwr::LOG_WARN, __VA_ARGS__)
+#define MWR_LOG_INFO(...)  MWR_LOG(::mwr::LOG_INFO, __VA_ARGS__)
+#define MWR_LOG_DEBUG(...) MWR_LOG(::mwr::LOG_DEBUG, __VA_ARGS__)
+
+#define MWR_LOG_ONCE(lvl, ...)         \
+    do {                               \
+        static int once = 0;           \
+        if (once == 0) {               \
+            MWR_LOG(lvl, __VA_ARGS__); \
+            once = 1;                  \
+        }                              \
     } while (0)
 
-// NOLINTNEXTLINE(readability-identifier-naming)
-#define log_info_once(...)                             \
-    do {                                               \
-        static int once = 1;                           \
-        if (once) {                                    \
-            log.info(__FILE__, __LINE__, __VA_ARGS__); \
-            once = 0;                                  \
-        }                                              \
-    } while (0) // NOLINT
+#define MWR_LOG_ERROR_ONCE(...) MWR_LOG_ONCE(::mwr::LOG_ERROR, __VA_ARGS__)
+#define MWR_LOG_WARN_ONCE(...)  MWR_LOG_ONCE(::mwr::LOG_WARN, __VA_ARGS__)
+#define MWR_LOG_INFO_ONCE(...)  MWR_LOG_ONCE(::mwr::LOG_INFO, __VA_ARGS__)
+#define MWR_LOG_DEBUG_ONCE(...) MWR_LOG_ONCE(::mwr::LOG_DEBUG, __VA_ARGS__)
 
-// NOLINTNEXTLINE(readability-identifier-naming)
-#define log_debug_once(...)                             \
-    do {                                                \
-        static int once = 1;                            \
-        if (once) {                                     \
-            log.debug(__FILE__, __LINE__, __VA_ARGS__); \
-            once = 0;                                   \
-        }                                               \
-    } while (0)
+#ifndef MWR_NO_LOG_MACROS
+// NOLINTBEGIN(readability-identifier-naming)
+#define log_error(...)      MWR_LOG_ERROR(__VA_ARGS__)
+#define log_warn(...)       MWR_LOG_WARN(__VA_ARGS__)
+#define log_info(...)       MWR_LOG_INFO(__VA_ARGS__)
+#define log_debug(...)      MWR_LOG_DEBUG(__VA_ARGS__)
+#define log_error_once(...) MWR_LOG_ERROR_ONCE(__VA_ARGS__)
+#define log_warn_once(...)  MWR_LOG_WARN_ONCE(__VA_ARGS__)
+#define log_info_once(...)  MWR_LOG_INFO_ONCE(__VA_ARGS__)
+#define log_debug_once(...) MWR_LOG_DEBUG_ONCE(__VA_ARGS__)
+// NOLINTEND(readability-identifier-naming)
+#endif
 
 } // namespace mwr
 

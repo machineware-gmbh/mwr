@@ -27,6 +27,13 @@ using enable_if_unsigned = typename std::enable_if<std::is_unsigned_v<T>, T>;
 template <typename T>
 using enable_if_unsigned_t = typename enable_if_unsigned<T>::type;
 
+template <typename BASE, typename DERIVED>
+using enable_if_base_if = typename std::enable_if<
+    std::is_base_of_v<BASE, std::decay_t<DERIVED>>, BASE>;
+
+template <typename B, typename D>
+using enable_if_base_of_t = typename enable_if_base_if<B, D>::type;
+
 #define MWR_DECL_MEMBER_CHECKER(T, MEMBER)                     \
     struct member_checker_##T##_has_##MEMBER {                 \
         template <typename T, typename U = void>               \
