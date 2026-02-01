@@ -83,6 +83,10 @@ inline const enable_if_base_of_t<logger, T>& select_logger(T&& l) {
     return l;
 }
 
+inline const logger& select_logger(double (*)(double)) {
+    return ::mwr::log; // overload for log from math.h
+}
+
 inline const logger& select_logger(...) {
     return ::mwr::log;
 }
