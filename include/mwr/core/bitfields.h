@@ -38,7 +38,9 @@ template <typename T, typename T2>
 constexpr T deposit(T val, size_t start, size_t width, T2 in) {
     assert(start + width <= width_of(val) && "bit range exceeded");
     const T mask = (T)bitmask(width, start);
-    return (val & ~mask) | (((T)in << start) & mask);
+    using T2U = std::make_unsigned_t<T2>;
+    const T shifted = start < width_of(in) ? (T2U)in << start : 0;
+    return (val & ~mask) | (shifted & mask);
 }
 
 constexpr i64 signext(u64 val, size_t width) {
