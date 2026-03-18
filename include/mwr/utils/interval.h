@@ -30,7 +30,7 @@ private:
         u64 hi;
         u64 min;
         u64 max;
-        size_t height;
+        u64 height;
         struct ivtnode* parent;
         struct ivtnode* left;
         struct ivtnode* right;
@@ -60,7 +60,7 @@ private:
             data(std::move(item)) {}
     };
 
-    static size_t ivt_min(ivtnode* node) {
+    static u64 ivt_min(ivtnode* node) {
         u64 min = node->lo;
         if (node->left && node->left->min < min)
             min = node->left->min;
@@ -69,7 +69,7 @@ private:
         return min;
     }
 
-    static size_t ivt_max(ivtnode* node) {
+    static u64 ivt_max(ivtnode* node) {
         u64 max = node->hi;
         if (node->left && node->left->max > max)
             max = node->left->max;
@@ -78,21 +78,21 @@ private:
         return max;
     }
 
-    static size_t ivt_height(ivtnode* node) {
+    static u64 ivt_height(ivtnode* node) {
         if (node == nullptr)
             return 0;
 
-        size_t lh = node->left ? node->left->height : 0;
-        size_t rh = node->right ? node->right->height : 0;
+        u64 lh = node->left ? node->left->height : 0;
+        u64 rh = node->right ? node->right->height : 0;
         return 1 + max(lh, rh);
     }
 
-    static ssize_t ivt_balance(ivtnode* node) {
+    static i64 ivt_balance(ivtnode* node) {
         if (node == nullptr)
             return 0;
 
-        size_t lh = node->left ? node->left->height : 0;
-        size_t rh = node->right ? node->right->height : 0;
+        u64 lh = node->left ? node->left->height : 0;
+        u64 rh = node->right ? node->right->height : 0;
         return lh - rh;
     }
 
@@ -202,7 +202,7 @@ private:
 
         ivt_refresh(node);
 
-        ssize_t balance = ivt_balance(node);
+        i64 balance = ivt_balance(node);
 
         if (balance > 1) {
             if (ivt_balance(node->left) < 0)
@@ -324,7 +324,7 @@ private:
             MWR_ERROR("node minimum corrupted");
         if (node->max != ivt_max(node))
             MWR_ERROR("node maximum corrupted");
-        ssize_t balance = ivt_balance(node);
+        i64 balance = ivt_balance(node);
         if (balance < -1 || balance > 1)
             MWR_ERROR("node is imbalanced");
 

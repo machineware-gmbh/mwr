@@ -246,7 +246,7 @@ TEST(interval, fuzzer) {
         } else {
             u64 start = (u64)rand() % 10000;
             u64 length = (u64)rand() % 10000;
-            auto it = tree.insert(start, start + length, fuzz);
+            auto it = tree.insert(start, start + length, (int)fuzz);
             elements.push_back(it);
         }
 
