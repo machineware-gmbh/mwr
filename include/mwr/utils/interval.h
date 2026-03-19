@@ -93,7 +93,7 @@ private:
 
         u64 lh = node->left ? node->left->height : 0;
         u64 rh = node->right ? node->right->height : 0;
-        return lh - rh;
+        return (i64)lh - (i64)rh;
     }
 
     static bool ivt_is_left(ivtnode* node) {
