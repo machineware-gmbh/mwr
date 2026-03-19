@@ -39,6 +39,10 @@ TEST(interval, remove_empty) {
     ASSERT_TRUE(tree.empty());
     EXPECT_FALSE(tree.remove(tree.end()));
     EXPECT_FALSE(tree.remove(tree.begin()));
+
+    const interval_tree<int>& ctree = tree;
+    EXPECT_FALSE(tree.remove(ctree.end()));
+    EXPECT_FALSE(tree.remove(ctree.begin()));
 }
 
 TEST(interval, iterators) {
