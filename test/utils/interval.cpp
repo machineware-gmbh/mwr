@@ -34,6 +34,13 @@ TEST(interval, insert_remove) {
     EXPECT_TRUE(tree.remove(it4));
 }
 
+TEST(interval, remove_empty) {
+    interval_tree<int> tree;
+    ASSERT_TRUE(tree.empty());
+    EXPECT_FALSE(tree.remove(tree.end()));
+    EXPECT_FALSE(tree.remove(tree.begin()));
+}
+
 TEST(interval, iterators) {
     interval_tree<int> tree;
     tree.insert(3, 6, 4);
@@ -237,15 +244,15 @@ TEST(interval, fuzzer) {
     interval_tree<int> tree;
     vector<interval_tree<int>::iterator> elements;
 
-    for (size_t round = 0; round < 10000; round++) {
+    for (size_t round = 0; round < 100000; round++) {
         size_t fuzz = (size_t)rand() % 100;
         if (fuzz < elements.size()) {
             auto it = elements.begin() + fuzz;
             EXPECT_TRUE(tree.remove(*it));
             elements.erase(it);
         } else {
-            u64 start = (u64)rand() % 10000;
-            u64 length = (u64)rand() % 10000;
+            u64 start = (u64)rand() % 100;
+            u64 length = (u64)rand() % 100;
             auto it = tree.insert(start, start + length, (int)fuzz);
             elements.push_back(it);
         }
