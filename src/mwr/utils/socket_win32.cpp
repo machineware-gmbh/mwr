@@ -578,8 +578,15 @@ int server_socket::poll(size_t ms) {
         int res = WSAPoll(pollfds.data(), (ULONG)pollfds.size(), (INT)ms);
         if (res == 0)
             return -1;
-        if (res < 0)
-            MWR_REPORT("failed to poll server socket: %s", socket_strerror());
+
+        int err = WSAGetLastError();
+        if (err == WSANOTINITIALISED)
+            return -1;
+
+        if (res < 0) {
+            MWR_REPORT("failed to poll server socket: %s",
+                       socket_strerror(err));
+        }
 
         for (const WSAPOLLFD& poll : pollfds) {
             if (poll.revents) {
