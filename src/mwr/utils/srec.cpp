@@ -12,7 +12,7 @@
 
 namespace mwr {
 
-enum record_type : char {
+enum srec_record_type : char {
     SREC_HEADER = '0',
     SREC_DATA16 = '1',
     SREC_DATA24 = '2',

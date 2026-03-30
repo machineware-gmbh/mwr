@@ -12,7 +12,7 @@
 
 namespace mwr {
 
-enum record_type : u8 {
+enum ihex_record_type : u8 {
     IHEX_DATA = 0x00,
     IHEX_EOF = 0x01,
     IHEX_EX_SEG = 0x02,
@@ -27,7 +27,7 @@ enum record_type : u8 {
 };
 
 struct ihex_record {
-    record_type type;
+    ihex_record_type type;
     u64 addr;
     vector<u8> data;
 };
@@ -95,7 +95,7 @@ static inline ihex_record process_line(const string& line) {
     data.reserve(nr_bytes);
     for (size_t pos = data_start; pos < data_start + nr_bytes * 2; pos += 2)
         data.push_back(ihex_byte(line, pos));
-    return { (record_type)r_type, addr, std::move(data) };
+    return { (ihex_record_type)r_type, addr, std::move(data) };
 }
 
 ihex::ihex(const string& filename): m_start_addr(), m_records() {
