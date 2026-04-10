@@ -286,6 +286,34 @@ socket::socket(const string& host, u16 port): socket() {
     connect(host, port);
 }
 
+socket::socket(socket&& other) noexcept:
+    m_mtx(),
+    m_host(std::move(other.m_host)),
+    m_peer(std::move(other.m_peer)),
+    m_ipv6(other.m_ipv6),
+    m_port(other.m_port),
+    m_sock4(other.m_sock4),
+    m_sock6(other.m_sock6),
+    m_conn(other.m_conn) {
+    other.m_sock4 = -1;
+    other.m_sock6 = -1;
+    other.m_conn = -1;
+}
+
+socket& socket::operator=(socket&& other) noexcept {
+    m_host = std::move(other.m_host);
+    m_peer = std::move(other.m_peer);
+    m_ipv6 = other.m_ipv6;
+    m_port = other.m_port;
+    m_sock4 = other.m_sock4;
+    m_sock6 = other.m_sock6;
+    m_conn = other.m_conn;
+    other.m_sock4 = -1;
+    other.m_sock6 = -1;
+    other.m_conn = -1;
+    return *this;
+}
+
 socket::~socket() {
     lock_guard<mutex> guard(m_mtx);
     close_socket(m_sock4);

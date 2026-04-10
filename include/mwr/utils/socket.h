@@ -58,9 +58,10 @@ public:
     socket();
     socket(u16 port);
     socket(const string& host, u16 port);
+    socket(socket&& other) noexcept;
+    socket& operator=(socket&&) noexcept;
     virtual ~socket();
 
-    socket(socket&&) = delete;
     socket(const socket&) = delete;
     socket& operator=(const socket&) = delete;
 

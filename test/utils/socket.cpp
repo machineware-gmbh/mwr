@@ -15,8 +15,8 @@
 #include "mwr/core/utils.h"
 
 TEST(socket, server) {
-    mwr::socket server(12345);
-    EXPECT_EQ(server.port(), 12345);
+    mwr::socket server(54321);
+    EXPECT_EQ(server.port(), 54321);
 }
 
 TEST(socket, port_select) {
@@ -121,4 +121,38 @@ TEST(socket, threads) {
     EXPECT_THROW(sock.send("test"), mwr::report);
 
     t.join();
+}
+
+TEST(socket, move) {
+    const char* str = "Hello World";
+    char buf[12] = {};
+    memset(buf, 0, strlen(str) + 1);
+
+    mwr::socket server(0);
+    mwr::socket client(server.host(), server.port());
+
+    server.accept();
+    server.send(str);
+
+    mwr::socket moved(std::move(client));
+    moved.recv(buf, sizeof(buf) - 1);
+
+    EXPECT_EQ(strcmp(str, buf), 0);
+}
+
+TEST(socket, move_assign) {
+    const char* str = "Hello World";
+    char buf[12] = {};
+    memset(buf, 0, strlen(str) + 1);
+
+    mwr::socket server(0);
+    mwr::socket client(server.host(), server.port());
+
+    server.accept();
+    server.send(str);
+
+    mwr::socket moved = std::move(client);
+    moved.recv(buf, sizeof(buf) - 1);
+
+    EXPECT_EQ(strcmp(str, buf), 0);
 }
