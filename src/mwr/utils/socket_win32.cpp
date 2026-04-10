@@ -253,30 +253,14 @@ void socket::disconnect_locked() {
     m_peer.clear();
 }
 
-bool socket::is_listening() const {
-    lock_guard<mutex> guard(m_mtx);
-    return m_sock4 != INVALID_SOCKET || m_sock6 != INVALID_SOCKET;
-}
-
 bool socket::is_connected() const {
     lock_guard<mutex> guard(m_mtx);
     return m_conn != INVALID_SOCKET;
 }
 
 socket::socket():
-    m_mtx(),
-    m_host(),
-    m_peer(),
-    m_ipv6(),
-    m_port(0),
-    m_sock4(INVALID_SOCKET),
-    m_sock6(INVALID_SOCKET),
-    m_conn(INVALID_SOCKET) {
+    m_mtx(), m_conn(INVALID_SOCKET), m_host(), m_peer(), m_ipv6(), m_port(0) {
     socket_init();
-}
-
-socket::socket(u16 port): socket() {
-    listen(port);
 }
 
 socket::socket(const string& host, u16 port): socket() {
@@ -285,15 +269,11 @@ socket::socket(const string& host, u16 port): socket() {
 
 socket::socket(socket&& other) noexcept:
     m_mtx(),
+    m_conn(other.m_conn),
     m_host(std::move(other.m_host)),
     m_peer(std::move(other.m_peer)),
     m_ipv6(other.m_ipv6),
-    m_port(other.m_port),
-    m_sock4(other.m_sock4),
-    m_sock6(other.m_sock6),
-    m_conn(other.m_conn) {
-    other.m_sock4 = INVALID_SOCKET;
-    other.m_sock6 = INVALID_SOCKET;
+    m_port(other.m_port) {
     other.m_conn = INVALID_SOCKET;
 }
 
@@ -302,95 +282,14 @@ socket& socket::operator=(socket&& other) noexcept {
     m_peer = std::move(other.m_peer);
     m_ipv6 = other.m_ipv6;
     m_port = other.m_port;
-    m_sock4 = other.m_sock4;
-    m_sock6 = other.m_sock6;
     m_conn = other.m_conn;
-    other.m_sock4 = INVALID_SOCKET;
-    other.m_sock6 = INVALID_SOCKET;
     other.m_conn = INVALID_SOCKET;
     return *this;
 }
 
 socket::~socket() {
     lock_guard<mutex> guard(m_mtx);
-    close_socket(m_sock4);
-    close_socket(m_sock6);
     close_socket(m_conn);
-}
-
-void socket::listen(u16 port) {
-    lock_guard<mutex> guard(m_mtx);
-    if ((m_sock4 != INVALID_SOCKET || m_sock6 != INVALID_SOCKET) &&
-        (port == 0 || port == m_port)) {
-        return; // already listening
-    }
-
-    close_socket(m_sock4);
-    close_socket(m_sock6);
-
-    m_host.clear();
-    m_port = 0;
-
-    if (g_no_ipv4 && g_no_ipv6)
-        MWR_REPORT("IPv4 and IPv6 both disabled via environment");
-
-    string host4;
-    string host6;
-
-    if (!g_no_ipv4)
-        create_socket(AF_INET, 1, m_sock4, port, host4);
-    if (!g_no_ipv6)
-        create_socket(AF_INET6, 1, m_sock6, port, host6);
-
-    if (!host4.empty())
-        m_host = host4;
-    if (!host6.empty())
-        m_host = host6;
-
-    m_port = port;
-}
-
-void socket::unlisten() {
-    lock_guard<mutex> guard(m_mtx);
-    close_socket(m_sock4);
-    close_socket(m_sock6);
-    m_host.clear();
-    m_port = 0;
-}
-
-bool socket::accept() {
-    lock_guard<mutex> guard(m_mtx);
-    close_socket(m_conn);
-
-    socket_addr addr;
-    socklen_t len = sizeof(addr);
-
-    vector<WSAPOLLFD> fds;
-    if (m_sock4 != INVALID_SOCKET)
-        fds.push_back({ m_sock4, POLLRDNORM, 0 });
-    if (m_sock6 != INVALID_SOCKET)
-        fds.push_back({ m_sock6, POLLRDNORM, 0 });
-
-    m_mtx.unlock();
-    WSAPoll(fds.data(), (ULONG)fds.size(), INFINITE);
-    m_mtx.lock();
-
-    for (const WSAPOLLFD& poll : fds) {
-        if (poll.revents & POLLRDNORM) {
-            m_conn = ::accept(poll.fd, &addr.base, &len);
-            if (m_conn != INVALID_SOCKET) {
-                SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
-                m_ipv6 = poll.fd == m_sock6;
-                m_host = addr.peer();
-                return true;
-            }
-        }
-    }
-
-    m_conn = INVALID_SOCKET;
-    m_ipv6 = false;
-    m_host.clear();
-    return false;
 }
 
 void socket::connect(const string& host, u16 port) {
@@ -428,6 +327,8 @@ void socket::connect(const string& host, u16 port) {
         socket_addr addr(ai->ai_addr);
         m_ipv6 = addr.is_ipv6();
         m_peer = addr.peer();
+        m_host = host;
+        m_port = port;
         break;
     }
 

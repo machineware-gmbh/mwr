@@ -33,14 +33,11 @@ class socket
 private:
     mutable mutex m_mtx;
 
+    socket_t m_conn;
     string m_host;
     string m_peer;
     bool m_ipv6;
     u16 m_port;
-
-    socket_t m_sock4;
-    socket_t m_sock6;
-    socket_t m_conn;
 
     void disconnect_locked();
 
@@ -52,11 +49,9 @@ public:
     bool is_ipv4() const;
     bool is_ipv6() const;
 
-    bool is_listening() const;
     bool is_connected() const;
 
     socket();
-    socket(u16 port);
     socket(const string& host, u16 port);
     socket(socket&& other) noexcept;
     socket& operator=(socket&&) noexcept;
@@ -64,11 +59,6 @@ public:
 
     socket(const socket&) = delete;
     socket& operator=(const socket&) = delete;
-
-    void listen(u16 port);
-    void unlisten();
-
-    bool accept();
 
     void connect(const string& host, u16 port);
     void disconnect();

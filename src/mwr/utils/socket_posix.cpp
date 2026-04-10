@@ -255,11 +255,8 @@ void socket::disconnect_locked() {
 
     close_socket(m_conn);
     m_peer.clear();
-}
-
-bool socket::is_listening() const {
-    lock_guard<mutex> guard(m_mtx);
-    return m_sock4 >= 0 || m_sock6 >= 0;
+    m_host.clear();
+    m_port = 0;
 }
 
 bool socket::is_connected() const {
@@ -268,18 +265,7 @@ bool socket::is_connected() const {
 }
 
 socket::socket():
-    m_mtx(),
-    m_host(),
-    m_peer(),
-    m_ipv6(),
-    m_port(0),
-    m_sock4(-1),
-    m_sock6(-1),
-    m_conn(-1) {
-}
-
-socket::socket(u16 port): socket() {
-    listen(port);
+    m_mtx(), m_conn(-1), m_host(), m_peer(), m_ipv6(), m_port(0) {
 }
 
 socket::socket(const string& host, u16 port): socket() {
@@ -288,15 +274,10 @@ socket::socket(const string& host, u16 port): socket() {
 
 socket::socket(socket&& other) noexcept:
     m_mtx(),
+    m_conn(other.m_conn),
     m_host(std::move(other.m_host)),
     m_peer(std::move(other.m_peer)),
-    m_ipv6(other.m_ipv6),
-    m_port(other.m_port),
-    m_sock4(other.m_sock4),
-    m_sock6(other.m_sock6),
-    m_conn(other.m_conn) {
-    other.m_sock4 = -1;
-    other.m_sock6 = -1;
+    m_ipv6(other.m_ipv6) {
     other.m_conn = -1;
 }
 
@@ -305,99 +286,14 @@ socket& socket::operator=(socket&& other) noexcept {
     m_peer = std::move(other.m_peer);
     m_ipv6 = other.m_ipv6;
     m_port = other.m_port;
-    m_sock4 = other.m_sock4;
-    m_sock6 = other.m_sock6;
     m_conn = other.m_conn;
-    other.m_sock4 = -1;
-    other.m_sock6 = -1;
     other.m_conn = -1;
     return *this;
 }
 
 socket::~socket() {
     lock_guard<mutex> guard(m_mtx);
-    close_socket(m_sock4);
-    close_socket(m_sock6);
     close_socket(m_conn);
-}
-
-void socket::listen(u16 port) {
-    lock_guard<mutex> guard(m_mtx);
-    if ((m_sock4 >= 0 || m_sock6 >= 0) && (port == 0 || port == m_port))
-        return;
-
-    close_socket(m_sock4);
-    close_socket(m_sock6);
-
-    m_host.clear();
-    m_port = 0;
-
-    if (g_no_ipv4 && g_no_ipv6)
-        MWR_REPORT("IPv4 and IPv6 both disabled via environment");
-
-    string host4;
-    string host6;
-
-    if (!g_no_ipv4)
-        create_socket(AF_INET, 1, m_sock4, port, host4);
-    if (!g_no_ipv6)
-        create_socket(AF_INET6, 1, m_sock6, port, host6);
-
-    if (!host4.empty())
-        m_host = host4;
-    if (!host6.empty())
-        m_host = host6;
-
-    m_port = port;
-}
-
-void socket::unlisten() {
-    lock_guard<mutex> guard(m_mtx);
-    close_socket(m_sock4);
-    close_socket(m_sock6);
-    m_host.clear();
-    m_port = 0;
-}
-
-bool socket::accept() {
-    lock_guard<mutex> guard(m_mtx);
-    if (m_conn >= 0)
-        disconnect_locked();
-
-    socket_addr addr;
-    socklen_t len = sizeof(addr);
-
-    while (m_sock4 >= 0 || m_sock6 >= 0) {
-        socket_t s4 = m_sock4;
-        socket_t s6 = m_sock6;
-
-        vector<pollfd> pollfds;
-        if (s4 >= 0)
-            pollfds.push_back({ s4, POLLIN | POLLERR | POLLHUP, 0 });
-        if (s6 >= 0)
-            pollfds.push_back({ s6, POLLIN | POLLERR | POLLHUP, 0 });
-
-        m_mtx.unlock();
-        int res = poll(pollfds.data(), pollfds.size(), 100);
-        m_mtx.lock();
-
-        if (res < 0)
-            MWR_REPORT("failed to accept connection: %s", strerror(errno));
-
-        for (const pollfd& poll : pollfds) {
-            if (poll.revents & POLLIN) {
-                m_conn = ::accept(poll.fd, &addr.base, &len);
-                if (m_conn >= 0) {
-                    SET_SOCKOPT(m_conn, IPPROTO_TCP, TCP_NODELAY, 1);
-                    m_peer = addr.peer();
-                    m_ipv6 = poll.fd == s6;
-                    return true;
-                }
-            }
-        }
-    }
-
-    return false;
 }
 
 void socket::connect(const string& host, u16 port) {
@@ -433,6 +329,8 @@ void socket::connect(const string& host, u16 port) {
         socket_addr addr(ai->ai_addr);
         m_ipv6 = addr.is_ipv6();
         m_peer = addr.peer();
+        m_host = host;
+        m_port = port;
         break;
     }
 
