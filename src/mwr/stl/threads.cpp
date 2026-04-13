@@ -35,6 +35,10 @@ static auto current_thread() {
 #endif
 }
 
+unsigned long long current_thread_id() {
+    return (unsigned long long)current_thread();
+}
+
 template <typename THREAD>
 static string native_get_thread_name(THREAD handle) {
 #if defined(MWR_GCC) || defined(MWR_CLANG)

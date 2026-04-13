@@ -28,6 +28,8 @@ using std::condition_variable;
 using std::condition_variable_any;
 using std::lock_guard;
 
+unsigned long long current_thread_id();
+
 string get_thread_name();
 string get_thread_name(const thread& t);
 
