@@ -168,7 +168,7 @@ string subprocess::peek(bool use_stderr) {
 
     DWORD available = 0;
     if (!PeekNamedPipe(fd, nullptr, 0, nullptr, &available, nullptr))
-        MWR_ERROR("PeekNamedPipe: 0x%lx", GetLastError());
+        return "";
 
     if (available == 0)
         return "";
