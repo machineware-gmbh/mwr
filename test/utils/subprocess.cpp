@@ -94,3 +94,24 @@ TEST(process, write_stdin) {
     std::string output = proc.peek();
     EXPECT_NE(output.find(input), std::string::npos);
 }
+
+TEST(process, is_running) {
+#ifdef MWR_WINDOWS
+    // On Windows, launch an interactive cmd shell that stays alive.
+    const std::string exec = "cmd.exe";
+    const std::vector<std::string> args = { "/K" };
+#else
+    // On POSIX, use "cat" which blocks waiting for input.
+    const std::string exec = "/bin/cat";
+    const std::vector<std::string> args = {};
+#endif
+
+    mwr::subprocess proc;
+    EXPECT_FALSE(proc.is_running());
+
+    ASSERT_TRUE(proc.run(exec, args));
+    EXPECT_TRUE(proc.is_running());
+
+    proc.terminate();
+    EXPECT_FALSE(proc.is_running());
+}

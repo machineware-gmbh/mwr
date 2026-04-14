@@ -54,6 +54,7 @@ public:
     bool run(const string& path,
              const vector<string>& args = vector<string>());
 
+    bool is_running() const;
     bool terminate();
 
     bool write(const string& str);

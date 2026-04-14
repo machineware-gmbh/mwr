@@ -94,6 +94,12 @@ bool subprocess::run(const string& path, const vector<string>& args) {
     }
 }
 
+bool subprocess::is_running() const {
+    if (m_pid < 0)
+        return false;
+    return waitpid(m_pid, NULL, WNOHANG) == 0;
+}
+
 bool subprocess::terminate() {
     if (m_pid < 0)
         return false;

@@ -91,6 +91,15 @@ bool subprocess::run(const string& path, const vector<string>& args) {
     return true;
 }
 
+bool subprocess::is_running() const {
+    if (!m_handle)
+        return false;
+    DWORD code = 0;
+    if (!GetExitCodeProcess((HANDLE)m_handle, &code))
+        return false;
+    return code == STILL_ACTIVE;
+}
+
 bool subprocess::terminate() {
     if (!m_handle)
         return false;
