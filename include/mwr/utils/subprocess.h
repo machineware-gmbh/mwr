@@ -48,6 +48,9 @@ public:
     int native_handle() const { return m_pid; }
 #endif
 
+    void inherit_env_var(const string& name);
+    void inherit_environment();
+
     subprocess();
     virtual ~subprocess();
 
@@ -62,6 +65,17 @@ public:
 
     string peek(bool use_stderr = false); // non-blocking
 };
+
+inline void subprocess::inherit_env_var(const string& name) {
+    auto var = getenv(name);
+    if (var)
+        env[name] = *var;
+}
+
+inline void subprocess::inherit_environment() {
+    for (auto& [var, val] : get_environment())
+        env[var] = val;
+}
 
 } // namespace mwr
 

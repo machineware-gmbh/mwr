@@ -11,6 +11,7 @@
 #ifndef MWR_UTILS_H
 #define MWR_UTILS_H
 
+#include <map>
 #include <string>
 #include <vector>
 #include <optional>
@@ -21,6 +22,7 @@
 
 namespace mwr {
 
+using std::map;
 using std::string;
 using std::vector;
 using std::optional;
@@ -41,6 +43,8 @@ string temp_dir();
 
 string progname();
 string username();
+
+map<string, string> get_environment();
 
 optional<string> getenv(const string& name);
 void setenv(const string& name, const string& value);

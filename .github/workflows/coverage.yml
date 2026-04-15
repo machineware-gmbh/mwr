@@ -41,7 +41,8 @@ jobs:
         mkdir -p ${{github.event.repository.name}}-coverage-report
         gcovr --html-details -f 'include/*' -f 'src/*' \
               --output ${{github.event.repository.name}}-coverage-report/${{github.event.repository.name}}.html \
-              --exclude-lines-by-pattern '\s*MWR_ERROR.*'
+              --exclude-lines-by-pattern '\s*MWR_ERROR.*' \
+              --gcov-ignore-parse-errors=negative_hits.warn
 
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v4

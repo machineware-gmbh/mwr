@@ -49,11 +49,11 @@ bool subprocess::run(const string& path, const vector<string>& args) {
     if (!SetHandleInformation(stderr_read, HANDLE_FLAG_INHERIT, 0))
         return false;
 
-    std::string cmdline = "\"" + path + "\"";
+    string cmdline = "\"" + path + "\"";
     for (auto& arg : args)
         cmdline += " " + arg;
 
-    std::string envstr;
+    string envstr;
     if (!env.empty()) {
         for (auto& [name, value] : env)
             envstr += name + "=" + value + '\0';

@@ -165,6 +165,32 @@ string username() {
     return "unknown";
 }
 
+extern "C" {
+#if defined(MWR_MSVC)
+#define ENVIRON _environ
+extern char** _environ; // NOLINT
+#else
+#define ENVIRON environ
+extern char** environ; // NOLINT
+#endif
+}
+
+map<string, string> get_environment() {
+    map<string, string> env;
+
+    for (char** current = ENVIRON; *current != nullptr; ++current) {
+        string entry(*current);
+        auto pos = entry.find('=');
+        if (pos != string::npos) {
+            env.emplace(entry.substr(0, pos), entry.substr(pos + 1));
+        }
+    }
+
+    return env;
+}
+
+#undef ENVIRON
+
 optional<string> getenv(const string& env) {
 #if defined(MWR_WINDOWS)
     DWORD n = GetEnvironmentVariable(env.c_str(), NULL, 0);

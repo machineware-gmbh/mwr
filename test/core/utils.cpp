@@ -148,6 +148,20 @@ TEST(utils, clrenv) {
     EXPECT_EQ(mwr::getenv("CLRENV"), std::nullopt);
 }
 
+TEST(utils, environment) {
+    mwr::setenv("FINDME", "findme");
+
+    bool found = false;
+    for (auto& [name, val] : get_environment()) {
+        if (name == "FINDME" && val == "findme") {
+            found = true;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(found);
+}
+
 TEST(utils, getpid) {
     EXPECT_GT(mwr::getpid(), 0);
 }

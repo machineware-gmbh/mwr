@@ -26,7 +26,6 @@ TEST(process, environment) {
     proc.env["MYVAR"] = "HelloWorld";
     ASSERT_TRUE(proc.run(exec, args));
 
-    // give the process 100ms to start
     mwr::usleep(100000);
 
     // test if our environment variable was printed
