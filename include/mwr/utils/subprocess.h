@@ -39,6 +39,7 @@ private:
 
 public:
     map<string, string> env;
+    string cwd;
 
 #ifdef MWR_WINDOWS
     unsigned long pid() const { return m_pid; }

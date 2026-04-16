@@ -114,3 +114,45 @@ TEST(process, is_running) {
     proc.terminate();
     EXPECT_FALSE(proc.is_running());
 }
+
+TEST(process, cwd_pwd) {
+#ifdef MWR_WINDOWS
+    const std::string exec = "cmd.exe";
+    const std::vector<std::string> args = { "/C", "cd" };
+    const std::string dir = "C:\\Windows";
+    const std::string expected = "C:\\Windows";
+#else
+    const std::string exec = "/bin/pwd";
+    const std::vector<std::string> args = {};
+    const std::string dir = "/tmp";
+    const std::string expected = "/tmp";
+#endif
+
+    mwr::subprocess proc;
+    proc.cwd = dir;
+    ASSERT_TRUE(proc.run(exec, args));
+
+    // give the process 100ms to complete
+    mwr::usleep(100000);
+
+    std::string output = proc.peek();
+    EXPECT_NE(output.find(expected), std::string::npos)
+        << "output: " << output;
+}
+
+TEST(process, cwd_invalid) {
+#ifdef MWR_WINDOWS
+    const std::string exec = "cmd.exe";
+    const std::vector<std::string> args = { "/C", "echo hi" };
+#else
+    const std::string exec = "/bin/echo";
+    const std::vector<std::string> args = { "hi" };
+#endif
+
+    mwr::subprocess proc;
+    proc.cwd = "/this/path/does/not/exist_xyz_42";
+
+    proc.run(exec, args);
+    mwr::usleep(100000);
+    EXPECT_FALSE(proc.is_running());
+}

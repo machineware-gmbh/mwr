@@ -20,7 +20,8 @@ subprocess::subprocess():
     m_stdout(NULL),
     m_stderr(NULL),
     m_pid(),
-    env() {
+    env(),
+    cwd() {
 }
 
 subprocess::~subprocess() {
@@ -71,9 +72,11 @@ bool subprocess::run(const string& path, const vector<string>& args) {
     PROCESS_INFORMATION pi;
     ZeroMemory(&pi, sizeof(pi));
 
-    if (!CreateProcessA(
-            NULL, &cmdline[0], NULL, NULL, TRUE, CREATE_NEW_PROCESS_GROUP,
-            envstr.empty() ? NULL : (LPVOID)envstr.c_str(), NULL, &si, &pi)) {
+    const char* working_dir = cwd.empty() ? NULL : cwd.c_str();
+    if (!CreateProcessA(NULL, &cmdline[0], NULL, NULL, TRUE,
+                        CREATE_NEW_PROCESS_GROUP,
+                        envstr.empty() ? NULL : (LPVOID)envstr.c_str(),
+                        working_dir, &si, &pi)) {
         return false;
     }
 

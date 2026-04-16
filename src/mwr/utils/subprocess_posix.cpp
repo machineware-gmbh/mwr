@@ -20,7 +20,7 @@
 namespace mwr {
 
 subprocess::subprocess():
-    m_pid(-1), m_stdin(-1), m_stdout(-1), m_stderr(-1), env() {
+    m_pid(-1), m_stdin(-1), m_stdout(-1), m_stderr(-1), env(), cwd() {
 }
 
 subprocess::~subprocess() {
@@ -62,6 +62,9 @@ bool subprocess::run(const string& path, const vector<string>& args) {
         close(stdout_pipe[1]);
         close(stderr_pipe[0]);
         close(stderr_pipe[1]);
+
+        if (!cwd.empty() && chdir(cwd.c_str()) != 0)
+            _exit(1);
 
         vector<char*> argv;
         argv.push_back(const_cast<char*>(path.c_str()));
