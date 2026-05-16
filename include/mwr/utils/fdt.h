@@ -34,7 +34,8 @@ public:
     const vector<u32>& numbers() const { return m_numbers; }
     const vector<string>& strings() const { return m_strings; }
 
-    fdtprop(const string& name): m_name(name), m_numbers(), m_strings() {}
+    fdtprop(const string& name):
+        m_name(name), m_size(), m_numbers(), m_strings() {}
     fdtprop(const string& name, vector<u32> numbers);
     fdtprop(const string& name, vector<string> strings);
     ~fdtprop() = default;
