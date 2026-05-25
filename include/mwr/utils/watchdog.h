@@ -28,8 +28,7 @@ class watchdog
 public:
     using clock_t = std::chrono::high_resolution_clock;
 
-    void schedule(typename clock_t::duration delta,
-                  std::function<void()> task) {
+    void schedule(clock_t::duration delta, std::function<void()> task) {
         std::lock_guard<std::mutex> lock(m_mtx);
         auto timeout = clock_t::now() + delta;
         m_tasks.push({ timeout, std::move(task) });
@@ -68,7 +67,7 @@ public:
 
 private:
     struct task {
-        typename clock_t::time_point timeout;
+        clock_t::time_point timeout;
         std::function<void()> func;
         bool operator>(const task& o) const { return timeout > o.timeout; }
     };

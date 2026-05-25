@@ -127,7 +127,7 @@ namespace mwr {
 template <typename T>
 constexpr int likely(const T& x) {
 #if defined(MWR_GCC) || defined(MWR_CLANG)
-    return __builtin_expect(!!(x), 1);
+    return __builtin_expect(!!x, 1);
 #else
     return !!(x);
 #endif
@@ -136,7 +136,7 @@ constexpr int likely(const T& x) {
 template <typename T>
 constexpr int unlikely(const T& x) {
 #if defined(MWR_GCC) || defined(MWR_CLANG)
-    return __builtin_expect(!!(x), 0);
+    return __builtin_expect(!!x, 0);
 #else
     return !!(x);
 #endif
