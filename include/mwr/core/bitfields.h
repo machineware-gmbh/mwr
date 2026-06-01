@@ -52,7 +52,7 @@ struct field {
     using ubase = typename std::make_unsigned<T>::type;
     enum : size_t { OFFSET = OFF };
     enum : size_t { LENGTH = LEN };
-    enum : T { MASK = bitmask(LEN, OFF) };
+    static constexpr T MASK = (T)bitmask(LEN, OFF);
     constexpr operator T() const noexcept { return MASK; }
     static constexpr T set(T v) noexcept { return (v << OFFSET) & MASK; }
 };
