@@ -110,11 +110,11 @@ TEST(muldiv, idivmod128) {
 
         // we only return the bottom 64bits of the division result, so in
         // order for our test verifcation to work, we clamp hi so that
-        // |hi| < |d|, ensuring the result fits in 64bits without truncation.
-        if (d > 0)
-            hi %= d;
+        // |hi| < |d| / 2, ensuring the result fits in i64 without truncation.
+        if (d > 1)
+            hi %= (d / 2);
         if (d < 0)
-            hi %= -d;
+            hi %= (-d / 2);
 
         i64 div = idiv128lo(hi, lo, d);
         i64 mod = imod128(hi, lo, d);

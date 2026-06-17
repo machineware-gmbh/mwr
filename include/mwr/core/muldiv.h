@@ -83,7 +83,7 @@ constexpr u64 udiv128lo(u64 hi, u64 lo, u64 d) {
     unsigned __int128 dividend = ((unsigned __int128)hi << 64) | lo;
     return (u64)(dividend / d);
 #elif defined(MWR_MSVC)
-    u64 rem;
+    u64 rem = 0;
     return _udiv128(hi, lo, d, &rem);
 #endif
 }
@@ -97,7 +97,7 @@ constexpr i64 idiv128lo(u64 hi, u64 lo, i64 d) {
     __int128 dividend = ((__int128)hi << 64) | lo;
     return (i64)(dividend / d);
 #elif defined(MWR_MSVC)
-    i64 rem;
+    i64 rem = 0;
     return _div128(hi, lo, d, &rem);
 #endif
 }
@@ -111,7 +111,7 @@ constexpr u64 umod128(u64 hi, u64 lo, u64 d) {
     unsigned __int128 dividend = ((unsigned __int128)hi << 64) | lo;
     return (u64)(dividend % d);
 #elif defined(MWR_MSVC)
-    u64 rem;
+    u64 rem = 0;
     _udiv128(hi, lo, d, &rem);
     return rem;
 #endif
@@ -126,7 +126,7 @@ constexpr i64 imod128(u64 hi, u64 lo, i64 d) {
     __int128 dividend = ((__int128)hi << 64) | lo;
     return (i64)(dividend % d);
 #elif defined(MWR_MSVC)
-    i64 rem;
+    i64 rem = 0;
     _div128(hi, lo, d, &rem);
     return rem;
 #endif
