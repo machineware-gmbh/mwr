@@ -13,6 +13,7 @@
 
 #include "mwr/core/types.h"
 #include "mwr/core/bitops.h"
+#include "mwr/core/compiler.h"
 
 namespace mwr {
 
@@ -71,6 +72,64 @@ constexpr void imul64(i64& hi, i64& lo, i64 a, i64 b) {
 
 constexpr u64 udivup(u64 a, u64 b) {
     return (a + b - 1) / b;
+}
+
+constexpr u64 udiv128lo(u64 hi, u64 lo, u64 d) {
+    if (d == 0)
+        return 0;
+    if (hi == 0)
+        return lo / d;
+#ifdef __SIZEOF_INT128__
+    unsigned __int128 dividend = ((unsigned __int128)hi << 64) | lo;
+    return (u64)(dividend / d);
+#elif defined(MWR_MSVC)
+    u64 rem = 0;
+    return _udiv128(hi, lo, d, &rem);
+#endif
+}
+
+constexpr i64 idiv128lo(u64 hi, u64 lo, i64 d) {
+    if (d == 0)
+        return 0;
+    if (hi == 0)
+        return (i64)lo / d;
+#ifdef __SIZEOF_INT128__
+    __int128 dividend = ((unsigned __int128)hi << 64) | lo;
+    return (i64)(dividend / d);
+#elif defined(MWR_MSVC)
+    i64 rem = 0;
+    return _div128(hi, lo, d, &rem);
+#endif
+}
+
+constexpr u64 umod128(u64 hi, u64 lo, u64 d) {
+    if (d == 0)
+        return 0;
+    if (hi == 0)
+        return lo % d;
+#ifdef __SIZEOF_INT128__
+    unsigned __int128 dividend = ((unsigned __int128)hi << 64) | lo;
+    return (u64)(dividend % d);
+#elif defined(MWR_MSVC)
+    u64 rem = 0;
+    _udiv128(hi, lo, d, &rem);
+    return rem;
+#endif
+}
+
+constexpr i64 imod128(u64 hi, u64 lo, i64 d) {
+    if (d == 0)
+        return 0;
+    if (hi == 0)
+        return (i64)lo % d;
+#ifdef __SIZEOF_INT128__
+    __int128 dividend = ((unsigned __int128)hi << 64) | lo;
+    return (i64)(dividend % d);
+#elif defined(MWR_MSVC)
+    i64 rem = 0;
+    _div128(hi, lo, d, &rem);
+    return rem;
+#endif
 }
 
 } // namespace mwr
