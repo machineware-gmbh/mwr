@@ -94,7 +94,7 @@ constexpr i64 idiv128lo(u64 hi, u64 lo, i64 d) {
     if (hi == 0)
         return (i64)lo / d;
 #ifdef __SIZEOF_INT128__
-    __int128 dividend = ((__int128)hi << 64) | lo;
+    __int128 dividend = ((unsigned __int128)hi << 64) | lo;
     return (i64)(dividend / d);
 #elif defined(MWR_MSVC)
     i64 rem = 0;
@@ -123,7 +123,7 @@ constexpr i64 imod128(u64 hi, u64 lo, i64 d) {
     if (hi == 0)
         return (i64)lo % d;
 #ifdef __SIZEOF_INT128__
-    __int128 dividend = ((__int128)hi << 64) | lo;
+    __int128 dividend = ((unsigned __int128)hi << 64) | lo;
     return (i64)(dividend % d);
 #elif defined(MWR_MSVC)
     i64 rem = 0;
