@@ -158,7 +158,7 @@ u64 elf::to_phys(u64 virt) const {
     return virt;
 }
 
-const elf::symbol* elf::find_symbol(const string& name) const {
+const elf::symbol* elf::find_symbol(string_view name) const {
     for (const auto& sym : m_symbols)
         if (sym.name == name)
             return &sym;

@@ -85,7 +85,11 @@ public:
     const vector<segment>& segments() const { return m_segments; }
     const vector<symbol>& symbols() const { return m_symbols; }
 
-    const symbol* find_symbol(const string& name) const;
+    const symbol* find_symbol(std::string_view name) const;
+
+    const symbol* find_symbol(const string& name) const {
+	    return find_symbol(std::string_view(name));
+    }
 
     elf(const string& filename);
     ~elf();
