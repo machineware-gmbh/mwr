@@ -613,6 +613,15 @@ void server_socket::accept_new_client() {
     connect_fn notify_connect = m_connect;
     int client = m_next_client_id++;
 
+    try {
+        SET_SOCKOPT(conn, IPPROTO_TCP, TCP_NODELAY, m_nodelay);
+    } catch (...) {
+        close_socket(conn);
+        throw;
+    }
+
+    m_clients[client] = conn;
+
     bool ok = true;
     if (notify_connect) {
         try {
@@ -628,17 +637,8 @@ void server_socket::accept_new_client() {
 
     if (!ok) {
         close_socket(conn);
-        return;
+        m_clients.erase(client);
     }
-
-    try {
-        SET_SOCKOPT(conn, IPPROTO_TCP, TCP_NODELAY, m_nodelay);
-    } catch (...) {
-        close_socket(conn);
-        throw;
-    }
-
-    m_clients[client] = conn;
 }
 
 } // namespace mwr
