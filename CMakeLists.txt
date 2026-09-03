@@ -16,7 +16,9 @@ set(MWR_COVERAGE OFF CACHE BOOL "Collect code coverage data")
 set(MWR_BUILD_TESTS OFF CACHE BOOL "Build unit tests")
 set(MWR_USE_LIBELF ON CACHE BOOL "Use libelf for reading ELF files")
 
-include(cmake/common.cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include(common)
+
 find_package(Threads REQUIRED)
 
 if(MWR_USE_LIBELF)
