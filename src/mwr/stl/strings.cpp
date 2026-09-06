@@ -117,20 +117,27 @@ string unescape(const string& s, const string& chars) {
 }
 
 vector<string> split(const string& str, const function<int(int)>& f) {
-    bool flag = false;
+    char quote = 0;
     vector<string> vec;
     string buf;
 
     for (size_t i = 0; i < str.length(); i++) {
         char ch = str[i];
-        if (ch == '"' || ch == '\'') {
-            flag = !flag;
-        } else if (ch == '\\' && i < str.length() - 1) {
-            buf += str[++i];
-        } else if (f(ch) && !flag) {
+        if (!quote && (ch == '"' || ch == '\'')) {
             if (!buf.empty())
                 vec.push_back(buf);
-            buf = "";
+            buf.clear();
+            quote = ch;
+        } else if (quote && ch == quote) {
+            vec.push_back(buf);
+            buf.clear();
+            quote = 0;
+        } else if (ch == '\\' && i + 1 < str.length()) {
+            buf += str[++i];
+        } else if (!quote && f(ch)) {
+            if (!buf.empty())
+                vec.push_back(buf);
+            buf.clear();
         } else {
             buf += ch;
         }
@@ -142,30 +149,8 @@ vector<string> split(const string& str, const function<int(int)>& f) {
     return vec;
 }
 
-vector<string> split(const string& str, char predicate) {
-    bool flag = false;
-    vector<string> vec;
-    string buf;
-
-    for (size_t i = 0; i < str.length(); i++) {
-        char ch = str[i];
-        if (ch == '"' || ch == '\'') {
-            flag = !flag;
-        } else if (ch == '\\' && i < str.length() - 1) {
-            buf += str[++i];
-        } else if (ch == predicate && !flag) {
-            if (!buf.empty())
-                vec.push_back(buf);
-            buf = "";
-        } else {
-            buf += ch;
-        }
-    }
-
-    if (!buf.empty())
-        vec.push_back(buf);
-
-    return vec;
+vector<string> split(const string& str, char pred) {
+    return split(str, [pred](char ch) -> bool { return ch == pred; });
 }
 
 size_t replace(string& str, const string& search, const string& repl) {

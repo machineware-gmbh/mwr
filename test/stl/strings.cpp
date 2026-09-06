@@ -43,6 +43,18 @@ TEST(strings, split) {
     vector<string> t = split("\"\\\"unterminated\\\"", ' ');
     ASSERT_EQ(t.size(), 1);
     EXPECT_EQ(t.at(0), "\"unterminated\"");
+
+    vector<string> r = split("\"\"\"\"    \"\" \"\"");
+    ASSERT_EQ(r.size(), 4);
+    EXPECT_EQ(r.at(0), "");
+    EXPECT_EQ(r.at(1), "");
+    EXPECT_EQ(r.at(2), "");
+    EXPECT_EQ(r.at(3), "");
+
+    vector<string> q = split("\"'\" '\"'");
+    ASSERT_EQ(q.size(), 2);
+    EXPECT_EQ(q.at(0), "'");
+    EXPECT_EQ(q.at(1), "\"");
 }
 
 TEST(strings, join) {
