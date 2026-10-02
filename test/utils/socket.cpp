@@ -93,6 +93,37 @@ TEST(socket, threads) {
     EXPECT_THROW(client.send("test"), mwr::report);
 }
 
+TEST(socket, peek) {
+    mwr::server_socket server(1, 0);
+    mwr::socket client(server.host(), server.port());
+    server.poll(100);
+    ASSERT_EQ(server.num_clients(), 1);
+
+    // nothing to read, peek must wait for its timeout and return 0
+    mwr::u64 start = mwr::timestamp_ms();
+    EXPECT_EQ(client.peek(100), 0);
+    EXPECT_GE(mwr::timestamp_ms() - start, 90); // allow for timer granularity
+
+    // data arriving while peek is waiting must wake it up
+    std::thread t([&]() {
+        mwr::usleep(50000);
+        server.send(0, "abc");
+    });
+
+    EXPECT_GT(client.peek(5000), 0);
+    t.join();
+
+    EXPECT_EQ(client.recv_char(), 'a');
+    EXPECT_EQ(client.recv_char(), 'b');
+    EXPECT_EQ(client.recv_char(), 'c');
+    EXPECT_EQ(client.peek(0), 0);
+
+    // peer hang up must be reported
+    server.disconnect(0);
+    EXPECT_THROW(client.peek(1000), mwr::report);
+    EXPECT_FALSE(client.is_connected());
+}
+
 TEST(socket, move) {
     const char* str = "Hello World";
     char buf[12] = {};

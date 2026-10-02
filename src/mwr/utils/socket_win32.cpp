@@ -343,6 +343,23 @@ void socket::disconnect() {
 }
 
 size_t socket::peek(time_t timeoutms) {
+    m_mtx.lock();
+    socket_t conn = m_conn;
+    m_mtx.unlock();
+
+    if (conn == INVALID_SOCKET)
+        return 0;
+
+    // wait without holding the lock, so other threads can still send
+    WSAPOLLFD pfd{};
+    pfd.fd = conn;
+    pfd.events = POLLRDNORM;
+    INT timeout = ~timeoutms ? (INT)min<time_t>(timeoutms, INT_MAX) : -1;
+    int r = WSAPoll(&pfd, 1, timeout);
+    MWR_REPORT_ON(r < 0, "failed to poll socket: %s", socket_strerror());
+    if (r == 0)
+        return 0;
+
     lock_guard<mutex> guard(m_mtx);
     if (m_conn == INVALID_SOCKET)
         return 0;
@@ -350,6 +367,12 @@ size_t socket::peek(time_t timeoutms) {
     u_long avail = 0;
     if (ioctlsocket(m_conn, FIONREAD, &avail) == SOCKET_ERROR)
         MWR_REPORT("error receiving data: %s", socket_strerror());
+
+    // readable without any data means the peer has hung up
+    if (avail == 0) {
+        disconnect_locked();
+        MWR_REPORT("error receiving data: disconnected");
+    }
 
     return avail;
 }
