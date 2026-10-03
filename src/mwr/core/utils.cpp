@@ -28,6 +28,11 @@ namespace fs = std::filesystem;
 #include <cxxabi.h>
 #endif
 
+#if !defined(MWR_MSVC) && !defined(MWR_MINGW)
+#include <poll.h>
+#include <sys/ioctl.h>
+#endif
+
 #ifdef MWR_WINDOWS
 #include <Windows.h>
 #include <DbgHelp.h>
@@ -390,7 +395,7 @@ size_t fd_peek(int fd, time_t timeoutms) {
         if (!SetFilePointerEx(handle, { 0 }, &pos, FILE_CURRENT))
             MWR_ERROR("failed to possition of fd %d", fd);
         if (pos.QuadPart < size.QuadPart)
-            return size.QuadPart - pos.QuadPart - 1;
+            return size.QuadPart - pos.QuadPart;
         return 0;
     }
 
@@ -398,20 +403,19 @@ size_t fd_peek(int fd, time_t timeoutms) {
         return 0;
     }
 #else
-    fd_set in, out, err;
-    struct timeval timeout;
+    // use poll instead of select, which cannot handle fds >= FD_SETSIZE
+    struct pollfd pfd = { fd, POLLIN, 0 };
+    int timeout = timeoutms < 0 ? -1 : (int)min<time_t>(timeoutms, INT_MAX);
+    if (poll(&pfd, 1, timeout) <= 0 || (pfd.revents & POLLNVAL))
+        return 0;
 
-    FD_ZERO(&in);
-    FD_SET(fd, &in);
-    FD_ZERO(&out);
-    FD_ZERO(&err);
+    // readable without data means end of file, hang up or error: report one
+    // byte, so that the next read on fd can report it to the caller
+    int avail = 0;
+    if (ioctl(fd, FIONREAD, &avail) < 0 || avail <= 0)
+        return 1;
 
-    timeout.tv_sec = (timeoutms / 1000ull);
-    timeout.tv_usec = (timeoutms % 1000ull) * 1000ull;
-
-    struct timeval* ptimeout = ~timeoutms ? &timeout : nullptr;
-    int ret = select(fd + 1, &in, &out, &err, ptimeout);
-    return ret > 0 ? 1 : 0;
+    return (size_t)avail;
 #endif
 }
 

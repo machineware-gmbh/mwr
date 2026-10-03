@@ -76,6 +76,33 @@ TEST(socket, send) {
     memset(buf, 0, sizeof(buf));
 }
 
+TEST(socket, recv_some) {
+    mwr::server_socket server(1, 0);
+    char buf[16] = {};
+
+    {
+        mwr::socket client(server.host(), server.port());
+        server.poll(100);
+        ASSERT_EQ(server.num_clients(), 1);
+
+        // never returns more than requested, keeps the rest for later
+        client.send("hello", 5);
+        size_t n = 0;
+        while (n < 2)
+            n += server.recv_some(0, buf + n, 2 - n);
+        EXPECT_EQ(n, 2);
+        while (n < 5)
+            n += server.recv_some(0, buf + n, sizeof(buf) - n);
+        EXPECT_EQ(n, 5);
+        EXPECT_EQ(std::string(buf, n), "hello");
+        EXPECT_EQ(server.recv_some(0, buf, 0), 0);
+    }
+
+    // reports a disconnect like recv
+    EXPECT_THROW(server.recv_some(0, buf, sizeof(buf)), mwr::report);
+    EXPECT_EQ(server.num_clients(), 0);
+}
+
 TEST(socket, threads) {
     mwr::server_socket server(1, 0);
     mwr::socket client(server.host(), server.port());
@@ -122,6 +149,28 @@ TEST(socket, peek) {
     server.disconnect(0);
     EXPECT_THROW(client.peek(1000), mwr::report);
     EXPECT_FALSE(client.is_connected());
+}
+
+TEST(socket, peek_all) {
+    mwr::server_socket server(1, 0);
+    mwr::socket client(server.host(), server.port());
+    server.poll(100);
+    ASSERT_EQ(server.num_clients(), 1);
+
+    // peek must report everything that has arrived, not just a few bytes
+    std::string data(1000, 'x');
+    data.back() = 'y';
+    server.send(0, data);
+
+    size_t avail = 0;
+    for (int i = 0; i < 100 && avail < data.size(); i++)
+        avail = client.peek(100);
+    ASSERT_EQ(avail, data.size());
+
+    std::string received(avail, '\0');
+    client.recv(received.data(), avail);
+    EXPECT_EQ(received, data);
+    EXPECT_EQ(client.peek(0), 0);
 }
 
 TEST(socket, move) {

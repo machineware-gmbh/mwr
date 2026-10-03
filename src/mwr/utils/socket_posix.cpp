@@ -12,6 +12,7 @@
 #include <poll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <netdb.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
@@ -356,19 +357,25 @@ size_t socket::peek(time_t timeoutms) {
     if (count == 0)
         return 0;
 
-    m_mtx.lock();
-    conn = m_conn;
-    m_mtx.unlock();
+    lock_guard<mutex> guard(m_mtx);
+    if (m_conn < 0)
+        return 0;
 
-    char buf[32];
-    int err = ::recv(conn, buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT);
-    if (err <= 0)
-        disconnect();
+    // report all available bytes, so that callers can read them at once
+    int avail = 0;
+    if (ioctl(m_conn, FIONREAD, &avail) < 0) {
+        int err = errno;
+        disconnect_locked();
+        MWR_REPORT("error receiving data: %s", strerror(err));
+    }
 
-    MWR_REPORT_ON(err == 0, "error receiving data: disconnected");
-    MWR_REPORT_ON(err < 0, "error receiving data: %s", strerror(errno));
+    // readable without any data means the peer has hung up
+    if (avail <= 0) {
+        disconnect_locked();
+        MWR_REPORT("error receiving data: disconnected");
+    }
 
-    return err;
+    return (size_t)avail;
 }
 
 void socket::send(const void* data, size_t size) {
@@ -591,6 +598,21 @@ void server_socket::recv(int client, void* buffer, size_t buflen) {
 
         n += r;
     }
+}
+
+size_t server_socket::recv_some(int client, void* buffer, size_t buflen) {
+    if (buflen == 0)
+        return 0;
+
+    socket_t conn = find_socket(client);
+    ssize_t r = ::recv(conn, buffer, buflen, 0);
+    if (r <= 0)
+        disconnect(client);
+
+    MWR_REPORT_ON(r == 0, "error receiving data: disconnected");
+    MWR_REPORT_ON(r < 0, "error receiving data: %s", strerror(errno));
+
+    return (size_t)r;
 }
 
 void server_socket::accept_new_client() {
