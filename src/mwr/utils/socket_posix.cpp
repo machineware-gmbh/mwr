@@ -600,6 +600,21 @@ void server_socket::recv(int client, void* buffer, size_t buflen) {
     }
 }
 
+size_t server_socket::recv_some(int client, void* buffer, size_t buflen) {
+    if (buflen == 0)
+        return 0;
+
+    socket_t conn = find_socket(client);
+    ssize_t r = ::recv(conn, buffer, buflen, 0);
+    if (r <= 0)
+        disconnect(client);
+
+    MWR_REPORT_ON(r == 0, "error receiving data: disconnected");
+    MWR_REPORT_ON(r < 0, "error receiving data: %s", strerror(errno));
+
+    return (size_t)r;
+}
+
 void server_socket::accept_new_client() {
     lock_guard<mutex> guard(m_mtx);
     if (m_socket < 0)

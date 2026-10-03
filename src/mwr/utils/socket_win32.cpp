@@ -606,6 +606,22 @@ void server_socket::recv(int client, void* buffer, size_t buflen) {
     }
 }
 
+size_t server_socket::recv_some(int client, void* buffer, size_t buflen) {
+    if (buflen == 0)
+        return 0;
+
+    socket_t conn = find_socket(client);
+    int len = (int)std::min<size_t>(buflen, INT_MAX);
+    int r = ::recv(conn, (char*)buffer, len, 0);
+    if (r <= 0)
+        disconnect(client);
+
+    MWR_REPORT_ON(r == 0, "error receiving data: disconnected");
+    MWR_REPORT_ON(r < 0, "error receiving data: %s", socket_strerror());
+
+    return (size_t)r;
+}
+
 void server_socket::accept_new_client() {
     lock_guard<mutex> guard(m_mtx);
     if (m_socket == INVALID_SOCKET)

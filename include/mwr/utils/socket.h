@@ -182,6 +182,10 @@ public:
     void send(int client, const void* buffer, size_t buflen);
     void recv(int client, void* buffer, size_t buflen);
 
+    // blocks until at least one byte is available, then returns up to
+    // buflen bytes that are available without blocking any further
+    size_t recv_some(int client, void* buffer, size_t buflen);
+
     void send(int client, const string& str);
     void send(int client, const char* str);
 
