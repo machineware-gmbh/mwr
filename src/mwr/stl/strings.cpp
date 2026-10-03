@@ -10,6 +10,7 @@
 
 #include <stdio.h> // for vsnprintf
 #include <ctype.h> // for isspace, tolower, toupper
+#include <bitset>
 
 #include "mwr/stl/strings.h"
 
@@ -90,30 +91,48 @@ string to_upper(const string& s) {
     return result;
 }
 
+static std::bitset<256> escape_table(const string& chars) {
+    std::bitset<256> table;
+    for (unsigned char c : chars + "\\\"'")
+        table.set(c);
+    return table;
+}
+
 string escape(const string& s, const string& chars) {
-    stringstream ss;
-    for (auto c : s) {
-        for (auto esc : chars + "\\\"'") {
-            if (c == esc)
-                ss << '\\';
+    const std::bitset<256> table = escape_table(chars);
+
+    string res;
+    res.reserve(s.length() + s.length() / 8);
+
+    size_t start = 0;
+    for (size_t i = 0; i < s.length(); i++) {
+        if (table[(u8)s[i]]) {
+            res.append(s, start, i - start);
+            res += '\\';
+            start = i;
         }
-        ss << c;
     }
 
-    return ss.str();
+    res.append(s, start, string::npos);
+    return res;
 }
 
 string unescape(const string& s, const string& chars) {
-    stringstream ss;
-    for (size_t i = 0; i < s.length(); i++) {
-        if (s[i] == '\\' && i < s.length() - 1 &&
-            (chars + "\\\"'").find(s[i + 1]) != string::npos) {
-            ss << s[++i];
-        } else
-            ss << s[i];
+    const std::bitset<256> table = escape_table(chars);
+
+    string res;
+    res.reserve(s.length());
+
+    size_t start = 0;
+    for (size_t i = 0; i + 1 < s.length(); i++) {
+        if (s[i] == '\\' && table[(u8)s[i + 1]]) {
+            res.append(s, start, i - start);
+            start = ++i; // skip over backslash
+        }
     }
 
-    return ss.str();
+    res.append(s, start, string::npos);
+    return res;
 }
 
 vector<string> split(const string& str, const function<int(int)>& f) {

@@ -179,3 +179,49 @@ TEST(utils, fill_random) {
 
     EXPECT_NE(buf1, buf2);
 }
+
+#ifndef MWR_WINDOWS
+#include <unistd.h>
+#include <sys/resource.h>
+
+TEST(utils, fd_peek) {
+    int fds[2];
+    ASSERT_EQ(pipe(fds), 0);
+
+    EXPECT_EQ(fd_peek(-1), 0);
+    EXPECT_EQ(fd_peek(fds[0]), 0);
+
+    auto t0 = std::chrono::steady_clock::now();
+    EXPECT_EQ(fd_peek(fds[0], 50), 0);
+    EXPECT_GE(std::chrono::steady_clock::now() - t0,
+              std::chrono::milliseconds(40));
+
+    // reports the number of available bytes
+    ASSERT_EQ(write(fds[1], "hello", 5), 5);
+    EXPECT_EQ(fd_peek(fds[0]), 5);
+    char buf[8];
+    ASSERT_EQ(read(fds[0], buf, 2), 2);
+    EXPECT_EQ(fd_peek(fds[0]), 3);
+
+    // works with fds beyond FD_SETSIZE, where select would fail
+    struct rlimit lim;
+    ASSERT_EQ(getrlimit(RLIMIT_NOFILE, &lim), 0);
+    int high = FD_SETSIZE + 100;
+    if (lim.rlim_cur <= (rlim_t)high && lim.rlim_max > (rlim_t)high) {
+        lim.rlim_cur = high + 1;
+        setrlimit(RLIMIT_NOFILE, &lim);
+    }
+
+    if (dup2(fds[0], high) == high) {
+        EXPECT_EQ(fd_peek(high), 3);
+        close(high);
+    }
+
+    // end of file still reports one byte, so that read can return it
+    close(fds[1]);
+    ASSERT_EQ(read(fds[0], buf, 3), 3);
+    EXPECT_EQ(fd_peek(fds[0]), 1);
+    EXPECT_EQ(read(fds[0], buf, 1), 0);
+    close(fds[0]);
+}
+#endif

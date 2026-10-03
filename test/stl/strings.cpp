@@ -135,4 +135,23 @@ TEST(strings, escape) {
     string s2 = escape("C:\\a\\b\\c");
     ASSERT_EQ(s2, "C:\\\\a\\\\b\\\\c");
     EXPECT_EQ(unescape(s2), "C:\\a\\b\\c");
+
+    // quotes and backslashes are always escaped
+    string s3 = escape("{\"a\":\"x,y\\\\z\",'b'}", ",");
+    ASSERT_EQ(s3, "{\\\"a\\\":\\\"x\\,y\\\\\\\\z\\\"\\,\\'b\\'}");
+    EXPECT_EQ(unescape(s3, ","), "{\"a\":\"x,y\\\\z\",'b'}");
+
+    // characters listed twice still get escaped only once
+    EXPECT_EQ(escape("a\"b", "\"'\\"), "a\\\"b");
+    EXPECT_EQ(unescape(escape("a\"b\\c'", "\"'\\"), "\"'\\"), "a\"b\\c'");
+
+    // backslashes before other characters and at the end are kept
+    EXPECT_EQ(unescape("a\\b\\,c\\"), "a\\b\\,c\\");
+    EXPECT_EQ(unescape("a\\b\\,c\\", ","), "a\\b,c\\");
+
+    // non-ascii characters pass through unchanged
+    EXPECT_EQ(escape("\xff\x80,", ","), "\xff\x80\\,");
+    EXPECT_EQ(unescape("\xff\\\x80", "\x80"), "\xff\x80");
+    EXPECT_EQ(escape(""), "");
+    EXPECT_EQ(unescape(""), "");
 }
