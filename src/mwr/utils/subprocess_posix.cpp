@@ -87,8 +87,9 @@ bool subprocess::run(const string& path, const vector<string>& args) {
 
         _exit(1);
     } else { // parent process
-        close(stdout_pipe[1]);
         close(stdin_pipe[0]);
+        close(stdout_pipe[1]);
+        close(stderr_pipe[1]);
         m_stdin = stdin_pipe[1];
         m_stdout = stdout_pipe[0];
         m_stderr = stderr_pipe[0];
@@ -107,11 +108,17 @@ bool subprocess::terminate() {
     if (m_pid < 0)
         return false;
 
-    if (kill(m_pid, SIGTERM))
-        return false;
+    // kill fails if is_running has already collected the exited process,
+    // otherwise wait until the process is gone
+    if (kill(m_pid, SIGTERM) == 0) {
+        int status;
+        waitpid(m_pid, &status, 0);
+    }
 
-    int status;
-    waitpid(m_pid, &status, 0);
+    for (int fd : { m_stdin, m_stdout, m_stderr }) {
+        if (fd >= 0)
+            close(fd);
+    }
 
     m_stdin = -1;
     m_stdout = -1;

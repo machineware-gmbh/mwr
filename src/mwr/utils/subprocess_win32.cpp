@@ -107,10 +107,19 @@ bool subprocess::terminate() {
     if (!m_handle)
         return false;
 
-    if (!TerminateProcess((HANDLE)m_handle, 0))
-        return false;
+    // fails if the process has already exited, which is fine
+    HANDLE process = (HANDLE)m_handle;
+    TerminateProcess(process, 0);
 
-    CloseHandle((HANDLE)m_handle);
+    // TerminateProcess is asynchronous: wait until the process is gone, so
+    // that it no longer holds any resources, e.g. its listening sockets
+    WaitForSingleObject(process, INFINITE);
+    CloseHandle(process);
+
+    for (void* pipe : { m_stdin, m_stdout, m_stderr }) {
+        if (pipe)
+            CloseHandle((HANDLE)pipe);
+    }
 
     m_pid = 0;
     m_handle = nullptr;
