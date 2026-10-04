@@ -10,6 +10,7 @@
 
 #include "testing.h"
 #include "mwr/core/utils.h"
+#include "mwr/utils/subprocess.h"
 
 #include <stdlib.h>
 #include <fstream>
@@ -225,3 +226,23 @@ TEST(utils, fd_peek) {
     close(fds[0]);
 }
 #endif
+
+TEST(utils, process_exists) {
+    EXPECT_TRUE(mwr::process_exists(mwr::getpid()));
+    EXPECT_FALSE(mwr::process_exists(0));
+    EXPECT_FALSE(mwr::process_exists(-1));
+
+    mwr::subprocess proc;
+#ifdef MWR_WINDOWS
+    ASSERT_TRUE(proc.run("cmd.exe", { "/K" }));
+#else
+    ASSERT_TRUE(proc.run("/bin/cat"));
+#endif
+
+    int pid = (int)proc.pid();
+    EXPECT_TRUE(mwr::process_exists(pid));
+
+    // terminate waits until the process is gone
+    proc.terminate();
+    EXPECT_FALSE(mwr::process_exists(pid));
+}

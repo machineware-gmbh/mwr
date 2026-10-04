@@ -58,6 +58,8 @@ T getenv_or_default(const string& name, const T& def) {
 
 int getpid();
 
+bool process_exists(int pid);
+
 size_t get_page_size();
 
 inline bool is_page_aligned(uintptr_t addr) {

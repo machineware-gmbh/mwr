@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <errno.h>
 #include <limits.h>
 #include <fcntl.h>
 #include <chrono>
@@ -238,6 +239,25 @@ int getpid() {
     return (int)GetCurrentProcessId();
 #else
     return (int)::getpid();
+#endif
+}
+
+bool process_exists(int pid) {
+    if (pid <= 0)
+        return false;
+
+#if defined(MWR_WINDOWS)
+    HANDLE proc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE,
+                              (DWORD)pid);
+    if (proc == NULL)
+        return GetLastError() != ERROR_INVALID_PARAMETER; // e.g. no access
+
+    DWORD code = 0;
+    bool alive = GetExitCodeProcess(proc, &code) && code == STILL_ACTIVE;
+    CloseHandle(proc);
+    return alive;
+#else
+    return kill((pid_t)pid, 0) == 0 || errno == EPERM;
 #endif
 }
 
