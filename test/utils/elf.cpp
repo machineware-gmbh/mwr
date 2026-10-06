@@ -96,7 +96,10 @@ TEST(elf64, segments) {
     EXPECT_EQ(reader.read_segment(segments[3], seg3.data()), seg3.size());
 
     mwr::u8 code[4] = {
-        0x7f, 0x45, 0x4c, 0x46, // ELF header at start of code
+        0x7f,
+        0x45,
+        0x4c,
+        0x46, // ELF header at start of code
     };
 
     mwr::u8 data[12] = {

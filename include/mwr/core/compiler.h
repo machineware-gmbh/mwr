@@ -49,11 +49,11 @@
 #include <intrin.h>
 #endif
 
-#define MWR_CPLUSPLUS_97 199711L
-#define MWR_CPLUSPLUS_11 201103L
-#define MWR_CPLUSPLUS_14 201402L
-#define MWR_CPLUSPLUS_17 201703L
-#define MWR_CPLUSPLUS_20 202002L
+#define MWR_CPLUSPLUS_97 199711l
+#define MWR_CPLUSPLUS_11 201103l
+#define MWR_CPLUSPLUS_14 201402l
+#define MWR_CPLUSPLUS_17 201703l
+#define MWR_CPLUSPLUS_20 202002l
 
 #if defined(MWR_GCC) || defined(MWR_CLANG)
 #define MWR_DECL_ALIGN(n) __attribute__((aligned(n)))
@@ -102,9 +102,7 @@
     static void fn();                       \
     namespace {                             \
     struct MWR_CAT(fn, _t) {                \
-        MWR_CAT(fn, _t)() {                 \
-            fn();                           \
-        }                                   \
+        MWR_CAT(fn, _t)() { fn(); }         \
     };                                      \
     static MWR_CAT(fn, _t) MWR_CAT(g_, fn); \
     }                                       \
@@ -114,9 +112,7 @@
     static void fn();                       \
     namespace {                             \
     struct MWR_CAT(fn, _t) {                \
-        ~MWR_CAT(fn, _t)() {                \
-            fn();                           \
-        }                                   \
+        ~MWR_CAT(fn, _t)() { fn(); }        \
     };                                      \
     static MWR_CAT(fn, _t) MWR_CAT(g_, fn); \
     }                                       \
