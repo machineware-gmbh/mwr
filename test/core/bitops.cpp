@@ -278,7 +278,7 @@ TEST(bitops, crc7) {
 }
 
 TEST(bitops, crc16) {
-    u8 b0[512] = { 0xFF };
+    u8 b0[512] = { 0xff };
     memset(b0, 0xff, 512);
     EXPECT_EQ(crc16(b0, sizeof(b0)), 0x7fa1);
 }
