@@ -86,6 +86,7 @@ TEST(utils, info) {
     EXPECT_NE(temp_dir(), "");
     EXPECT_NE(progname(), "");
     EXPECT_NE(username(), "");
+    EXPECT_NE(hostname(), "");
 }
 
 TEST(utils, timestamp) {

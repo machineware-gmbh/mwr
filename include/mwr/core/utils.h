@@ -43,6 +43,7 @@ string temp_dir();
 
 string progname();
 string username();
+string hostname();
 
 map<string, string> get_environment();
 

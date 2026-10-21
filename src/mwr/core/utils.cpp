@@ -171,6 +171,20 @@ string username() {
     return "unknown";
 }
 
+string hostname() {
+#if defined(MWR_WINDOWS)
+    TCHAR name[MAX_COMPUTERNAME_LENGTH + 1] = {};
+    DWORD namelen = MAX_COMPUTERNAME_LENGTH + 1;
+    if (GetComputerName(name, &namelen))
+        return string(name);
+#else
+    char hname[256] = {};
+    if (gethostname(hname, sizeof(hname) - 1) == 0)
+        return hname;
+#endif
+    return "unknown";
+}
+
 extern "C" {
 #if defined(MWR_MSVC)
 #define ENVIRON _environ
