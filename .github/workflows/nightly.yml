@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04, ubuntu-22.04-arm, ubuntu-24.04-arm, self-hosted-rhel-8, windows-2022, windows-2025, macos-14, macos-15]
+        os: [ubuntu-22.04, ubuntu-24.04, ubuntu-26.04, ubuntu-22.04-arm, ubuntu-24.04-arm, ubuntu-26.04-arm, windows-2022, windows-2025, macos-15, macos-26]
 
     steps:
     - name: Checkout
@@ -54,6 +54,48 @@ jobs:
       if: '!cancelled()'
       with:
         name: ${{github.event.repository.name}}-logs-${{matrix.os}}
+        path: |
+            BUILD/.ninja_log
+            BUILD/CMakeCache.txt
+            BUILD/msbuild.binlog
+            BUILD/Testing/Temporary/LastTest.log
+        include-hidden-files: true
+        retention-days: 7
+
+  nightly-alma8:
+    name: nightly
+    runs-on: ubuntu-latest
+    container:
+      image: docker.io/almalinux:8
+
+    steps:
+    - name: Setup Dependencies
+      run: |
+        dnf install -y dnf-utils
+        dnf config-manager --set-enabled powertools
+        dnf -y groupinstall "Development Tools"
+        dnf -y install epel-release cmake ninja-build
+
+    - name: Checkout
+      uses: actions/checkout@v6
+      with:
+        submodules: 'recursive'
+
+    - name: Configure
+      run: cmake -G Ninja -B BUILD -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DMWR_BUILD_TESTS=ON
+
+    - name: Build
+      run: cmake --build BUILD
+
+    - name: Test
+      working-directory: BUILD
+      run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
+
+    - name: Upload Logs
+      uses: actions/upload-artifact@v7
+      if: '!cancelled()'
+      with:
+        name: ${{github.event.repository.name}}-logs-almalinux-8
         path: |
             BUILD/.ninja_log
             BUILD/CMakeCache.txt
