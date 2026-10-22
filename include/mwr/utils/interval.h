@@ -297,7 +297,7 @@ private:
     }
 
     template <typename FN>
-    static void ivt_for_each(ivtnode* node, u64 start, u64 end, FN fn) {
+    static void ivt_for_each(ivtnode* node, u64 start, u64 end, FN& fn) {
         if (node == nullptr)
             return;
 
@@ -483,14 +483,15 @@ public:
         return ivt_overlaps(m_root, start, end);
     }
 
-    void for_each(u64 start, u64 end,
-                  function<void(u64, u64, const const_iterator&)> fn) const {
+    void for_each(
+        u64 start, u64 end,
+        const function<void(u64, u64, const const_iterator&)>& fn) const {
         MWR_ERROR_ON(end < start, "invalid interval %llu..%llu", start, end);
         ivt_for_each(m_root, start, end, fn);
     }
 
     void for_each(u64 start, u64 end,
-                  function<void(u64, u64, const iterator&)> fn) {
+                  const function<void(u64, u64, const iterator&)>& fn) {
         MWR_ERROR_ON(end < start, "invalid interval %llu..%llu", start, end);
         ivt_for_each(m_root, start, end, fn);
     }
