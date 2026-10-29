@@ -31,6 +31,7 @@ namespace fs = std::filesystem;
 
 #if !defined(MWR_MSVC) && !defined(MWR_MINGW)
 #include <poll.h>
+#include <pwd.h>
 #include <sys/ioctl.h>
 #endif
 
@@ -160,9 +161,13 @@ string username() {
     if (GetUserName(name, &namelen))
         return string(name);
 #else
-    char uname[256] = {};
-    if (getlogin_r(uname, sizeof(uname) - 1) == 0)
-        return uname;
+    long bufsz = sysconf(_SC_GETPW_R_SIZE_MAX);
+    vector<char> buf(bufsz > 0 ? bufsz : 16384);
+    struct passwd pwd = {};
+    struct passwd* result = nullptr;
+    if (getpwuid_r(geteuid(), &pwd, buf.data(), buf.size(), &result) == 0 &&
+        result && result->pw_name)
+        return result->pw_name;
 
     auto envuser = getenv("USER");
     if (envuser)
