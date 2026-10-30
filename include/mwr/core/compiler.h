@@ -103,14 +103,18 @@
 #endif
 #endif
 
+// multiversioning currently does not work corectly on clang:
+// https://github.com/llvm/llvm-project/pull/218210
+// https://github.com/llvm/llvm-project/issues/116501
+// test/core/compiler.cpp has a test for this
 #if defined(MWR_X86_64) && defined(__ELF__) && !defined(MWR_TSAN) && \
-    (MWR_GCC_VERSION >= 6 || MWR_CLANG_VERSION >= 14)
+    MWR_GCC_VERSION >= 6
 #define MWR_DECL_MULTIVERSION(...) __attribute__((target_clones(__VA_ARGS__)))
 #else
 #define MWR_DECL_MULTIVERSION(...)
 #endif
 
-#if defined(MWR_X86_64) && (MWR_GCC_VERSION >= 12 || MWR_CLANG_VERSION >= 14)
+#if defined(MWR_X86_64) && MWR_GCC_VERSION >= 12
 #define MWR_DECL_VECTORIZE \
     MWR_DECL_MULTIVERSION("default", "arch=x86-64-v3", "arch=x86-64-v4")
 #elif defined(MWR_X86_64)

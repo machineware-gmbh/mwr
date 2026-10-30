@@ -75,11 +75,17 @@ TEST(compiler, multiversion) {
     EXPECT_EQ(dot(a, b, 64), expect);
 }
 
+template <typename T>
+struct product {
+    T val;
+    constexpr product(T a, T b): val(a * b) {}
+};
+
 MWR_DECL_VECTORIZE
 static int dot_vectorized(const int* a, const int* b, int n) {
     int sum = 0;
     for (int i = 0; i < n; i++)
-        sum += a[i] * b[i];
+        sum += product<int>(a[i], b[i]).val;
     return sum;
 }
 
