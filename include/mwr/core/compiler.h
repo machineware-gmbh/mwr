@@ -11,14 +11,32 @@
 #ifndef MWR_COMPILER_H
 #define MWR_COMPILER_H
 
-#if defined(__GNUC__)
-#define MWR_GCC
-#elif defined(__clang__)
+#if defined(__clang__)
 #define MWR_CLANG
+#elif defined(__GNUC__)
+#define MWR_GCC
 #elif defined(_MSC_VER)
 #define MWR_MSVC
 #else
 #error unsupported compiler
+#endif
+
+#ifdef MWR_GCC
+#define MWR_GCC_VERSION __GNUC__
+#else
+#define MWR_GCC_VERSION 0
+#endif
+
+#ifdef MWR_CLANG
+#define MWR_CLANG_VERSION __clang_major__
+#else
+#define MWR_CLANG_VERSION 0
+#endif
+
+#ifdef MWR_MSVC
+#define MWR_MSVC_VERSION _MSC_VER
+#else
+#define MWR_MSVC_VERSION 0
 #endif
 
 #if defined(__GNUC__) && defined(_WIN64)
@@ -63,7 +81,7 @@
 #define MWR_DECL_WEAK __attribute__((weak))
 #endif
 #define MWR_DECL_PRINTF(s, a) __attribute__((format(printf, s, a)))
-#define MWR_DECL_INLINE       __attribute__((always_inline))
+#define MWR_DECL_INLINE       inline __attribute__((always_inline))
 #define MWR_DECL_NOINLINE     __attribute__((noinline))
 #define MWR_DECL_NORETURN     __attribute__((noreturn))
 #define MWR_DECL_DEPRECATED   __attribute__((deprecated))
@@ -71,10 +89,28 @@
 #define MWR_DECL_ALIGN(n)     __declspec(align(n))
 #define MWR_DECL_WEAK         __declspec(selectany)
 #define MWR_DECL_PRINTF(s, a) /* MSVC does not support this */
-#define MWR_DECL_INLINE       __declspec(inline)
+#define MWR_DECL_INLINE       __forceinline
 #define MWR_DECL_NOINLINE     __declspec(noinline)
 #define MWR_DECL_NORETURN     __declspec(noreturn)
 #define MWR_DECL_DEPRECATED   __declspec(deprecated)
+#endif
+
+#if defined(MWR_X86_64) && defined(__ELF__) && \
+    (MWR_GCC_VERSION >= 6 || MWR_CLANG_VERSION >= 14)
+#define MWR_DECL_MULTIVERSION(...) __attribute__((target_clones(__VA_ARGS__)))
+#else
+#define MWR_DECL_MULTIVERSION(...)
+#endif
+
+// clones for the best simd levels the compiler can dispatch; arch=<cpu>
+// targets are dispatched by cpu model, so older compilers use feature names
+#if defined(MWR_X86_64) && (MWR_GCC_VERSION >= 12 || MWR_CLANG_VERSION >= 14)
+#define MWR_DECL_VECTORIZE \
+    MWR_DECL_MULTIVERSION("default", "arch=x86-64-v3", "arch=x86-64-v4")
+#elif defined(MWR_X86_64)
+#define MWR_DECL_VECTORIZE MWR_DECL_MULTIVERSION("default", "avx2", "avx512f")
+#else
+#define MWR_DECL_VECTORIZE
 #endif
 
 #if defined(MWR_GCC) || defined(MWR_CLANG)
