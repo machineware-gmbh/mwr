@@ -95,15 +95,21 @@
 #define MWR_DECL_DEPRECATED   __declspec(deprecated)
 #endif
 
-#if defined(MWR_X86_64) && defined(__ELF__) && \
+#if defined(__SANITIZE_THREAD__)
+#define MWR_TSAN
+#elif defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define MWR_TSAN
+#endif
+#endif
+
+#if defined(MWR_X86_64) && defined(__ELF__) && !defined(MWR_TSAN) && \
     (MWR_GCC_VERSION >= 6 || MWR_CLANG_VERSION >= 14)
 #define MWR_DECL_MULTIVERSION(...) __attribute__((target_clones(__VA_ARGS__)))
 #else
 #define MWR_DECL_MULTIVERSION(...)
 #endif
 
-// clones for the best simd levels the compiler can dispatch; arch=<cpu>
-// targets are dispatched by cpu model, so older compilers use feature names
 #if defined(MWR_X86_64) && (MWR_GCC_VERSION >= 12 || MWR_CLANG_VERSION >= 14)
 #define MWR_DECL_VECTORIZE \
     MWR_DECL_MULTIVERSION("default", "arch=x86-64-v3", "arch=x86-64-v4")
