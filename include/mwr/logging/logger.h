@@ -32,6 +32,8 @@ public:
     log_level level() const { return m_lvl; }
     void set_level(log_level lvl) { m_lvl = lvl; }
 
+    virtual ~logger();
+
     virtual bool can_log(log_level lvl) const;
 
     logger();
@@ -40,7 +42,6 @@ public:
 
     logger(logger&&) = default;
     logger(const logger&) = default;
-    virtual ~logger() = default;
 
     void log(log_level lvl, const char* format, ...) const
         MWR_DECL_PRINTF(3, 4);

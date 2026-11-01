@@ -34,6 +34,10 @@ logger::logger(const string& name, log_level lvl): m_name(name), m_lvl(lvl) {
     // nothing to do
 }
 
+logger::~logger() {
+    // nothing to do
+}
+
 void logger::log(log_level lvl, const char* format, ...) const {
     va_list args;
     va_start(args, format);
