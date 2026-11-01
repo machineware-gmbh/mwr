@@ -62,11 +62,16 @@ public:
     static void print_licenses(ostream& os);
 };
 
+#ifdef MWR_NO_MODULES
+#define MWR_DECLARE_MODULE_EX(prefix, name, license, version, major, minor, \
+                              patch, verstr, gitrev, shortrev)
+#else
 #define MWR_DECLARE_MODULE_EX(prefix, name, license, version, major, minor, \
                               patch, verstr, gitrev, shortrev)              \
     MWR_DECL_WEAK extern const mwr::module MWR_CAT(                         \
         module_##prefix##_, version)(name, license, version, major, minor,  \
                                      patch, verstr, gitrev, shortrev);
+#endif
 
 #define MWR_DECLARE_MODULE(prefix, name, spdx)                             \
     MWR_DECLARE_MODULE_EX(                                                 \
