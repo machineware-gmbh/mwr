@@ -42,3 +42,8 @@ TEST(ihex, load) {
     EXPECT_EQ(reader.records()[2].data, V3);
     EXPECT_EQ(reader.records()[3].data, V4);
 }
+
+TEST(ihex, invalid) {
+    EXPECT_THROW(mwr::ihex(get_resource_path("elf32.elf")), mwr::report);
+    EXPECT_THROW(mwr::ihex(get_resource_path("nothing.ihex")), mwr::report);
+}

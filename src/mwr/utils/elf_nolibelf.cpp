@@ -166,11 +166,11 @@ static vector<elf::segment> read_segments(int fd, const EHDR& hdr) {
     for (size_t i = 0; i < hdr.phnum; i++) {
         size_t offset = hdr.phoff + i * sizeof(phdr_t);
         if (fd_seek(fd, offset) != offset)
-            MWR_ERROR("cannot find elf program header %zu", i);
+            MWR_REPORT("cannot find elf program header %llu", (u64)i);
 
         phdr_t phdr = {};
         if (fd_read(fd, &phdr, sizeof(phdr)) != sizeof(phdr))
-            MWR_ERROR("eof while reading program header %zu", i);
+            MWR_REPORT("eof while reading program header %llu", (u64)i);
 
         if (phdr.type == PT_LOAD)
             phdrs.push_back(phdr);
@@ -220,22 +220,22 @@ struct strings {
     strings(int fd, const EHDR& hdr, u64 idx): data() {
         size_t offset = hdr.shoff + idx * sizeof(typename EHDR::shdr_t);
         if (fd_seek(fd, offset) != offset)
-            MWR_ERROR("cannot find string table header");
+            MWR_REPORT("cannot find string table header");
 
         typename EHDR::shdr_t shdr = {};
         if (fd_read(fd, &shdr, sizeof(shdr)) != sizeof(shdr))
-            MWR_ERROR("EOF while reading string table header");
+            MWR_REPORT("EOF while reading string table header");
 
         if (fd_seek(fd, shdr.offset) != shdr.offset)
-            MWR_ERROR("cannot find string table");
+            MWR_REPORT("cannot find string table");
 
         data = vector<char>(shdr.size);
         if (fd_read(fd, data.data(), data.size()) != data.size())
-            MWR_ERROR("failed to read string table");
+            MWR_REPORT("failed to read string table");
     }
 
     string get(u32 idx) const {
-        MWR_ERROR_ON(idx >= data.size(), "string index out of bounds");
+        MWR_REPORT_ON(idx >= data.size(), "string index out of bounds");
         string result;
         for (size_t i = idx; i < data.size(); i++) {
             if (data[i])
@@ -256,22 +256,22 @@ static vector<elf::symbol> read_symbols(int fd, const EHDR& hdr) {
     for (size_t i = 0; i < hdr.shnum; i++) {
         size_t offset = hdr.shoff + i * sizeof(shdr_t);
         if (fd_seek(fd, offset) != offset)
-            MWR_ERROR("cannot find elf program header %zu", i);
+            MWR_REPORT("cannot find elf section header %llu", (u64)i);
 
         shdr_t shdr = {};
         if (fd_read(fd, &shdr, sizeof(shdr)) != sizeof(shdr))
-            MWR_ERROR("EOF while reading section header %zu", i);
+            MWR_REPORT("EOF while reading section header %llu", (u64)i);
 
         if (shdr.type != SHT_SYMTAB)
             continue;
 
         if (fd_seek(fd, shdr.offset) != shdr.offset)
-            MWR_ERROR("cannot find symbols table");
+            MWR_REPORT("cannot find symbols table");
 
         vector<sym_t> syms(shdr.size / sizeof(sym_t));
         size_t size = syms.size() * sizeof(sym_t);
         if (fd_read(fd, syms.data(), size) != size)
-            MWR_ERROR("EOF while reading symbol table");
+            MWR_REPORT("EOF while reading symbol table");
 
         strings strtab(fd, hdr, shdr.link);
         for (const auto& sym : syms) {
@@ -317,37 +317,43 @@ elf::elf(const string& path):
     m_segments() {
     m_fd = fd_open(filename(), "rb");
     if (m_fd < 0)
-        MWR_ERROR("cannot open elf file '%s'", filename());
+        MWR_REPORT("cannot open elf file '%s'", filename());
 
-    u8 ident[16] = {};
-    if (fd_read(m_fd, ident, sizeof(ident)) != sizeof(ident))
-        MWR_ERROR("early EOF while reading '%s'", filename());
+    try {
+        u8 ident[16] = {};
+        if (fd_read(m_fd, ident, sizeof(ident)) != sizeof(ident))
+            MWR_REPORT("early EOF while reading '%s'", filename());
 
-    u8 start[] = { 0x7f, 'E', 'L', 'F' };
-    if (memcmp(ident, start, sizeof(start)))
-        MWR_ERROR("not an elf file: '%s'", filename());
+        u8 start[] = { 0x7f, 'E', 'L', 'F' };
+        if (memcmp(ident, start, sizeof(start)))
+            MWR_REPORT("not an elf file: '%s'", filename());
 
-    m_asize = (ident[4] == 2) ? 8 : 4;
-    m_big_endian = (ident[5] == 2);
+        m_asize = (ident[4] == 2) ? 8 : 4;
+        m_big_endian = (ident[5] == 2);
 
-    if (is_64bit()) {
-        ehdr64 hdr = {};
-        if (fd_read(m_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
-            MWR_ERROR("EOF while reading elf header in '%s'", filename());
+        if (is_64bit()) {
+            ehdr64 hdr = {};
+            if (fd_read(m_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
+                MWR_REPORT("EOF while reading elf header in '%s'", filename());
 
-        m_entry = hdr.entry;
-        m_machine = (elf_machine)hdr.machine;
-        m_segments = read_segments(m_fd, hdr);
-        m_symbols = read_symbols(m_fd, hdr);
-    } else {
-        ehdr32 hdr = {};
-        if (fd_read(m_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
-            MWR_ERROR("EOF while reading elf header in '%s'", filename());
+            m_entry = hdr.entry;
+            m_machine = (elf_machine)hdr.machine;
+            m_segments = read_segments(m_fd, hdr);
+            m_symbols = read_symbols(m_fd, hdr);
+        } else {
+            ehdr32 hdr = {};
+            if (fd_read(m_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
+                MWR_REPORT("EOF while reading elf header in '%s'", filename());
 
-        m_entry = hdr.entry;
-        m_machine = (elf_machine)hdr.machine;
-        m_segments = read_segments(m_fd, hdr);
-        m_symbols = read_symbols(m_fd, hdr);
+            m_entry = hdr.entry;
+            m_machine = (elf_machine)hdr.machine;
+            m_segments = read_segments(m_fd, hdr);
+            m_symbols = read_symbols(m_fd, hdr);
+        }
+    } catch (...) {
+        fd_close(m_fd);
+        m_fd = -1;
+        throw;
     }
 
     for (auto& sym : m_symbols)
@@ -363,13 +369,13 @@ u64 elf::read_segment(const segment& seg, u8* dest) {
     MWR_ERROR_ON(m_fd < 0, "ELF file '%s' not open", filename());
 
     if (fd_seek(m_fd, seg.offset) != seg.offset)
-        MWR_ERROR("cannot seek within ELF file '%s'", filename());
+        MWR_REPORT("cannot seek within ELF file '%s'", filename());
 
     if (fd_read(m_fd, dest, seg.filesz) != seg.filesz)
-        MWR_ERROR("cannot read ELF file '%s'", filename());
+        MWR_REPORT("cannot read ELF file '%s'", filename());
 
     if (fd_seek(m_fd, 0) != 0u)
-        MWR_ERROR("cannot seek within ELF file '%s'", filename());
+        MWR_REPORT("cannot seek within ELF file '%s'", filename());
 
     if (seg.filesz < seg.size)
         memset(dest + seg.filesz, 0, seg.size - seg.filesz);

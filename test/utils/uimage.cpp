@@ -65,3 +65,8 @@ TEST(uimage, load) {
     for (int i = 0; i < 8; i++)
         EXPECT_EQ(payload[i], rawdata[i]) << "mismatch at " << i;
 }
+
+TEST(uimage, invalid) {
+    EXPECT_THROW(mwr::uimage(get_resource_path("elf32.elf")), mwr::report);
+    EXPECT_THROW(mwr::uimage(get_resource_path("nothing")), mwr::report);
+}

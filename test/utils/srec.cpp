@@ -42,3 +42,7 @@ TEST(srec, load) {
     EXPECT_EQ(reader.records()[1].data, V2);
     EXPECT_EQ(reader.records()[2].data, V3);
 }
+
+TEST(srec, invalid) {
+    EXPECT_THROW(mwr::srec(get_resource_path("nothing.srec")), mwr::report);
+}

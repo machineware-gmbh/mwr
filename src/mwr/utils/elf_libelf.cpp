@@ -72,7 +72,7 @@ static vector<elf::segment> read_segments(Elf* elf) {
     size_t count = 0;
     int err = elf_getphdrnum(elf, &count);
     if (err)
-        MWR_ERROR("elf_begin failed: %s", elf_errmsg(err));
+        MWR_REPORT("cannot read program headers: %s", elf_errmsg(err));
 
     vector<elf::segment> segments;
     typename T::Elf_Phdr* phdrs = T::elf_getphdr(elf);
@@ -178,34 +178,43 @@ elf::elf(const string& path):
 
     m_fd = open(filename(), O_RDONLY, 0);
     if (m_fd < 0)
-        MWR_ERROR("cannot open elf file '%s'", filename());
+        MWR_REPORT("cannot open elf file '%s'", filename());
 
-    Elf* elf = elf_begin(m_fd, ELF_C_READ, nullptr);
-    if (elf == nullptr)
-        MWR_ERROR("error reading '%s' (%s)", filename(), elf_errmsg(-1));
+    Elf* elf = nullptr;
+    try {
+        elf = elf_begin(m_fd, ELF_C_READ, nullptr);
+        if (elf == nullptr)
+            MWR_REPORT("error reading '%s' (%s)", filename(), elf_errmsg(-1));
 
-    if (elf_kind(elf) != ELF_K_ELF)
-        MWR_ERROR("ELF version error in %s", filename());
+        if (elf_kind(elf) != ELF_K_ELF)
+            MWR_REPORT("ELF version error in %s", filename());
 
-    Elf32_Ehdr* ehdr32 = elf32_getehdr(elf);
-    Elf64_Ehdr* ehdr64 = elf64_getehdr(elf);
+        Elf32_Ehdr* ehdr32 = elf32_getehdr(elf);
+        Elf64_Ehdr* ehdr64 = elf64_getehdr(elf);
 
-    if (ehdr32) {
-        m_asize = 4;
-        m_entry = ehdr32->e_entry;
-        m_machine = (elf_machine)ehdr32->e_machine;
-        m_big_endian = ehdr32->e_ident[EI_DATA] == ELFDATA2MSB;
-        m_segments = read_segments<elf32_traits>(elf);
-        m_symbols = read_symbols<elf32_traits>(elf);
-    } else if (ehdr64) {
-        m_asize = 8;
-        m_entry = ehdr64->e_entry;
-        m_machine = (elf_machine)ehdr64->e_machine;
-        m_big_endian = ehdr64->e_ident[EI_DATA] == ELFDATA2MSB;
-        m_segments = read_segments<elf64_traits>(elf);
-        m_symbols = read_symbols<elf64_traits>(elf);
-    } else {
-        MWR_ERROR("unable to determine elf class: %s", filename());
+        if (ehdr32) {
+            m_asize = 4;
+            m_entry = ehdr32->e_entry;
+            m_machine = (elf_machine)ehdr32->e_machine;
+            m_big_endian = ehdr32->e_ident[EI_DATA] == ELFDATA2MSB;
+            m_segments = read_segments<elf32_traits>(elf);
+            m_symbols = read_symbols<elf32_traits>(elf);
+        } else if (ehdr64) {
+            m_asize = 8;
+            m_entry = ehdr64->e_entry;
+            m_machine = (elf_machine)ehdr64->e_machine;
+            m_big_endian = ehdr64->e_ident[EI_DATA] == ELFDATA2MSB;
+            m_segments = read_segments<elf64_traits>(elf);
+            m_symbols = read_symbols<elf64_traits>(elf);
+        } else {
+            MWR_REPORT("unable to determine elf class: %s", filename());
+        }
+    } catch (...) {
+        if (elf)
+            elf_end(elf);
+        close(m_fd);
+        m_fd = -1;
+        throw;
     }
 
     elf_end(elf);
@@ -223,13 +232,13 @@ u64 elf::read_segment(const segment& seg, u8* dest) {
     MWR_ERROR_ON(m_fd < 0, "ELF file '%s' not open", filename());
 
     if (fd_seek(m_fd, seg.offset) != seg.offset)
-        MWR_ERROR("cannot seek within ELF file '%s'", filename());
+        MWR_REPORT("cannot seek within ELF file '%s'", filename());
 
     if (fd_read(m_fd, dest, seg.filesz) != seg.filesz)
-        MWR_ERROR("cannot read ELF file '%s'", filename());
+        MWR_REPORT("cannot read ELF file '%s'", filename());
 
     if (fd_seek(m_fd, 0) != 0u)
-        MWR_ERROR("cannot seek within ELF file '%s'", filename());
+        MWR_REPORT("cannot seek within ELF file '%s'", filename());
 
     if (seg.filesz < seg.size)
         memset(dest + seg.filesz, 0, seg.size - seg.filesz);

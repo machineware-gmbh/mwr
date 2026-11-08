@@ -23,10 +23,10 @@ uimage::uimage(const string& filename):
     m_load(),
     m_entry(),
     m_file(path(), std::ios::binary) {
-    MWR_ERROR_ON(!m_file, "failed to open uimage at %s", path());
+    MWR_REPORT_ON(!m_file, "failed to open uimage at %s", path());
 
     u32 magic = read32be();
-    MWR_ERROR_ON(magic != 0x27051956, "not an uimage: %s", path());
+    MWR_REPORT_ON(magic != 0x27051956, "not an uimage: %s", path());
 
     u32 crc = read32be();
     (void)crc;
@@ -40,13 +40,13 @@ uimage::uimage(const string& filename):
     (void)dcrc;
 
     m_os = (uimage_os)read8();
-    MWR_ERROR_ON(m_os == OS_INVALID, "invalid operating system: %s", path());
+    MWR_REPORT_ON(m_os == OS_INVALID, "invalid operating system: %s", path());
 
     m_arch = (uimage_arch)read8();
-    MWR_ERROR_ON(m_arch == ARCH_INVALID, "invalid architecture: %s", path());
+    MWR_REPORT_ON(m_arch == ARCH_INVALID, "invalid architecture: %s", path());
 
     m_type = (uimage_type)read8();
-    MWR_ERROR_ON(m_type == TYPE_INVALID, "invalid payload type: %s", path());
+    MWR_REPORT_ON(m_type == TYPE_INVALID, "invalid payload type: %s", path());
 
     m_comp = (uimage_comp)read8();
 
@@ -54,8 +54,8 @@ uimage::uimage(const string& filename):
 }
 
 size_t uimage::read(u8* dest, size_t size, size_t offset) {
-    MWR_ERROR_ON(!m_file, "invalid uimage");
-    MWR_ERROR_ON(size + offset > m_size, "reading beyond end of file");
+    MWR_REPORT_ON(!m_file, "invalid uimage");
+    MWR_REPORT_ON(size + offset > m_size, "reading beyond end of file");
 
     const size_t header_size = 0x40;
     m_file.seekg(offset + header_size, std::ios::beg);
@@ -66,14 +66,14 @@ size_t uimage::read(u8* dest, size_t size, size_t offset) {
 u8 uimage::read8() {
     u8 val = 0;
     m_file.read((char*)&val, sizeof(val));
-    MWR_ERROR_ON(!m_file, "error reading uimage header: %s", path());
+    MWR_REPORT_ON(!m_file, "error reading uimage header: %s", path());
     return val;
 }
 
 u32 uimage::read32be() {
     u32 val = 0;
     m_file.read((char*)&val, sizeof(val));
-    MWR_ERROR_ON(!m_file, "error reading uimage header: %s", path());
+    MWR_REPORT_ON(!m_file, "error reading uimage header: %s", path());
     return bswap(val);
 }
 
@@ -81,7 +81,7 @@ string uimage::readstr() {
     char strbuf[33];
     memset(strbuf, 0, sizeof(strbuf));
     m_file.read(strbuf, 32);
-    MWR_ERROR_ON(!m_file, "error reading uimage header: %s", path());
+    MWR_REPORT_ON(!m_file, "error reading uimage header: %s", path());
     return strbuf;
 }
 

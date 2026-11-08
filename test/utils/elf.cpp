@@ -147,3 +147,8 @@ TEST(elf64, symbols) {
     EXPECT_EQ(func_c->virt, 0x401000);
     EXPECT_EQ(func_c->size, 22);
 }
+
+TEST(elf, invalid) {
+    EXPECT_THROW(mwr::elf(get_resource_path("sample.srec")), mwr::report);
+    EXPECT_THROW(mwr::elf(get_resource_path("nothing.elf")), mwr::report);
+}

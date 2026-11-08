@@ -24,13 +24,13 @@ enum srec_record_type : char {
 };
 
 static u8 srec_byte(const string& line, size_t off) {
-    MWR_ERROR_ON(off + 1 >= line.length(), "reading beyond srec line");
+    MWR_REPORT_ON(off + 1 >= line.length(), "reading beyond srec line");
     return from_hex_ascii(line[off]) << 4 | from_hex_ascii(line[off + 1]);
 }
 
 srec::srec(const string& filename): m_entry(), m_header(), m_records() {
     ifstream file(filename);
-    MWR_ERROR_ON(!file, "cannot open srec file '%s'", filename.c_str());
+    MWR_REPORT_ON(!file, "cannot open srec file '%s'", filename.c_str());
 
     string line;
     while (getline(file, line)) {

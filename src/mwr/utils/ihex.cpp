@@ -33,14 +33,14 @@ struct ihex_record {
 };
 
 static inline u8 ihex_byte(const string& line, size_t off) {
-    MWR_ERROR_ON(off + 1 >= line.size(), "reading beyond srec line");
+    MWR_REPORT_ON(off + 1 >= line.size(), "reading beyond srec line");
     return from_hex_ascii(line[off]) << 4 | from_hex_ascii(line[off + 1]);
 }
 
 template <typename T>
 static inline u64 vec_to(const std::vector<u8>& vec) {
     constexpr size_t num_bytes = sizeof(T);
-    MWR_ERROR_ON(num_bytes > vec.size(), "reading beyond given vector");
+    MWR_REPORT_ON(num_bytes > vec.size(), "reading beyond given vector");
     T result = 0;
     for (size_t i = 0; i < num_bytes; ++i)
         result = (result << 8) | vec[i];
@@ -100,7 +100,7 @@ static inline ihex_record process_line(const string& line) {
 
 ihex::ihex(const string& filename): m_start_addr(), m_records() {
     ifstream file(filename);
-    MWR_ERROR_ON(!file, "Cannot open ihex file '%s'", filename.c_str());
+    MWR_REPORT_ON(!file, "Cannot open ihex file '%s'", filename.c_str());
 
     u64 seg_offset = 0;
     u64 linear_offset = 0;
