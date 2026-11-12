@@ -62,6 +62,19 @@ TEST(utils, tty_restore) {
     // fd will be closed on exit
 }
 
+TEST(utils, tty_null_device) {
+    // The null device is what a process without a console gets as stdin. On
+    // Windows it is a character device like the console, but it is no tty.
+#ifdef MWR_WINDOWS
+    int fd = mwr::fd_open("NUL", "r");
+#else
+    int fd = mwr::fd_open("/dev/null", "r");
+#endif
+    ASSERT_GE(fd, 0);
+    EXPECT_FALSE(mwr::is_tty(fd));
+    mwr::fd_close(fd);
+}
+
 TEST(utils, termcolors) {
     EXPECT_GT(strlen(mwr::termcolors::CLEAR), 1);
     EXPECT_GT(strlen(mwr::termcolors::BLACK), 1);

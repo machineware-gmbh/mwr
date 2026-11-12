@@ -49,7 +49,8 @@ int new_tty() {
 
 bool is_tty(int fd) {
 #ifdef MWR_WINDOWS
-    return fd >= 0 && _isatty(fd);
+    DWORD mode;
+    return fd >= 0 && GetConsoleMode((HANDLE)_get_osfhandle(fd), &mode);
 #else
     termios attr;
     return tcgetattr(fd, &attr) == 0;
