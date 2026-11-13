@@ -25,6 +25,9 @@ string mkstr(const char* format, ...) {
 }
 
 string vmkstr(const char* format, va_list args) {
+    if (format == nullptr)
+        return "";
+
     va_list args2;
     va_copy(args2, args);
 
