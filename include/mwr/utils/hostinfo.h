@@ -34,6 +34,14 @@ bool host_has_avx512(); // 512-bit vectors
 // arm64 host features
 bool host_has_sve(); // scalable vector extension
 
+// riscv64 host features
+bool host_has_rvc();    // compressed instructions (C)
+bool host_has_rvv();    // scalable vector extension (V)
+bool host_has_zba();    // address generation (shift-and-add)
+bool host_has_zbb();    // basic bit manipulation
+bool host_has_zbs();    // single-bit instructions
+bool host_has_zicond(); // integer conditional operations
+
 // common host features
 bool host_has_fp16(); // half precision arithmetic
 bool host_has_bf16(); // brainfloat conversion and dot product

@@ -31,6 +31,12 @@ TEST(hostinfo, overrides) {
     EXPECT_FALSE(disabled("F16C") && host_has_f16c());
     EXPECT_FALSE(disabled("AVX512") && host_has_avx512());
     EXPECT_FALSE(disabled("SVE") && host_has_sve());
+    EXPECT_FALSE(disabled("RVC") && host_has_rvc());
+    EXPECT_FALSE(disabled("RVV") && host_has_rvv());
+    EXPECT_FALSE(disabled("ZBA") && host_has_zba());
+    EXPECT_FALSE(disabled("ZBB") && host_has_zbb());
+    EXPECT_FALSE(disabled("ZBS") && host_has_zbs());
+    EXPECT_FALSE(disabled("ZICOND") && host_has_zicond());
     EXPECT_FALSE(disabled("FP16") && host_has_fp16());
     EXPECT_FALSE(disabled("BF16") && host_has_bf16());
 }
@@ -48,7 +54,6 @@ TEST(hostinfo, dependencies) {
 
 TEST(hostinfo, arch) {
 #ifdef MWR_X86_64
-    EXPECT_FALSE(host_has_sve());
     EXPECT_TRUE(disabled("CMOV") || host_has_cmov()); // all x86_64 have cmov
 #else
     EXPECT_FALSE(host_has_bmi1());
@@ -62,6 +67,19 @@ TEST(hostinfo, arch) {
     EXPECT_FALSE(host_has_fma());
     EXPECT_FALSE(host_has_f16c());
     EXPECT_FALSE(host_has_avx512());
+#endif
+
+#ifndef MWR_ARM64
+    EXPECT_FALSE(host_has_sve());
+#endif
+
+#ifndef MWR_RISCV64
+    EXPECT_FALSE(host_has_rvc());
+    EXPECT_FALSE(host_has_rvv());
+    EXPECT_FALSE(host_has_zba());
+    EXPECT_FALSE(host_has_zbb());
+    EXPECT_FALSE(host_has_zbs());
+    EXPECT_FALSE(host_has_zicond());
 #endif
 }
 
@@ -77,6 +95,13 @@ TEST(hostinfo, dump) {
 #ifdef MWR_ARM64
     EXPECT_NE(s.find("sve:"), string::npos);
     EXPECT_EQ(s.find("cmov:"), string::npos);
+#endif
+#ifdef MWR_RISCV64
+    EXPECT_NE(s.find("rvc:"), string::npos);
+    EXPECT_NE(s.find("zba:"), string::npos);
+    EXPECT_NE(s.find("rvv:"), string::npos);
+    EXPECT_EQ(s.find("cmov:"), string::npos);
+    EXPECT_EQ(s.find("sve:"), string::npos);
 #endif
     EXPECT_NE(s.find("fp16:"), string::npos);
     EXPECT_NE(s.find("bf16:"), string::npos);

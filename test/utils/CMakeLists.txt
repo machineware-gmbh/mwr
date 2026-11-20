@@ -51,4 +51,5 @@ macro(hostinfo_test name)
 endmacro()
 
 hostinfo_test(noavx AVX)
-hostinfo_test(none BMI1 BMI2 CMOV MOVBE POPCNT LZCNT AVX AVX2 FMA F16C AVX512 SVE FP16 BF16)
+hostinfo_test(none BMI1 BMI2 CMOV MOVBE POPCNT LZCNT AVX AVX2 FMA F16C AVX512 SVE
+              RVC RVV ZBA ZBB ZBS ZICOND FP16 BF16)

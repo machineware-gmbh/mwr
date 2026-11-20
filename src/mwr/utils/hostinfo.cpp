@@ -33,6 +33,11 @@
 #include <windows.h>
 #endif
 
+#if defined(MWR_RISCV64) && defined(MWR_LINUX)
+#include <sys/syscall.h>
+#include <unistd.h>
+#endif
+
 namespace mwr {
 
 struct hostinfo {
@@ -48,6 +53,12 @@ struct hostinfo {
     bool has_f16c;
     bool has_avx512;
     bool has_sve;
+    bool has_rvc;
+    bool has_rvv;
+    bool has_zba;
+    bool has_zbb;
+    bool has_zbs;
+    bool has_zicond;
     bool has_fp16;
     bool has_bf16;
 
@@ -183,6 +194,51 @@ static void init_hostinfo_arm64(hostinfo& hi) {
 }
 #endif
 
+#ifdef MWR_RISCV64
+static void init_hostinfo_riscv64(hostinfo& hi) {
+#if defined(MWR_LINUX)
+    // use the raw syscall with our own definitions, since the libc wrapper
+    // (glibc 2.40+) and recent extension bits are missing on older systems
+    enum : long { NR_RISCV_HWPROBE = 258 };
+    enum : i64 { KEY_IMA_EXT_0 = 4 };
+    enum : u64 {
+        IMA_C = bit(1),
+        IMA_V = bit(2),
+        EXT_ZBA = bit(3),
+        EXT_ZBB = bit(4),
+        EXT_ZBS = bit(5),
+        EXT_ZFH = bit(27),
+        EXT_ZICOND = bit(35),
+        EXT_ZFBFMIN = bit(52),
+    };
+
+    struct {
+        i64 key;
+        u64 value;
+    } probe = { KEY_IMA_EXT_0, 0 };
+
+    // no cpu set: report only extensions supported by all online harts;
+    // fails with ENOSYS on kernels older than 6.4
+    if (syscall(NR_RISCV_HWPROBE, &probe, 1, 0, nullptr, 0) != 0)
+        return;
+
+    if (probe.key != KEY_IMA_EXT_0)
+        return;
+
+    hi.has_rvc = probe.value & IMA_C;
+    hi.has_rvv = probe.value & IMA_V;
+    hi.has_zba = probe.value & EXT_ZBA;
+    hi.has_zbb = probe.value & EXT_ZBB;
+    hi.has_zbs = probe.value & EXT_ZBS;
+    hi.has_zicond = probe.value & EXT_ZICOND;
+    hi.has_fp16 = probe.value & EXT_ZFH;
+    hi.has_bf16 = probe.value & EXT_ZFBFMIN;
+#else
+    (void)hi;
+#endif
+}
+#endif
+
 hostinfo::hostinfo():
     has_bmi1(false),
     has_bmi2(false),
@@ -196,6 +252,12 @@ hostinfo::hostinfo():
     has_f16c(false),
     has_avx512(false),
     has_sve(false),
+    has_rvc(false),
+    has_rvv(false),
+    has_zba(false),
+    has_zbb(false),
+    has_zbs(false),
+    has_zicond(false),
     has_fp16(false),
     has_bf16(false) {
 #ifdef MWR_X86_64
@@ -204,6 +266,10 @@ hostinfo::hostinfo():
 
 #ifdef MWR_ARM64
     init_hostinfo_arm64(*this);
+#endif
+
+#ifdef MWR_RISCV64
+    init_hostinfo_riscv64(*this);
 #endif
 
     has_bmi1 &= !getenv_or_default("MWR_NO_BMI1", false);
@@ -218,6 +284,12 @@ hostinfo::hostinfo():
     has_f16c &= has_avx && !getenv_or_default("MWR_NO_F16C", false);
     has_avx512 &= has_avx2 && !getenv_or_default("MWR_NO_AVX512", false);
     has_sve &= !getenv_or_default("MWR_NO_SVE", false);
+    has_rvc &= !getenv_or_default("MWR_NO_RVC", false);
+    has_rvv &= !getenv_or_default("MWR_NO_RVV", false);
+    has_zba &= !getenv_or_default("MWR_NO_ZBA", false);
+    has_zbb &= !getenv_or_default("MWR_NO_ZBB", false);
+    has_zbs &= !getenv_or_default("MWR_NO_ZBS", false);
+    has_zicond &= !getenv_or_default("MWR_NO_ZICOND", false);
     has_fp16 &= !getenv_or_default("MWR_NO_FP16", false);
     has_bf16 &= !getenv_or_default("MWR_NO_BF16", false);
 
@@ -276,6 +348,30 @@ bool host_has_sve() {
     return hostinfo::instance().has_sve;
 }
 
+bool host_has_rvc() {
+    return hostinfo::instance().has_rvc;
+}
+
+bool host_has_rvv() {
+    return hostinfo::instance().has_rvv;
+}
+
+bool host_has_zba() {
+    return hostinfo::instance().has_zba;
+}
+
+bool host_has_zbb() {
+    return hostinfo::instance().has_zbb;
+}
+
+bool host_has_zbs() {
+    return hostinfo::instance().has_zbs;
+}
+
+bool host_has_zicond() {
+    return hostinfo::instance().has_zicond;
+}
+
 bool host_has_fp16() {
     return hostinfo::instance().has_fp16;
 }
@@ -305,6 +401,14 @@ void host_info_dump(std::ostream& os) {
 #endif
 #ifdef MWR_ARM64
     os << "sve:    " << yesno(hi.has_sve) << std::endl;
+#endif
+#ifdef MWR_RISCV64
+    os << "rvc:    " << yesno(hi.has_rvc) << std::endl;
+    os << "rvv:    " << yesno(hi.has_rvv) << std::endl;
+    os << "zba:    " << yesno(hi.has_zba) << std::endl;
+    os << "zbb:    " << yesno(hi.has_zbb) << std::endl;
+    os << "zbs:    " << yesno(hi.has_zbs) << std::endl;
+    os << "zicond: " << yesno(hi.has_zicond) << std::endl;
 #endif
     os << "fp16:   " << yesno(hi.has_fp16) << std::endl;
     os << "bf16:   " << yesno(hi.has_bf16) << std::endl;
