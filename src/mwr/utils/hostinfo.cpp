@@ -53,6 +53,22 @@ struct hostinfo {
     bool has_f16c;
     bool has_avx512;
     bool has_sve;
+    bool has_aes;
+    bool has_pmull;
+    bool has_sha1;
+    bool has_sha2;
+    bool has_sha512;
+    bool has_sha3;
+    bool has_sm3;
+    bool has_sm4;
+    bool has_crc32;
+    bool has_lse;
+    bool has_rdm;
+    bool has_dotprod;
+    bool has_fhm;
+    bool has_flagm;
+    bool has_flagm2;
+    bool has_rng;
     bool has_rvc;
     bool has_rvv;
     bool has_zba;
@@ -164,6 +180,54 @@ static void init_hostinfo_arm64(hostinfo& hi) {
 #if defined(HWCAP_SVE)
     hi.has_sve = hwcap & HWCAP_SVE;
 #endif
+#if defined(HWCAP_AES)
+    hi.has_aes = hwcap & HWCAP_AES;
+#endif
+#if defined(HWCAP_PMULL)
+    hi.has_pmull = hwcap & HWCAP_PMULL;
+#endif
+#if defined(HWCAP_SHA1)
+    hi.has_sha1 = hwcap & HWCAP_SHA1;
+#endif
+#if defined(HWCAP_SHA2)
+    hi.has_sha2 = hwcap & HWCAP_SHA2;
+#endif
+#if defined(HWCAP_SHA512)
+    hi.has_sha512 = hwcap & HWCAP_SHA512;
+#endif
+#if defined(HWCAP_SHA3)
+    hi.has_sha3 = hwcap & HWCAP_SHA3;
+#endif
+#if defined(HWCAP_SM3)
+    hi.has_sm3 = hwcap & HWCAP_SM3;
+#endif
+#if defined(HWCAP_SM4)
+    hi.has_sm4 = hwcap & HWCAP_SM4;
+#endif
+#if defined(HWCAP_CRC32)
+    hi.has_crc32 = hwcap & HWCAP_CRC32;
+#endif
+#if defined(HWCAP_ATOMICS)
+    hi.has_lse = hwcap & HWCAP_ATOMICS;
+#endif
+#if defined(HWCAP_ASIMDRDM)
+    hi.has_rdm = hwcap & HWCAP_ASIMDRDM;
+#endif
+#if defined(HWCAP_ASIMDDP)
+    hi.has_dotprod = hwcap & HWCAP_ASIMDDP;
+#endif
+#if defined(HWCAP_ASIMDFHM)
+    hi.has_fhm = hwcap & HWCAP_ASIMDFHM;
+#endif
+#if defined(HWCAP_FLAGM)
+    hi.has_flagm = hwcap & HWCAP_FLAGM;
+#endif
+#if defined(HWCAP2_FLAGM2)
+    hi.has_flagm2 = hwcap2 & HWCAP2_FLAGM2;
+#endif
+#if defined(HWCAP2_RNG)
+    hi.has_rng = hwcap2 & HWCAP2_RNG;
+#endif
 #if defined(HWCAP_FPHP) && defined(HWCAP_ASIMDHP)
     hi.has_fp16 = (hwcap & HWCAP_FPHP) && (hwcap & HWCAP_ASIMDHP);
 #endif
@@ -172,12 +236,47 @@ static void init_hostinfo_arm64(hostinfo& hi) {
 #endif
     (void)hwcap2;
 #elif defined(MWR_MACOS)
-    // no SVE support on macOS
+    // no SVE, SM3, SM4 or RNG support on macOS
+    hi.has_aes = host_sysctl("hw.optional.arm.FEAT_AES");
+    hi.has_pmull = host_sysctl("hw.optional.arm.FEAT_PMULL");
+    hi.has_sha1 = host_sysctl("hw.optional.arm.FEAT_SHA1");
+    hi.has_sha2 = host_sysctl("hw.optional.arm.FEAT_SHA256");
+    hi.has_sha512 = host_sysctl("hw.optional.arm.FEAT_SHA512");
+    hi.has_sha3 = host_sysctl("hw.optional.arm.FEAT_SHA3");
+    hi.has_crc32 = host_sysctl("hw.optional.arm.FEAT_CRC32");
+    hi.has_lse = host_sysctl("hw.optional.arm.FEAT_LSE");
+    hi.has_rdm = host_sysctl("hw.optional.arm.FEAT_RDM");
+    hi.has_dotprod = host_sysctl("hw.optional.arm.FEAT_DotProd");
+    hi.has_fhm = host_sysctl("hw.optional.arm.FEAT_FHM");
+    hi.has_flagm = host_sysctl("hw.optional.arm.FEAT_FlagM");
+    hi.has_flagm2 = host_sysctl("hw.optional.arm.FEAT_FlagM2");
     hi.has_fp16 = host_sysctl("hw.optional.arm.FEAT_FP16");
     hi.has_bf16 = host_sysctl("hw.optional.arm.FEAT_BF16");
 #elif defined(MWR_WINDOWS)
 #if defined(PF_ARM_SVE_INSTRUCTIONS_AVAILABLE)
     hi.has_sve = IsProcessorFeaturePresent(PF_ARM_SVE_INSTRUCTIONS_AVAILABLE);
+#endif
+#if defined(PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE)
+    hi.has_aes = IsProcessorFeaturePresent(
+        PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE);
+    hi.has_pmull = IsProcessorFeaturePresent(
+        PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE);
+    hi.has_sha1 = IsProcessorFeaturePresent(
+        PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE);
+    hi.has_sha2 = IsProcessorFeaturePresent(
+        PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE);
+#endif
+#if defined(PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE)
+    hi.has_crc32 = IsProcessorFeaturePresent(
+        PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE);
+#endif
+#if defined(PF_ARM_V81_ATOMIC_INSTRUCTIONS_AVAILABLE)
+    hi.has_lse = IsProcessorFeaturePresent(
+        PF_ARM_V81_ATOMIC_INSTRUCTIONS_AVAILABLE);
+#endif
+#if defined(PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE)
+    hi.has_dotprod = IsProcessorFeaturePresent(
+        PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE);
 #endif
 #if defined(PF_ARM_V82_FP16_INSTRUCTIONS_AVAILABLE)
     hi.has_fp16 = IsProcessorFeaturePresent(
@@ -252,6 +351,22 @@ hostinfo::hostinfo():
     has_f16c(false),
     has_avx512(false),
     has_sve(false),
+    has_aes(false),
+    has_pmull(false),
+    has_sha1(false),
+    has_sha2(false),
+    has_sha512(false),
+    has_sha3(false),
+    has_sm3(false),
+    has_sm4(false),
+    has_crc32(false),
+    has_lse(false),
+    has_rdm(false),
+    has_dotprod(false),
+    has_fhm(false),
+    has_flagm(false),
+    has_flagm2(false),
+    has_rng(false),
     has_rvc(false),
     has_rvv(false),
     has_zba(false),
@@ -284,6 +399,22 @@ hostinfo::hostinfo():
     has_f16c &= has_avx && !getenv_or_default("MWR_NO_F16C", false);
     has_avx512 &= has_avx2 && !getenv_or_default("MWR_NO_AVX512", false);
     has_sve &= !getenv_or_default("MWR_NO_SVE", false);
+    has_aes &= !getenv_or_default("MWR_NO_AES", false);
+    has_pmull &= !getenv_or_default("MWR_NO_PMULL", false);
+    has_sha1 &= !getenv_or_default("MWR_NO_SHA1", false);
+    has_sha2 &= !getenv_or_default("MWR_NO_SHA2", false);
+    has_sha512 &= !getenv_or_default("MWR_NO_SHA512", false);
+    has_sha3 &= !getenv_or_default("MWR_NO_SHA3", false);
+    has_sm3 &= !getenv_or_default("MWR_NO_SM3", false);
+    has_sm4 &= !getenv_or_default("MWR_NO_SM4", false);
+    has_crc32 &= !getenv_or_default("MWR_NO_CRC32", false);
+    has_lse &= !getenv_or_default("MWR_NO_LSE", false);
+    has_rdm &= !getenv_or_default("MWR_NO_RDM", false);
+    has_dotprod &= !getenv_or_default("MWR_NO_DOTPROD", false);
+    has_fhm &= !getenv_or_default("MWR_NO_FHM", false);
+    has_flagm &= !getenv_or_default("MWR_NO_FLAGM", false);
+    has_flagm2 &= !getenv_or_default("MWR_NO_FLAGM2", false);
+    has_rng &= !getenv_or_default("MWR_NO_RNG", false);
     has_rvc &= !getenv_or_default("MWR_NO_RVC", false);
     has_rvv &= !getenv_or_default("MWR_NO_RVV", false);
     has_zba &= !getenv_or_default("MWR_NO_ZBA", false);
@@ -292,6 +423,12 @@ hostinfo::hostinfo():
     has_zicond &= !getenv_or_default("MWR_NO_ZICOND", false);
     has_fp16 &= !getenv_or_default("MWR_NO_FP16", false);
     has_bf16 &= !getenv_or_default("MWR_NO_BF16", false);
+
+    // arm64 features that are extensions of other features
+    has_pmull &= has_aes;
+    has_sha512 &= has_sha2;
+    has_sha3 &= has_sha512;
+    has_flagm2 &= has_flagm;
 
 #ifdef MWR_X86_64
     // x86 fp16 and bf16 require avx512 (evex encoding)
@@ -348,6 +485,70 @@ bool host_has_sve() {
     return hostinfo::instance().has_sve;
 }
 
+bool host_has_aes() {
+    return hostinfo::instance().has_aes;
+}
+
+bool host_has_pmull() {
+    return hostinfo::instance().has_pmull;
+}
+
+bool host_has_sha1() {
+    return hostinfo::instance().has_sha1;
+}
+
+bool host_has_sha2() {
+    return hostinfo::instance().has_sha2;
+}
+
+bool host_has_sha512() {
+    return hostinfo::instance().has_sha512;
+}
+
+bool host_has_sha3() {
+    return hostinfo::instance().has_sha3;
+}
+
+bool host_has_sm3() {
+    return hostinfo::instance().has_sm3;
+}
+
+bool host_has_sm4() {
+    return hostinfo::instance().has_sm4;
+}
+
+bool host_has_crc32() {
+    return hostinfo::instance().has_crc32;
+}
+
+bool host_has_lse() {
+    return hostinfo::instance().has_lse;
+}
+
+bool host_has_rdm() {
+    return hostinfo::instance().has_rdm;
+}
+
+bool host_has_dotprod() {
+    return hostinfo::instance().has_dotprod;
+}
+
+bool host_has_fhm() {
+    return hostinfo::instance().has_fhm;
+}
+
+bool host_has_flagm() {
+    return hostinfo::instance().has_flagm;
+}
+
+bool host_has_flagm2() {
+    return hostinfo::instance().has_flagm2;
+}
+
+bool host_has_rng() {
+    return hostinfo::instance().has_rng;
+}
+
 bool host_has_rvc() {
     return hostinfo::instance().has_rvc;
 }
@@ -387,31 +588,47 @@ constexpr const char* yesno(bool option) {
 void host_info_dump(std::ostream& os) {
     const hostinfo& hi = hostinfo::instance();
 #ifdef MWR_X86_64
-    os << "bmi1:   " << yesno(hi.has_bmi1) << std::endl;
-    os << "bmi2:   " << yesno(hi.has_bmi2) << std::endl;
-    os << "cmov:   " << yesno(hi.has_cmov) << std::endl;
-    os << "movbe:  " << yesno(hi.has_movbe) << std::endl;
-    os << "popcnt: " << yesno(hi.has_popcnt) << std::endl;
-    os << "lzcnt:  " << yesno(hi.has_lzcnt) << std::endl;
-    os << "avx:    " << yesno(hi.has_avx) << std::endl;
-    os << "avx2:   " << yesno(hi.has_avx2) << std::endl;
-    os << "fma:    " << yesno(hi.has_fma) << std::endl;
-    os << "f16c:   " << yesno(hi.has_f16c) << std::endl;
-    os << "avx512: " << yesno(hi.has_avx512) << std::endl;
+    os << "bmi1:    " << yesno(hi.has_bmi1) << std::endl;
+    os << "bmi2:    " << yesno(hi.has_bmi2) << std::endl;
+    os << "cmov:    " << yesno(hi.has_cmov) << std::endl;
+    os << "movbe:   " << yesno(hi.has_movbe) << std::endl;
+    os << "popcnt:  " << yesno(hi.has_popcnt) << std::endl;
+    os << "lzcnt:   " << yesno(hi.has_lzcnt) << std::endl;
+    os << "avx:     " << yesno(hi.has_avx) << std::endl;
+    os << "avx2:    " << yesno(hi.has_avx2) << std::endl;
+    os << "fma:     " << yesno(hi.has_fma) << std::endl;
+    os << "f16c:    " << yesno(hi.has_f16c) << std::endl;
+    os << "avx512:  " << yesno(hi.has_avx512) << std::endl;
 #endif
 #ifdef MWR_ARM64
-    os << "sve:    " << yesno(hi.has_sve) << std::endl;
+    os << "sve:     " << yesno(hi.has_sve) << std::endl;
+    os << "aes:     " << yesno(hi.has_aes) << std::endl;
+    os << "pmull:   " << yesno(hi.has_pmull) << std::endl;
+    os << "sha1:    " << yesno(hi.has_sha1) << std::endl;
+    os << "sha2:    " << yesno(hi.has_sha2) << std::endl;
+    os << "sha512:  " << yesno(hi.has_sha512) << std::endl;
+    os << "sha3:    " << yesno(hi.has_sha3) << std::endl;
+    os << "sm3:     " << yesno(hi.has_sm3) << std::endl;
+    os << "sm4:     " << yesno(hi.has_sm4) << std::endl;
+    os << "crc32:   " << yesno(hi.has_crc32) << std::endl;
+    os << "lse:     " << yesno(hi.has_lse) << std::endl;
+    os << "rdm:     " << yesno(hi.has_rdm) << std::endl;
+    os << "dotprod: " << yesno(hi.has_dotprod) << std::endl;
+    os << "fhm:     " << yesno(hi.has_fhm) << std::endl;
+    os << "flagm:   " << yesno(hi.has_flagm) << std::endl;
+    os << "flagm2:  " << yesno(hi.has_flagm2) << std::endl;
+    os << "rng:     " << yesno(hi.has_rng) << std::endl;
 #endif
 #ifdef MWR_RISCV64
-    os << "rvc:    " << yesno(hi.has_rvc) << std::endl;
-    os << "rvv:    " << yesno(hi.has_rvv) << std::endl;
-    os << "zba:    " << yesno(hi.has_zba) << std::endl;
-    os << "zbb:    " << yesno(hi.has_zbb) << std::endl;
-    os << "zbs:    " << yesno(hi.has_zbs) << std::endl;
-    os << "zicond: " << yesno(hi.has_zicond) << std::endl;
+    os << "rvc:     " << yesno(hi.has_rvc) << std::endl;
+    os << "rvv:     " << yesno(hi.has_rvv) << std::endl;
+    os << "zba:     " << yesno(hi.has_zba) << std::endl;
+    os << "zbb:     " << yesno(hi.has_zbb) << std::endl;
+    os << "zbs:     " << yesno(hi.has_zbs) << std::endl;
+    os << "zicond:  " << yesno(hi.has_zicond) << std::endl;
 #endif
-    os << "fp16:   " << yesno(hi.has_fp16) << std::endl;
-    os << "bf16:   " << yesno(hi.has_bf16) << std::endl;
+    os << "fp16:    " << yesno(hi.has_fp16) << std::endl;
+    os << "bf16:    " << yesno(hi.has_bf16) << std::endl;
 }
 
 } // namespace mwr
