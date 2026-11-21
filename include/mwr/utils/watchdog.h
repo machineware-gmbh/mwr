@@ -100,11 +100,10 @@ private:
                         ; // spin
                     lock.lock();
                 } else {
-                    m_cv.wait_until(lock, next_timeout, [this] {
-                        return m_terminate ||
-                               (!m_tasks.empty() &&
-                                (m_tasks.top().timeout < clock_t::now()));
-                    });
+                    // wake up whenever something happens: tasks may have
+                    // been added or cancelled, so the next timeout must be
+                    // looked up again and may be earlier than this one
+                    m_cv.wait_until(lock, next_timeout);
                 }
 
                 while (!m_tasks.empty() &&
