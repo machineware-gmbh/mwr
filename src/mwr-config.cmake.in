@@ -1,0 +1,59 @@
+ ##############################################################################
+ #                                                                            #
+ # Copyright (C) 2026 MachineWare GmbH                                        #
+ # All Rights Reserved                                                        #
+ #                                                                            #
+ # This work is licensed under the terms described in the LICENSE file found  #
+ # in the root directory of this source tree.                                 #
+ #                                                                            #
+ ##############################################################################
+
+@PACKAGE_INIT@
+
+if(NOT TARGET mwr)
+    get_filename_component(__mwr_home "${CMAKE_CURRENT_LIST_DIR}/../../" ABSOLUTE)
+    add_library(mwr STATIC IMPORTED GLOBAL)
+    set_target_properties(mwr PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${__mwr_home}/include"
+        IMPORTED_LOCATION "${__mwr_home}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}mwr${CMAKE_STATIC_LIBRARY_SUFFIX}"
+        IMPORTED_LOCATION_DEBUG "${__mwr_home}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}mwrd${CMAKE_STATIC_LIBRARY_SUFFIX}"
+        VERSION "@MWR_VERSION@")
+    unset(__mwr_home)
+
+    find_package(Threads REQUIRED)
+
+    target_compile_features(mwr INTERFACE cxx_std_17)
+    target_compile_definitions(mwr INTERFACE $<$<CONFIG:DEBUG>:MWR_DEBUG>)
+    target_link_libraries(mwr INTERFACE Threads::Threads)
+    target_link_libraries(mwr INTERFACE ${CMAKE_DL_LIBS})
+
+    if(MSVC OR MINGW)
+        if(MSVC)
+            target_link_options(mwr INTERFACE /OPT:NOREF)
+        endif()
+        target_link_libraries(mwr INTERFACE Dbghelp.lib)
+        target_link_libraries(mwr INTERFACE ws2_32)
+    else()
+        target_link_libraries(mwr INTERFACE -rdynamic)
+        if(NOT APPLE)
+            target_link_libraries(mwr INTERFACE rt stdc++fs)
+        endif()
+    endif()
+
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "riscv64")
+        target_link_libraries(mwr INTERFACE atomic)
+    endif()
+
+    if("@LIBELF_FOUND@")
+        find_package(LibELF REQUIRED)
+        target_link_libraries(mwr INTERFACE ${LIBELF_LIBRARIES})
+    endif()
+
+    if("@MWR_COVERAGE@")
+        target_compile_definitions(mwr INTERFACE MWR_COVERAGE)
+        target_compile_options(mwr INTERFACE --coverage)
+        target_link_libraries(mwr INTERFACE -lgcov)
+    endif()
+endif()
+
+check_required_components(mwr)

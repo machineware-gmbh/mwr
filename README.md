@@ -37,6 +37,7 @@ make install
 If everything went well, the following artifacts will have been installed:
 * mwr headers in `BUILD/RELEASE/include`
 * mwr library in `BUILD/RELEASE/lib`
+* mwr cmake package in `BUILD/RELEASE/lib/cmake`
 
 ----
 ## Integration
@@ -46,6 +47,17 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/mwr)
 ...
 target_link_libraries(my_target mwr)
 ```
+Alternatively, you can link against an installed `mwr` using its `cmake`
+package. The build type of your project must match the one of the installed
+library:
+```
+find_package(mwr CONFIG REQUIRED PATHS <install-dir>/lib/cmake)
+...
+target_link_libraries(my_target mwr)
+```
+If `mwr` was built with libelf, your project also needs `FindLibELF.cmake` from
+the [MachineWare cmake modules](https://github.com/machineware-gmbh/cmake) on
+its `CMAKE_MODULE_PATH`.
 
 ----
 ## License

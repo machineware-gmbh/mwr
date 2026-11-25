@@ -18,6 +18,7 @@ set(MWR_USE_LIBELF ON CACHE BOOL "Use libelf for reading ELF files")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(common)
+include(CMakePackageConfigHelpers)
 
 find_package(Threads REQUIRED)
 
@@ -117,3 +118,16 @@ endif()
 install(TARGETS mwr DESTINATION lib)
 install(DIRECTORY ${inc}/ DESTINATION include)
 install(DIRECTORY ${gen}/ DESTINATION include)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/mwr-config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/mwr-config.cmake"
+    INSTALL_DESTINATION lib/cmake)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/mwr-config-version.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY ExactVersion)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mwr-config.cmake" DESTINATION lib/cmake)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/mwr-config-version.cmake" DESTINATION lib/cmake)
