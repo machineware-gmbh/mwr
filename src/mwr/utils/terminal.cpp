@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
+#include <sys/ioctl.h>
 #endif
 
 #if defined(MWR_MSVC) || defined(MWR_MINGW)
@@ -198,6 +199,35 @@ void tty_pop(int fd) {
 
 void tty_setup_vt100(int fd) {
     tty::lookup(fd).setup_vt100();
+}
+
+bool tty_size(int fd, size_t& cols, size_t& rows) {
+#ifdef MWR_WINDOWS
+    if (fd < 0)
+        return false;
+
+    CONSOLE_SCREEN_BUFFER_INFO info;
+    HANDLE console = (HANDLE)_get_osfhandle(fd);
+    if (!GetConsoleScreenBufferInfo(console, &info))
+        return false;
+
+    int width = info.srWindow.Right - info.srWindow.Left + 1;
+    int height = info.srWindow.Bottom - info.srWindow.Top + 1;
+    if (width <= 0 || height <= 0)
+        return false;
+
+    cols = (size_t)width;
+    rows = (size_t)height;
+    return true;
+#else
+    winsize size{};
+    if (ioctl(fd, TIOCGWINSZ, &size) || !size.ws_col || !size.ws_row)
+        return false;
+
+    cols = size.ws_col;
+    rows = size.ws_row;
+    return true;
+#endif
 }
 
 } // namespace mwr

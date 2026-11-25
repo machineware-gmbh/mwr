@@ -12,6 +12,10 @@
 
 #include "mwr.h"
 
+#if defined(MWR_LINUX) || defined(MWR_MACOS)
+#include <sys/ioctl.h>
+#endif
+
 TEST(utils, tty) {
     // Try to get a new pseudo terminal, if the operating system supports
     // that. Otherwise try STDIN (0), that should usually be a terminal as
@@ -73,6 +77,51 @@ TEST(utils, tty_null_device) {
     ASSERT_GE(fd, 0);
     EXPECT_FALSE(mwr::is_tty(fd));
     mwr::fd_close(fd);
+}
+
+TEST(utils, tty_size) {
+    size_t cols = 123;
+    size_t rows = 456;
+
+#ifdef MWR_WINDOWS
+    int null = mwr::fd_open("NUL", "r");
+#else
+    int null = mwr::fd_open("/dev/null", "r");
+#endif
+    ASSERT_GE(null, 0);
+    EXPECT_FALSE(mwr::tty_size(null, cols, rows));
+    EXPECT_FALSE(mwr::tty_size(-1, cols, rows));
+    EXPECT_EQ(cols, 123);
+    EXPECT_EQ(rows, 456);
+    mwr::fd_close(null);
+
+#if defined(MWR_LINUX) || defined(MWR_MACOS)
+    int fd = mwr::new_tty();
+    if (!mwr::is_tty(fd))
+        return;
+
+    winsize size{};
+    ASSERT_EQ(ioctl(fd, TIOCSWINSZ, &size), 0);
+    EXPECT_FALSE(mwr::tty_size(fd, cols, rows));
+    EXPECT_EQ(cols, 123);
+    EXPECT_EQ(rows, 456);
+
+    size.ws_col = 132;
+    size.ws_row = 43;
+    ASSERT_EQ(ioctl(fd, TIOCSWINSZ, &size), 0);
+    EXPECT_TRUE(mwr::tty_size(fd, cols, rows));
+    EXPECT_EQ(cols, 132);
+    EXPECT_EQ(rows, 43);
+
+    mwr::fd_close(fd);
+#else
+    int out = mwr::STDOUT_FDNO;
+    if (mwr::is_tty(out)) {
+        EXPECT_TRUE(mwr::tty_size(out, cols, rows));
+        EXPECT_GT(cols, 0);
+        EXPECT_GT(rows, 0);
+    }
+#endif
 }
 
 TEST(utils, termcolors) {

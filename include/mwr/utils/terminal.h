@@ -25,6 +25,8 @@ bool is_tty(int fd);
 bool tty_is_vt100(int fd);
 void tty_setup_vt100(int fd);
 
+bool tty_size(int fd, size_t& cols, size_t& rows);
+
 void tty_push(int fd, bool restore);
 void tty_pop(int fd);
 
