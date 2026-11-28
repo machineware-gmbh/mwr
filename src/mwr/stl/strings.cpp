@@ -76,7 +76,7 @@ string trim(const string& str) {
 string pad(const string& ref, size_t max) {
     string s(ref);
     for (size_t i = ref.length(); i < max; i++)
-        s += " ";
+        s += ' ';
     return s;
 }
 

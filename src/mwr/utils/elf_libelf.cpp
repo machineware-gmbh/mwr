@@ -127,7 +127,7 @@ static vector<elf::symbol> read_symbols(Elf* elf) {
         Elf_Data* data = elf_getdata(scn, nullptr);
         size_t numsyms = shdr->sh_size / shdr->sh_entsize;
 
-        auto* syms = (typename T::Elf_Sym*)(data->d_buf);
+        auto* syms = (typename T::Elf_Sym*)data->d_buf;
         for (size_t i = 0; i < numsyms; i++) {
             char* str = elf_strptr(elf, shdr->sh_link, syms[i].st_name);
             if (str == nullptr || strlen(str) == 0)

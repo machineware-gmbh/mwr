@@ -22,11 +22,11 @@
 
 namespace mwr {
 
-static bool g_no_ipv4 = []() {
+static bool g_no_ipv4 = [] {
     return getenv_or_default("MWR_NO_IPv4", false);
 }();
 
-static bool g_no_ipv6 = []() {
+static bool g_no_ipv6 = [] {
     return getenv_or_default("MWR_NO_IPv6", false);
 }();
 
